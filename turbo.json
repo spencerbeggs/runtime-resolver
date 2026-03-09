@@ -42,9 +42,24 @@
 			"outputLogs": "full",
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
+		"generate:defaults": {
+			"cache": true,
+			"inputs": [
+				"lib/scripts/generate-defaults.mts",
+				"src/schemas/**",
+				"src/services/GitHubClient.ts",
+				"src/services/OctokitInstance.ts",
+				"src/layers/GitHubClientLive.ts",
+				"src/layers/GitHubTokenAuth.ts",
+				"src/errors/**"
+			],
+			"outputLogs": "new-only",
+			"outputs": ["src/data/node-defaults.ts", "src/data/bun-defaults.ts", "src/data/deno-defaults.ts"],
+			"passThroughEnv": ["GITHUB_PERSONAL_ACCESS_TOKEN", "GITHUB_TOKEN"]
+		},
 		"types:check": {
 			"cache": true,
-			"dependsOn": [],
+			"dependsOn": ["generate:defaults"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"!**/*.md",
