@@ -21,7 +21,7 @@ import { DenoResolver } from "./services/DenoResolver.js";
 import type { NodeResolverOptions } from "./services/NodeResolver.js";
 import { NodeResolver } from "./services/NodeResolver.js";
 
-export type { ResolvedVersions } from "./schemas/common.js";
+export type { Increments, NodePhase, ResolvedVersions } from "./schemas/common.js";
 export type { BunResolverOptions } from "./services/BunResolver.js";
 export type { DenoResolverOptions } from "./services/DenoResolver.js";
 export type { NodeResolverOptions } from "./services/NodeResolver.js";
