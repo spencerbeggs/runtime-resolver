@@ -1,0 +1,151 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"anyOf": [
+		{
+			"type": "object",
+			"required": ["ok", "results"],
+			"properties": {
+				"ok": {
+					"type": "boolean",
+					"enum": [true]
+				},
+				"results": {
+					"type": "object",
+					"required": [],
+					"properties": {},
+					"additionalProperties": {
+						"anyOf": [
+							{
+								"type": "object",
+								"required": ["ok", "versions", "latest"],
+								"properties": {
+									"ok": {
+										"type": "boolean",
+										"enum": [true]
+									},
+									"versions": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"latest": {
+										"type": "string"
+									},
+									"lts": {
+										"type": "string"
+									},
+									"default": {
+										"type": "string"
+									}
+								},
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"required": ["ok", "error"],
+								"properties": {
+									"ok": {
+										"type": "boolean",
+										"enum": [false]
+									},
+									"error": {
+										"type": "object",
+										"required": ["_tag", "message"],
+										"properties": {
+											"_tag": {
+												"type": "string"
+											},
+											"message": {
+												"type": "string"
+											}
+										},
+										"additionalProperties": {
+											"$id": "/schemas/unknown",
+											"title": "unknown"
+										}
+									}
+								},
+								"additionalProperties": false
+							}
+						]
+					}
+				}
+			},
+			"additionalProperties": false
+		},
+		{
+			"type": "object",
+			"required": ["ok", "results"],
+			"properties": {
+				"ok": {
+					"type": "boolean",
+					"enum": [false]
+				},
+				"results": {
+					"type": "object",
+					"required": [],
+					"properties": {},
+					"additionalProperties": {
+						"anyOf": [
+							{
+								"type": "object",
+								"required": ["ok", "versions", "latest"],
+								"properties": {
+									"ok": {
+										"type": "boolean",
+										"enum": [true]
+									},
+									"versions": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"latest": {
+										"type": "string"
+									},
+									"lts": {
+										"type": "string"
+									},
+									"default": {
+										"type": "string"
+									}
+								},
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"required": ["ok", "error"],
+								"properties": {
+									"ok": {
+										"type": "boolean",
+										"enum": [false]
+									},
+									"error": {
+										"type": "object",
+										"required": ["_tag", "message"],
+										"properties": {
+											"_tag": {
+												"type": "string"
+											},
+											"message": {
+												"type": "string"
+											}
+										},
+										"additionalProperties": {
+											"$id": "/schemas/unknown",
+											"title": "unknown"
+										}
+									}
+								},
+								"additionalProperties": false
+							}
+						]
+					}
+				}
+			},
+			"additionalProperties": false
+		}
+	]
+}

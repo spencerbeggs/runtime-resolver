@@ -32,6 +32,7 @@
 		"commit:check": "savvy-commit check",
 		"commit:init": "savvy-commit init",
 		"generate:defaults": "tsx lib/scripts/generate-defaults.mts",
+		"generate:json-schema": "tsx lib/scripts/generate-json-schema.mts",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",

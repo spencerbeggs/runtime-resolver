@@ -13,6 +13,8 @@ import { DenoResolver } from "../../services/DenoResolver.js";
 import { NodeResolver } from "../../services/NodeResolver.js";
 import type { CliResponse, CliRuntimeResult } from "../schemas/response.js";
 
+const SCHEMA_URL = "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json";
+
 // --- Options ---
 
 export const nodeOption = Options.text("node").pipe(Options.optional);
@@ -135,10 +137,11 @@ export const resolveHandler = (args: {
 
 		// No runtime specified — output JSON error envelope and exit 0
 		if (!hasNode && !hasBun && !hasDeno) {
-			const response: CliResponse = {
-				ok: false,
+			const response = {
+				$schema: SCHEMA_URL,
+				ok: false as const,
 				results: {},
-			};
+			} satisfies CliResponse & { $schema: string };
 			const indent = args.pretty ? 2 : undefined;
 			yield* Console.error(JSON.stringify(response, null, indent));
 			return;
@@ -161,10 +164,11 @@ export const resolveHandler = (args: {
 		const results: Record<string, CliRuntimeResult> = Object.fromEntries(entries);
 
 		const hasError = Object.values(results).some((r) => !r.ok);
-		const response: CliResponse = {
+		const response = {
+			$schema: SCHEMA_URL,
 			ok: !hasError as CliResponse["ok"],
 			results,
-		};
+		} satisfies CliResponse & { $schema: string };
 
 		const indent = args.pretty ? 2 : undefined;
 		yield* Console.log(JSON.stringify(response, null, indent));
