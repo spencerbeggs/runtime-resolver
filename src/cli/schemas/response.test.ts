@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
 import {
+	CliErrorDetail,
 	CliErrorResponse,
 	CliResponse,
 	CliRuntimeError,
@@ -10,6 +11,37 @@ import {
 } from "./response.js";
 
 const decode = <A, I>(schema: Schema.Schema<A, I>) => Schema.decodeUnknownSync(schema);
+
+describe("CliErrorDetail", () => {
+	it("decodes with only _tag and message", () => {
+		const input = { _tag: "NetworkError", message: "Connection refused" };
+		const result = decode(CliErrorDetail)(input);
+		expect(result._tag).toBe("NetworkError");
+		expect(result.message).toBe("Connection refused");
+	});
+
+	it("decodes with additional fields", () => {
+		const input = {
+			_tag: "RateLimitError",
+			message: "Rate limited",
+			limit: 60,
+			remaining: 0,
+			retryAfter: 42,
+		};
+		const result = decode(CliErrorDetail)(input);
+		expect(result._tag).toBe("RateLimitError");
+		expect(result.limit).toBe(60);
+		expect(result.retryAfter).toBe(42);
+	});
+
+	it("rejects missing _tag", () => {
+		expect(() => decode(CliErrorDetail)({ message: "no tag" })).toThrow();
+	});
+
+	it("rejects missing message", () => {
+		expect(() => decode(CliErrorDetail)({ _tag: "Foo" })).toThrow();
+	});
+});
 
 describe("CliRuntimeSuccess", () => {
 	it("decodes a valid success with all fields", () => {

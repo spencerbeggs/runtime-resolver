@@ -8,6 +8,7 @@ export const CliErrorDetail = Schema.Struct({
 	_tag: Schema.String,
 	message: Schema.String,
 }).pipe(Schema.extend(Schema.Record({ key: Schema.String, value: Schema.Unknown })));
+export type CliErrorDetail = typeof CliErrorDetail.Type;
 
 /**
  * Successful resolution for a single runtime.
