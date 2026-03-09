@@ -31,7 +31,7 @@ const rootCommand = Command.make(
 
 const cli = Command.run(rootCommand, {
 	name: "runtime-resolver",
-	version: process.env.__PACKAGE_VERSION__,
+	version: process.env.__PACKAGE_VERSION__ ?? "0.0.0",
 });
 
 const main = Effect.suspend(() => cli(process.argv)).pipe(

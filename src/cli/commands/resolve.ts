@@ -47,11 +47,32 @@ const serializeError = (error: unknown): { _tag: string; message: string; [key: 
 
 // --- Runtime resolution helpers ---
 
+type RuntimeEntry = readonly [string, CliRuntimeResult];
+
+const toSuccess = (
+	name: string,
+	result: { versions: readonly string[]; latest: string; lts?: string | undefined; default?: string | undefined },
+): RuntimeEntry => [
+	name,
+	{
+		ok: true as const,
+		versions: [...result.versions],
+		latest: result.latest,
+		...(result.lts !== undefined ? { lts: result.lts } : {}),
+		...(result.default !== undefined ? { default: result.default } : {}),
+	},
+];
+
+const toError = (name: string, error: unknown): RuntimeEntry => [
+	name,
+	{ ok: false as const, error: serializeError(error) },
+];
+
 const resolveNode = (
 	semverRange: string,
 	phases: Option.Option<string>,
 	increments: Option.Option<string>,
-): Effect.Effect<CliRuntimeResult> =>
+): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* NodeResolver;
 		const nodePhases = Option.isSome(phases)
@@ -63,63 +84,30 @@ const resolveNode = (
 			...(nodePhases ? { phases: nodePhases } : {}),
 			...(nodeIncrements ? { increments: nodeIncrements } : {}),
 		});
-		return {
-			ok: true as const,
-			versions: result.versions as string[],
-			latest: result.latest,
-			...(result.lts ? { lts: result.lts } : {}),
-			...(result.default ? { default: result.default } : {}),
-		};
+		return toSuccess("node", result);
 	}).pipe(
 		Effect.provide(NodeLayer),
-		Effect.catchAll((error) =>
-			Effect.succeed({
-				ok: false as const,
-				error: serializeError(error),
-			}),
-		),
+		Effect.catchAll((error) => Effect.succeed(toError("node", error))),
 	);
 
-const resolveBun = (semverRange: string): Effect.Effect<CliRuntimeResult> =>
+const resolveBun = (semverRange: string): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* BunResolver;
 		const result = yield* resolver.resolve({ semverRange });
-		return {
-			ok: true as const,
-			versions: result.versions as string[],
-			latest: result.latest,
-			...(result.lts ? { lts: result.lts } : {}),
-			...(result.default ? { default: result.default } : {}),
-		};
+		return toSuccess("bun", result);
 	}).pipe(
 		Effect.provide(BunLayer),
-		Effect.catchAll((error) =>
-			Effect.succeed({
-				ok: false as const,
-				error: serializeError(error),
-			}),
-		),
+		Effect.catchAll((error) => Effect.succeed(toError("bun", error))),
 	);
 
-const resolveDeno = (semverRange: string): Effect.Effect<CliRuntimeResult> =>
+const resolveDeno = (semverRange: string): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* DenoResolver;
 		const result = yield* resolver.resolve({ semverRange });
-		return {
-			ok: true as const,
-			versions: result.versions as string[],
-			latest: result.latest,
-			...(result.lts ? { lts: result.lts } : {}),
-			...(result.default ? { default: result.default } : {}),
-		};
+		return toSuccess("deno", result);
 	}).pipe(
 		Effect.provide(DenoLayer),
-		Effect.catchAll((error) =>
-			Effect.succeed({
-				ok: false as const,
-				error: serializeError(error),
-			}),
-		),
+		Effect.catchAll((error) => Effect.succeed(toError("deno", error))),
 	);
 
 // --- Handler ---
@@ -145,53 +133,32 @@ export const resolveHandler = (args: {
 		const hasBun = Option.isSome(args.bun);
 		const hasDeno = Option.isSome(args.deno);
 
+		// No runtime specified — output JSON error envelope and exit 0
 		if (!hasNode && !hasBun && !hasDeno) {
-			yield* Console.error("Error: At least one runtime flag is required (--node, --bun, --deno)");
-			return yield* Effect.fail("No runtime specified" as const);
+			const response: CliResponse = {
+				ok: false,
+				results: {},
+			};
+			const indent = args.pretty ? 2 : undefined;
+			yield* Console.error(JSON.stringify(response, null, indent));
+			return;
 		}
 
 		// Resolve each requested runtime independently
-		const results: Record<string, CliRuntimeResult> = {};
-
-		const tasks: Effect.Effect<void>[] = [];
+		const tasks: Effect.Effect<RuntimeEntry>[] = [];
 
 		if (hasNode) {
-			tasks.push(
-				resolveNode(args.node.value, args.nodePhases, args.nodeIncrements).pipe(
-					Effect.tap((result) =>
-						Effect.sync(() => {
-							results.node = result;
-						}),
-					),
-				),
-			);
+			tasks.push(resolveNode(args.node.value, args.nodePhases, args.nodeIncrements));
 		}
-
 		if (hasBun) {
-			tasks.push(
-				resolveBun(args.bun.value).pipe(
-					Effect.tap((result) =>
-						Effect.sync(() => {
-							results.bun = result;
-						}),
-					),
-				),
-			);
+			tasks.push(resolveBun(args.bun.value));
 		}
-
 		if (hasDeno) {
-			tasks.push(
-				resolveDeno(args.deno.value).pipe(
-					Effect.tap((result) =>
-						Effect.sync(() => {
-							results.deno = result;
-						}),
-					),
-				),
-			);
+			tasks.push(resolveDeno(args.deno.value));
 		}
 
-		yield* Effect.all(tasks, { concurrency: "unbounded" });
+		const entries = yield* Effect.all(tasks, { concurrency: "unbounded" });
+		const results: Record<string, CliRuntimeResult> = Object.fromEntries(entries);
 
 		const hasError = Object.values(results).some((r) => !r.ok);
 		const response: CliResponse = {
