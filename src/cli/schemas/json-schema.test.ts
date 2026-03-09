@@ -9,11 +9,15 @@ describe("cliJsonSchema", () => {
 		expect(cliJsonSchema).toHaveProperty("$schema");
 	});
 
-	it("describes the response structure with union variants", () => {
+	it("uses $defs with $ref for named schema definitions", () => {
 		const schema = cliJsonSchema as unknown as Record<string, unknown>;
-		// The top-level schema should use oneOf or anyOf for the Union type
-		const hasUnionCombinator = "oneOf" in schema || "anyOf" in schema;
-		expect(hasUnionCombinator).toBe(true);
+		expect(schema).toHaveProperty("$ref", "#/$defs/CliResponse");
+		expect(schema).toHaveProperty("$defs");
+		const defs = schema.$defs as Record<string, unknown>;
+		expect(defs).toHaveProperty("CliResponse");
+		expect(defs).toHaveProperty("CliRuntimeSuccess");
+		expect(defs).toHaveProperty("CliRuntimeError");
+		expect(defs).toHaveProperty("CliErrorDetail");
 	});
 
 	it("is JSON-serializable", () => {
