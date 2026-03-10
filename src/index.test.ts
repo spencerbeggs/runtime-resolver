@@ -44,5 +44,6 @@ describe("Effect API exports", () => {
 		expect(mod.RateLimitError).toBeDefined();
 		expect(mod.VersionNotFoundError).toBeDefined();
 		expect(mod.InvalidInputError).toBeDefined();
+		expect(mod.FreshnessError).toBeDefined();
 	});
 });

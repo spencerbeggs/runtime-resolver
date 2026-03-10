@@ -9,6 +9,7 @@
 
 // Errors
 export { CacheError } from "./errors/CacheError.js";
+export { FreshnessError } from "./errors/FreshnessError.js";
 export { InvalidInputError } from "./errors/InvalidInputError.js";
 export { NetworkError } from "./errors/NetworkError.js";
 export { ParseError } from "./errors/ParseError.js";
@@ -25,7 +26,7 @@ export { NodeResolverLive } from "./layers/NodeResolverLive.js";
 export { VersionCacheLive } from "./layers/VersionCacheLive.js";
 export type { CachedNodeData, CachedTagData } from "./schemas/cache.js";
 // Schemas
-export type { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
+export type { Freshness, Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
 export type { GitHubRelease, GitHubReleaseList, GitHubTag, GitHubTagList } from "./schemas/github.js";
 export type { NodeDistIndex, NodeDistVersion, NodeReleaseSchedule, ReleaseScheduleEntry } from "./schemas/node.js";
 // Services
