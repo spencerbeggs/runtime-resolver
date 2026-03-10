@@ -1,11 +1,21 @@
 /* v8 ignore start */
+import { readFileSync } from "node:fs";
 import { Options } from "@effect/cli";
-import { Console, Effect, Option } from "effect";
+import { Console, Effect, Layer, Option } from "effect";
+import type { AuthenticationError } from "../../errors/AuthenticationError.js";
+import { BunResolverLive } from "../../layers/BunResolverLive.js";
+import { DenoResolverLive } from "../../layers/DenoResolverLive.js";
+import { GitHubAppAuth } from "../../layers/GitHubAppAuth.js";
+import { GitHubClientLive } from "../../layers/GitHubClientLive.js";
+import { GitHubTokenAuthFromToken } from "../../layers/GitHubTokenAuth.js";
 import { BunLayer, DenoLayer, NodeLayer } from "../../layers/index.js";
+import { NodeResolverLive } from "../../layers/NodeResolverLive.js";
+import { VersionCacheLive } from "../../layers/VersionCacheLive.js";
 import type { Freshness, Increments, NodePhase } from "../../schemas/common.js";
 import { BunResolver } from "../../services/BunResolver.js";
 import { DenoResolver } from "../../services/DenoResolver.js";
 import { NodeResolver } from "../../services/NodeResolver.js";
+import type { OctokitInstance } from "../../services/OctokitInstance.js";
 import type { CliResponse, CliRuntimeResult } from "../schemas/response.js";
 
 const SCHEMA_URL = "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json";
@@ -24,6 +34,10 @@ export const freshnessOption = Options.text("freshness").pipe(Options.optional);
 export const nodeDateOption = Options.text("node-date").pipe(Options.optional);
 export const prettyOption = Options.boolean("pretty").pipe(Options.withDefault(false));
 export const schemaOption = Options.boolean("schema").pipe(Options.withDefault(false));
+export const tokenOption = Options.text("token").pipe(Options.optional);
+export const appIdOption = Options.text("app-id").pipe(Options.optional);
+export const appPrivateKeyOption = Options.text("app-private-key").pipe(Options.optional);
+export const appInstallationIdOption = Options.text("app-installation-id").pipe(Options.optional);
 
 // --- Validation helpers ---
 
@@ -105,6 +119,7 @@ const resolveNode = (
 	defaultVersion?: string,
 	date?: Date,
 	freshness?: Freshness,
+	authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* NodeResolver;
@@ -118,7 +133,13 @@ const resolveNode = (
 		});
 		return toSuccess("node", result);
 	}).pipe(
-		Effect.provide(NodeLayer),
+		Effect.provide(
+			authOverride
+				? NodeResolverLive.pipe(
+						Layer.provide(Layer.merge(GitHubClientLive.pipe(Layer.provide(authOverride)), VersionCacheLive)),
+					)
+				: NodeLayer,
+		),
 		Effect.catchAll((error) => Effect.succeed(toError("node", error))),
 	);
 
@@ -127,6 +148,7 @@ const resolveBun = (
 	increments?: Increments,
 	defaultVersion?: string,
 	freshness?: Freshness,
+	authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* BunResolver;
@@ -138,7 +160,13 @@ const resolveBun = (
 		});
 		return toSuccess("bun", result);
 	}).pipe(
-		Effect.provide(BunLayer),
+		Effect.provide(
+			authOverride
+				? BunResolverLive.pipe(
+						Layer.provide(Layer.merge(GitHubClientLive.pipe(Layer.provide(authOverride)), VersionCacheLive)),
+					)
+				: BunLayer,
+		),
 		Effect.catchAll((error) => Effect.succeed(toError("bun", error))),
 	);
 
@@ -147,6 +175,7 @@ const resolveDeno = (
 	increments?: Increments,
 	defaultVersion?: string,
 	freshness?: Freshness,
+	authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* DenoResolver;
@@ -158,7 +187,13 @@ const resolveDeno = (
 		});
 		return toSuccess("deno", result);
 	}).pipe(
-		Effect.provide(DenoLayer),
+		Effect.provide(
+			authOverride
+				? DenoResolverLive.pipe(
+						Layer.provide(Layer.merge(GitHubClientLive.pipe(Layer.provide(authOverride)), VersionCacheLive)),
+					)
+				: DenoLayer,
+		),
 		Effect.catchAll((error) => Effect.succeed(toError("deno", error))),
 	);
 
@@ -184,6 +219,10 @@ export const resolveHandler = (args: {
 	readonly nodeDate: Option.Option<string>;
 	readonly pretty: boolean;
 	readonly schema: boolean;
+	readonly token: Option.Option<string>;
+	readonly appId: Option.Option<string>;
+	readonly appPrivateKey: Option.Option<string>;
+	readonly appInstallationId: Option.Option<string>;
 }) =>
 	Effect.gen(function* () {
 		// Handle --schema flag with strict validation
@@ -199,6 +238,10 @@ export const resolveHandler = (args: {
 				args.bunDefault,
 				args.denoDefault,
 				args.nodeDate,
+				args.token,
+				args.appId,
+				args.appPrivateKey,
+				args.appInstallationId,
 			];
 			const hasResolveFlags = resolveFlags.some((f) => Option.isSome(f));
 			if (hasResolveFlags) {
@@ -209,6 +252,56 @@ export const resolveHandler = (args: {
 			const { cliJsonSchema } = yield* Effect.promise(() => import("../schemas/json-schema.js"));
 			yield* Console.log(JSON.stringify(cliJsonSchema, null, 2));
 			return;
+		}
+
+		// Auth flag validation
+		const hasToken = Option.isSome(args.token);
+		const hasAppId = Option.isSome(args.appId);
+		const hasAppPrivateKey = Option.isSome(args.appPrivateKey);
+		const hasAppInstallationId = Option.isSome(args.appInstallationId);
+
+		if (hasToken && (hasAppId || hasAppPrivateKey)) {
+			yield* Console.error("Error: --token and --app-id/--app-private-key are mutually exclusive");
+			return;
+		}
+
+		if (hasAppId !== hasAppPrivateKey) {
+			yield* Console.error("Error: --app-id and --app-private-key must both be provided");
+			return;
+		}
+
+		if (hasAppInstallationId && !hasAppId) {
+			yield* Console.error("Error: --app-installation-id requires --app-id and --app-private-key");
+			return;
+		}
+
+		// Resolve private key (@ prefix means file path)
+		let resolvedPrivateKey: string | undefined;
+		if (hasAppPrivateKey) {
+			const keyValue = args.appPrivateKey.value;
+			if (keyValue.startsWith("@")) {
+				const filePath = keyValue.slice(1);
+				try {
+					resolvedPrivateKey = readFileSync(filePath, "utf-8");
+				} catch {
+					yield* Console.error(`Error: Cannot read private key file: ${filePath}`);
+					return;
+				}
+			} else {
+				resolvedPrivateKey = keyValue;
+			}
+		}
+
+		// Construct auth layer override if CLI flags provided
+		let authLayerOverride: Layer.Layer<OctokitInstance, AuthenticationError> | undefined;
+		if (hasToken) {
+			authLayerOverride = GitHubTokenAuthFromToken(args.token.value);
+		} else if (hasAppId && resolvedPrivateKey) {
+			authLayerOverride = GitHubAppAuth({
+				appId: args.appId.value,
+				privateKey: resolvedPrivateKey,
+				...(hasAppInstallationId ? { installationId: Number(args.appInstallationId.value) } : {}),
+			});
 		}
 
 		const hasNode = Option.isSome(args.node);
@@ -273,16 +366,21 @@ export const resolveHandler = (args: {
 					nodeDefaultVersion,
 					nodeDate,
 					validatedFreshness,
+					authLayerOverride,
 				),
 			);
 		}
 		if (hasBun) {
 			const bunDefaultVersion = Option.isSome(args.bunDefault) ? args.bunDefault.value : undefined;
-			tasks.push(resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion, validatedFreshness));
+			tasks.push(
+				resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion, validatedFreshness, authLayerOverride),
+			);
 		}
 		if (hasDeno) {
 			const denoDefaultVersion = Option.isSome(args.denoDefault) ? args.denoDefault.value : undefined;
-			tasks.push(resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion, validatedFreshness));
+			tasks.push(
+				resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion, validatedFreshness, authLayerOverride),
+			);
 		}
 
 		const entries = yield* Effect.all(tasks, { concurrency: "unbounded" });

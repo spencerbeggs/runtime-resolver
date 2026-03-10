@@ -5,6 +5,9 @@ import { NodeContext, NodeRuntime } from "@effect/platform-node";
 import { Cause, Console, Effect } from "effect";
 
 import {
+	appIdOption,
+	appInstallationIdOption,
+	appPrivateKeyOption,
 	bunDefaultOption,
 	bunOption,
 	denoDefaultOption,
@@ -18,6 +21,7 @@ import {
 	prettyOption,
 	resolveHandler,
 	schemaOption,
+	tokenOption,
 } from "./commands/resolve.js";
 
 const rootCommand = Command.make(
@@ -35,6 +39,10 @@ const rootCommand = Command.make(
 		nodeDate: nodeDateOption,
 		pretty: prettyOption,
 		schema: schemaOption,
+		token: tokenOption,
+		appId: appIdOption,
+		appPrivateKey: appPrivateKeyOption,
+		appInstallationId: appInstallationIdOption,
 	},
 	resolveHandler,
 );
