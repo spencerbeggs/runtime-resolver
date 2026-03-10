@@ -1,3 +1,4 @@
+import { createAppAuth } from "@octokit/auth-app";
 import { Effect, Layer } from "effect";
 import { Octokit } from "octokit";
 import { NetworkError } from "../errors/NetworkError.js";
@@ -42,7 +43,6 @@ export const GitHubAppAuth = (config: GitHubAppAuthConfig): Layer.Layer<OctokitI
 		OctokitInstance,
 		Effect.tryPromise({
 			try: async () => {
-				const { createAppAuth } = await import("@octokit/auth-app");
 				const auth = createAppAuth({
 					appId: config.appId,
 					privateKey: config.privateKey,
