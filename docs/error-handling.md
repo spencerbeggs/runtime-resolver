@@ -30,8 +30,8 @@ Thrown when the GitHub API rate limit is exceeded.
 | `remaining` | `number` | Requests remaining (typically `0`) |
 | `message` | `string` | Human-readable description |
 
-Bun and Deno resolvers automatically retry with exponential backoff (3 retries,
-starting at 1 second).
+All three resolvers (Node.js, Bun, and Deno) automatically retry with
+exponential backoff (3 retries, starting at 1 second).
 
 ### ParseError
 
@@ -55,7 +55,9 @@ Thrown when no versions match the semver constraint.
 ### InvalidInputError
 
 Thrown when input parameters are invalid (for example, a malformed semver
-range).
+range). All three resolvers -- Node.js, Bun, and Deno -- validate their inputs
+and fail with `InvalidInputError` when a semver range or other option is
+malformed.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -72,6 +74,14 @@ Thrown when the version cache fails to read or write.
 | `operation` | `"read"` or `"write"` | Which cache operation failed |
 | `message` | `string` | Human-readable description |
 
+## Error Unions by Runtime
+
+Each resolver's error union includes all relevant error types:
+
+- **Node.js**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+- **Bun**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+- **Deno**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+
 ## Promise API Error Handling
 
 The Promise API (`resolveNode`, `resolveBun`, `resolveDeno`) surfaces errors
@@ -86,6 +96,17 @@ try {
 } catch (error) {
   // Errors surface as FiberFailure wrapping the tagged error
   console.error(error.message);
+}
+```
+
+Invalid semver ranges are caught at input validation:
+
+```typescript
+try {
+  // This will throw InvalidInputError
+  await resolveNode({ semverRange: "not-valid-semver" });
+} catch (error) {
+  console.error(error.message); // Invalid semver range: "not-valid-semver"
 }
 ```
 
@@ -114,6 +135,9 @@ const program = Effect.gen(function* () {
   ),
   Effect.catchTag("RateLimitError", (e) =>
     Effect.logWarning(`Rate limited, retry after ${e.retryAfter}s`)
+  ),
+  Effect.catchTag("InvalidInputError", (e) =>
+    Effect.logError(`Invalid ${e.field}: ${e.value}`)
   )
 );
 ```
@@ -147,6 +171,25 @@ each runtime entry in `results` carries its own `ok` field:
         "limit": 60,
         "remaining": 0,
         "retryAfter": 30
+      }
+    }
+  }
+}
+```
+
+Invalid input is also reported through the error envelope:
+
+```json
+{
+  "ok": false,
+  "results": {
+    "bun": {
+      "ok": false,
+      "error": {
+        "_tag": "InvalidInputError",
+        "message": "Invalid semver range: \"not-valid\"",
+        "field": "semverRange",
+        "value": "not-valid"
       }
     }
   }

@@ -26,10 +26,23 @@ npx runtime-resolver --node ">=20"
 | `--bun <range>` | Resolve Bun versions matching a semver range | `--bun ">=1.1"` |
 | `--deno <range>` | Resolve Deno versions matching a semver range | `--deno ">=2"` |
 | `--node-phases <phases>` | Comma-separated Node.js release phases | `--node-phases "current,active-lts"` |
-| `--node-increments <type>` | Version granularity: `latest`, `minor`, or `patch` | `--node-increments minor` |
+| `--increments <type>` | Version granularity for all runtimes: `latest`, `minor`, or `patch` | `--increments minor` |
+| `--node-default <version>` | Pin a default version for Node.js | `--node-default "20.19.0"` |
+| `--bun-default <version>` | Pin a default version for Bun | `--bun-default "1.1.0"` |
+| `--deno-default <version>` | Pin a default version for Deno | `--deno-default "2.0.0"` |
+| `--node-date <date>` | ISO date for reproducible Node.js phase calculations | `--node-date "2024-01-15"` |
 | `--pretty` | Pretty-print the JSON output | |
 | `--schema` | Print the JSON Schema for the response format and exit | |
 | `--version` | Print the CLI version and exit | |
+
+### Increments
+
+The `--increments` flag controls version granularity in the output for all
+requested runtimes (Node.js, Bun, and Deno):
+
+- `latest` -- only the latest matching version per major line (default)
+- `minor` -- one version per minor release
+- `patch` -- every patch version
 
 ### Node.js Phases
 
@@ -41,19 +54,34 @@ filter results. Valid phases:
 - `maintenance-lts` -- LTS releases in maintenance mode
 - `end-of-life` -- releases that have reached end of life
 
-### Node.js Increments
+### Default Versions
 
-The `--node-increments` flag controls version granularity in the output:
+The `--node-default`, `--bun-default`, and `--deno-default` flags pin a
+specific version for each runtime. The pinned version is included in the
+results even if it would otherwise be filtered out. It appears as the `default`
+field in the response.
 
-- `latest` -- only the latest matching version per major line
-- `minor` -- one version per minor release
-- `patch` -- every patch version (default behavior)
+For Node.js, when no `--node-default` is provided, the `default` field
+automatically reports the latest LTS version.
+
+### Node.js Date
+
+The `--node-date` flag accepts an ISO 8601 date string (e.g. `2024-01-15`). It
+overrides the reference date used for Node.js release phase calculations,
+enabling reproducible results.
+
+### Empty Invocation
+
+When no runtime flags (`--node`, `--bun`, `--deno`) are provided, the CLI
+prints a help message to stderr instead of producing JSON output.
 
 ## Response Format
 
 ### Success Response
 
-When all requested runtimes resolve successfully, `ok` is `true`:
+When all requested runtimes resolve successfully, `ok` is `true`. Each runtime
+result includes a `source` field indicating whether data came from a live API
+fetch (`"api"`) or the bundled build-time cache (`"cache"`):
 
 ```json
 {
@@ -62,16 +90,18 @@ When all requested runtimes resolve successfully, `ok` is `true`:
   "results": {
     "node": {
       "ok": true,
+      "source": "api",
       "versions": ["22.14.0", "20.19.0"],
       "latest": "22.14.0",
-      "lts": "20.19.0"
+      "lts": "20.19.0",
+      "default": "20.19.0"
     }
   }
 }
 ```
 
 The `lts` field appears only for Node.js results. The `default` field appears
-only for Deno results.
+when a `--*-default` flag is set, or automatically for Node.js (latest LTS).
 
 ### Partial Failure
 
@@ -85,6 +115,7 @@ successful results are still included:
   "results": {
     "node": {
       "ok": true,
+      "source": "api",
       "versions": ["22.14.0"],
       "latest": "22.14.0"
     },
@@ -98,19 +129,6 @@ successful results are still included:
       }
     }
   }
-}
-```
-
-### No Runtimes Requested
-
-When no runtime flags are provided, the CLI writes an error envelope to stderr
-with an empty `results` map:
-
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json",
-  "ok": false,
-  "results": {}
 }
 ```
 
@@ -143,6 +161,9 @@ runtime-resolver --node ">=20" | jq '.ok'
 
 # Get the LTS version for Node.js
 runtime-resolver --node ">=18" | jq -r '.results.node.lts'
+
+# Check data source (api vs cache)
+runtime-resolver --node ">=20" | jq -r '.results.node.source'
 ```
 
 ## JSON Schema

@@ -20,6 +20,32 @@ additional configuration.
 5. When the network is unavailable and no memory cache exists, the layer
    transparently falls back to the bundled defaults.
 
+## Detecting Fallback with the `source` Field
+
+Every `ResolvedVersions` result includes a `source` field that indicates where
+the data came from:
+
+- `"api"` -- Data was fetched live from GitHub or nodejs.org.
+- `"cache"` -- Data was loaded from the bundled build-time cache.
+
+Use this field to detect when the resolver is operating in offline mode:
+
+```typescript
+import { resolveNode } from "runtime-resolver";
+
+const result = await resolveNode({ semverRange: ">=20" });
+if (result.source === "cache") {
+  console.warn("Using bundled offline data — versions may not be current");
+}
+```
+
+In the CLI, the `source` field appears in each runtime result:
+
+```bash
+runtime-resolver --node ">=20" | jq -r '.results.node.source'
+# "api" when fetched live, "cache" when using bundled data
+```
+
 ## Cache Behavior
 
 The in-memory cache has three tiers:
@@ -32,7 +58,8 @@ The in-memory cache has three tiers:
    cache exists for the requested runtime.
 
 The fallback is transparent. Callers receive the same data structures regardless
-of whether the values came from a live fetch or the bundled defaults.
+of whether the values came from a live fetch or the bundled defaults. The
+`source` field is the only way to distinguish the two.
 
 ## Freshness
 

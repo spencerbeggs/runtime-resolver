@@ -11,7 +11,10 @@ cache.
 
 - Resolve matching versions for Node.js, Bun, and Deno with a single call
 - Filter Node.js results by release phase (current, active-lts, maintenance-lts)
-- Control version granularity with increment levels (latest, minor, patch)
+- Control version granularity with increment levels (latest, minor, patch) for all runtimes
+- Resolve a single version from a semver range with `resolveVersion`
+- Track data provenance with the `source` field (`"api"` or `"cache"`)
+- Input validation with typed `InvalidInputError` for all resolvers
 - Offline fallback using bundled version data when GitHub is unreachable
 - CLI with structured JSON output for CI/CD pipelines
 
@@ -27,11 +30,12 @@ npm install runtime-resolver
 import { resolveNode, resolveBun, resolveDeno } from "runtime-resolver";
 
 const node = await resolveNode({ semverRange: ">=20" });
-console.log(node.latest); // e.g. "22.14.0"
-console.log(node.versions); // ["22.14.0", "22.13.1", ...]
+console.log(node.latest);  // e.g. "22.14.0"
+console.log(node.source);  // "api" or "cache"
+console.log(node.default); // latest LTS version
 
-const bun = await resolveBun({ semverRange: ">=1.1" });
-const deno = await resolveDeno({ semverRange: ">=2" });
+const bun = await resolveBun({ semverRange: ">=1.1", increments: "minor" });
+const deno = await resolveDeno({ semverRange: ">=2", increments: "minor" });
 ```
 
 Set a `GITHUB_TOKEN` or `GITHUB_PERSONAL_ACCESS_TOKEN` environment variable
@@ -40,7 +44,7 @@ for authenticated requests. Without one, the resolver falls back to cached data.
 ### CLI
 
 ```bash
-runtime-resolver --node ">=20" --bun ">=1.1" --deno ">=2" --pretty
+runtime-resolver --node ">=20" --bun ">=1.1" --deno ">=2" --increments minor --pretty
 ```
 
 ## Documentation

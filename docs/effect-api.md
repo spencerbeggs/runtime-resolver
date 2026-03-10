@@ -39,25 +39,42 @@ interface NodeResolverShape {
 `NodePhase` is `"current" | "active-lts" | "maintenance-lts" | "end-of-life"`.
 `Increments` is `"latest" | "minor" | "patch"`.
 
+When no `defaultVersion` is provided, the `default` field in the result is
+automatically set to the latest LTS version.
+
 ### BunResolver
 
 ```typescript
 interface BunResolverShape {
   resolve(options?: BunResolverOptions): Effect<ResolvedVersions, BunResolverError>
+  resolveVersion(versionOrRange: string): Effect<string, BunResolverError>
 }
 ```
 
-`BunResolverOptions` accepts `semverRange` and `defaultVersion`.
+`BunResolverOptions` accepts:
+
+| Field | Type | Default |
+| --- | --- | --- |
+| `semverRange` | `string` | `"*"` |
+| `defaultVersion` | `string` | -- |
+| `increments` | `Increments` | `"latest"` |
 
 ### DenoResolver
 
 ```typescript
 interface DenoResolverShape {
   resolve(options?: DenoResolverOptions): Effect<ResolvedVersions, DenoResolverError>
+  resolveVersion(versionOrRange: string): Effect<string, DenoResolverError>
 }
 ```
 
-`DenoResolverOptions` accepts `semverRange` and `defaultVersion`.
+`DenoResolverOptions` accepts:
+
+| Field | Type | Default |
+| --- | --- | --- |
+| `semverRange` | `string` | `"*"` |
+| `defaultVersion` | `string` | -- |
+| `increments` | `Increments` | `"latest"` |
 
 ### GitHubClient
 
@@ -84,12 +101,13 @@ interface GitHubClientShape {
 
 ```typescript
 interface VersionCacheShape {
-  get(runtime: Runtime): Effect<CachedData, CacheError>
+  get(runtime: Runtime): Effect<{ data: CachedData; source: Source }, CacheError>
   set(runtime: Runtime, data: CachedData): Effect<void, CacheError>
 }
 ```
 
 `Runtime` is `"node" | "bun" | "deno"`.
+`Source` is `"api" | "cache"`.
 
 ### OctokitInstance
 
@@ -155,6 +173,7 @@ const program = Effect.gen(function* () {
 })
 
 const result = await Effect.runPromise(program.pipe(Effect.provide(NodeLayer)))
+console.log(result.source)   // "api" or "cache"
 console.log(result.latest)   // e.g. "22.14.0"
 console.log(result.versions) // all matching versions, descending
 ```
@@ -165,12 +184,17 @@ Every resolver returns the same shape:
 
 ```typescript
 interface ResolvedVersions {
-  versions: string[]   // all matching versions, semver-descending
-  latest: string       // highest version
-  lts?: string         // latest LTS (Node.js only)
-  default?: string     // pinned default when defaultVersion is set
+  source: "api" | "cache"  // where the data came from
+  versions: string[]       // all matching versions, semver-descending
+  latest: string           // highest version
+  lts?: string             // latest LTS (Node.js only)
+  default?: string         // pinned default when defaultVersion is set
 }
 ```
+
+The `source` field indicates whether version data was fetched live from the
+GitHub API or nodejs.org (`"api"`) or loaded from the bundled build-time cache
+(`"cache"`).
 
 ## Error types
 
@@ -184,6 +208,12 @@ All errors extend `Data.TaggedError`. Discriminate with `Effect.catchTag`.
 | `VersionNotFoundError` | `"VersionNotFoundError"` | `runtime`, `constraint`, `message` |
 | `InvalidInputError` | `"InvalidInputError"` | `field`, `value`, `message` |
 | `CacheError` | `"CacheError"` | `operation` (`"read"` or `"write"`), `message` |
+
+All three resolver error unions include `InvalidInputError`:
+
+- **`NodeResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+- **`BunResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+- **`DenoResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
 
 ### Handling errors with catchTag
 
@@ -205,6 +235,20 @@ const program = Effect.gen(function* () {
   Effect.catchTag("RateLimitError", (err) =>
     Effect.fail(new Error(`Rate limited. Retry after ${err.retryAfter}s`)),
   ),
+  Effect.catchTag("InvalidInputError", (err) =>
+    Effect.fail(new Error(`Invalid ${err.field}: ${err.value}`)),
+  ),
+)
+```
+
+You can also match multiple error tags at once with `Effect.catchTags`:
+
+```typescript
+const safe = program.pipe(
+  Effect.catchTags({
+    NetworkError: (e) => Effect.succeed({ fallback: true, url: e.url }),
+    ParseError: (e) => Effect.die(`Corrupt data from ${e.source}`),
+  })
 )
 ```
 

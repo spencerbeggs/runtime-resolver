@@ -19,12 +19,16 @@ const node = await resolveNode();
 console.log(node.versions); // ["24.1.0", "22.15.0"]
 console.log(node.latest);   // "24.1.0"
 console.log(node.lts);      // "22.15.0"
+console.log(node.default);  // "22.15.0" (latest LTS when no defaultVersion is set)
+console.log(node.source);   // "api" or "cache"
 
 const bun = await resolveBun();
-console.log(bun.latest); // "1.2.14"
+console.log(bun.latest);  // "1.2.14"
+console.log(bun.source);  // "api"
 
 const deno = await resolveDeno();
 console.log(deno.latest); // "2.3.2"
+console.log(deno.source); // "api"
 ```
 
 ## Functions
@@ -46,7 +50,8 @@ phase and semver range.
 
 #### semverRange
 
-Filter results to versions matching a semver range.
+Filter results to versions matching a semver range. Invalid semver ranges cause
+an `InvalidInputError` to be thrown.
 
 ```typescript
 // Only Node.js 20.x versions
@@ -65,6 +70,9 @@ console.log(result.versions); // ["24.1.0", "22.15.0", "20.19.2", "18.20.8"]
 Include a specific version in the results, even if it would not normally appear
 based on the `phases` or `increments` filters. The version must exist in the
 Node.js release index.
+
+When no `defaultVersion` is provided, the `default` field is automatically set
+to the latest LTS version in the result set.
 
 ```typescript
 const result = await resolveNode({
@@ -150,6 +158,7 @@ Resolves Bun versions from GitHub tags.
 | --- | --- | --- | --- |
 | `semverRange` | `string` | `"*"` (all versions) | Semver range to filter versions |
 | `defaultVersion` | `string` | -- | Version to include if it matches |
+| `increments` | `Increments` | `"latest"` | Version granularity |
 
 ```typescript
 import { resolveBun } from "runtime-resolver";
@@ -157,10 +166,15 @@ import { resolveBun } from "runtime-resolver";
 // All Bun versions
 const all = await resolveBun();
 console.log(all.latest); // "1.2.14"
+console.log(all.source); // "api"
 
 // Only Bun 1.1.x
 const result = await resolveBun({ semverRange: "~1.1.0" });
 console.log(result.versions); // ["1.1.43", "1.1.42", ...]
+
+// Control granularity
+const minor = await resolveBun({ increments: "minor" });
+console.log(minor.versions); // one version per minor release
 
 // Ensure a specific version is included
 const pinned = await resolveBun({
@@ -179,6 +193,7 @@ Resolves Deno versions from GitHub tags.
 | --- | --- | --- | --- |
 | `semverRange` | `string` | `"*"` (all versions) | Semver range to filter versions |
 | `defaultVersion` | `string` | -- | Version to include if it matches |
+| `increments` | `Increments` | `"latest"` | Version granularity |
 
 ```typescript
 import { resolveDeno } from "runtime-resolver";
@@ -186,10 +201,15 @@ import { resolveDeno } from "runtime-resolver";
 // All Deno versions
 const all = await resolveDeno();
 console.log(all.latest); // "2.3.2"
+console.log(all.source); // "api"
 
 // Only Deno 2.x
 const result = await resolveDeno({ semverRange: "^2.0.0" });
 console.log(result.versions); // ["2.3.2", "2.2.12", ...]
+
+// Control granularity
+const minor = await resolveDeno({ increments: "minor" });
+console.log(minor.versions); // one version per minor release
 ```
 
 ## Return Type
@@ -198,13 +218,17 @@ All three functions return `Promise<ResolvedVersions>`:
 
 ```typescript
 interface ResolvedVersions {
-  versions: string[]; // Semver sorted descending (newest first)
-  latest: string;     // Most recent version across all releases
-  lts?: string;       // Most recent LTS version (Node.js only)
-  default?: string;   // Resolved value of defaultVersion option
+  source: "api" | "cache"; // Where the data came from
+  versions: string[];      // Semver sorted descending (newest first)
+  latest: string;          // Most recent version across all releases
+  lts?: string;            // Most recent LTS version (Node.js only)
+  default?: string;        // Resolved value of defaultVersion option
 }
 ```
 
+- **`source`** -- Indicates whether the data was fetched live from the API
+  (`"api"`) or loaded from the bundled build-time cache (`"cache"`). Useful for
+  detecting offline fallback scenarios.
 - **`versions`** -- All matching versions, sorted newest to oldest.
 - **`latest`** -- The single newest version. For Node.js this is the newest
   version matching your filters. For Bun and Deno this is always the newest
@@ -212,7 +236,8 @@ interface ResolvedVersions {
 - **`lts`** -- Present only for Node.js. The newest version in the result set
   that has LTS status.
 - **`default`** -- Present only when you pass a `defaultVersion` option and it
-  resolves to an actual release.
+  resolves to an actual release. For Node.js, when no `defaultVersion` is
+  provided, this defaults to the latest LTS version.
 
 ## Authentication
 
@@ -251,6 +276,7 @@ try {
 
 Common failure scenarios:
 
+- **Invalid input** -- The semver range is not a valid semver expression.
 - **No matching versions** -- The semver range or phase filters exclude
   everything.
 - **Network failure without cache** -- GitHub API is unreachable and no cached
@@ -270,5 +296,6 @@ import type {
   ResolvedVersions,
   NodePhase,
   Increments,
+  Source,
 } from "runtime-resolver";
 ```
