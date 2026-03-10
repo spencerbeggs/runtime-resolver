@@ -7,8 +7,13 @@
  *
  * @packageDocumentation
  */
-import { Effect } from "effect";
-import { BunLayer, DenoLayer, NodeLayer } from "./layers/index.js";
+import { Effect, Layer } from "effect";
+import { BunResolverLive } from "./layers/BunResolverLive.js";
+import { DenoResolverLive } from "./layers/DenoResolverLive.js";
+import { GitHubAutoAuth } from "./layers/GitHubAutoAuth.js";
+import { GitHubClientLive } from "./layers/GitHubClientLive.js";
+import { NodeResolverLive } from "./layers/NodeResolverLive.js";
+import { VersionCacheLive } from "./layers/VersionCacheLive.js";
 import type { ResolvedVersions } from "./schemas/common.js";
 import type { BunResolverOptions } from "./services/BunResolver.js";
 import { BunResolver } from "./services/BunResolver.js";
@@ -16,6 +21,12 @@ import type { DenoResolverOptions } from "./services/DenoResolver.js";
 import { DenoResolver } from "./services/DenoResolver.js";
 import type { NodeResolverOptions } from "./services/NodeResolver.js";
 import { NodeResolver } from "./services/NodeResolver.js";
+
+const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive);
+const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer));
+const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer));
+const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer));
 
 // Re-export all Effect API plumbing (services, layers, errors, schemas)
 export * from "./effect.js";

@@ -6,9 +6,9 @@ import type { AuthenticationError } from "../../errors/AuthenticationError.js";
 import { BunResolverLive } from "../../layers/BunResolverLive.js";
 import { DenoResolverLive } from "../../layers/DenoResolverLive.js";
 import { GitHubAppAuth } from "../../layers/GitHubAppAuth.js";
+import { GitHubAutoAuth } from "../../layers/GitHubAutoAuth.js";
 import { GitHubClientLive } from "../../layers/GitHubClientLive.js";
 import { GitHubTokenAuthFromToken } from "../../layers/GitHubTokenAuth.js";
-import { BunLayer, DenoLayer, NodeLayer } from "../../layers/index.js";
 import { NodeResolverLive } from "../../layers/NodeResolverLive.js";
 import { VersionCacheLive } from "../../layers/VersionCacheLive.js";
 import type { Freshness, Increments, NodePhase } from "../../schemas/common.js";
@@ -17,6 +17,12 @@ import { DenoResolver } from "../../services/DenoResolver.js";
 import { NodeResolver } from "../../services/NodeResolver.js";
 import type { OctokitInstance } from "../../services/OctokitInstance.js";
 import type { CliResponse, CliRuntimeResult } from "../schemas/response.js";
+
+const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive);
+const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer));
+const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer));
+const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer));
 
 const SCHEMA_URL = "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json";
 
