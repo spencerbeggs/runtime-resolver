@@ -335,7 +335,12 @@ export const resolveHandler = (args: {
 		// Validate and extract increments
 		let validatedIncrements: Increments | undefined;
 		if (Option.isSome(args.increments)) {
-			validatedIncrements = validateIncrements(args.increments.value);
+			try {
+				validatedIncrements = validateIncrements(args.increments.value);
+			} catch (e) {
+				yield* Console.error((e as Error).message);
+				return;
+			}
 		}
 
 		// Validate and extract freshness

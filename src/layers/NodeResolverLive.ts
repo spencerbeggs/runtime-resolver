@@ -80,7 +80,8 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 					);
 				}
 
-				// "auto" — current behavior
+				// "auto" — only network failures fall back to cache; schema errors
+				// (ParseError) propagate because they signal genuinely unexpected data.
 				return yield* fromNetwork.pipe(
 					Effect.catchTag("NetworkError", () =>
 						Effect.gen(function* () {

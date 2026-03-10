@@ -35,6 +35,8 @@ const resolveInstallationId = async (
 		throw new Error("No installations found for this GitHub App");
 	}
 
+	// Use the first installation. Most apps have a single installation;
+	// callers with multiple should pass installationId explicitly.
 	return installations[0].id;
 };
 

@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, LogLevel, Logger } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OctokitInstance } from "../services/OctokitInstance.js";
 import { GitHubAutoAuth } from "./GitHubAutoAuth.js";
@@ -72,20 +72,33 @@ describe("GitHubAutoAuth", () => {
 	});
 
 	it("emits warning when both app and token env vars are set", async () => {
-		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 		vi.stubEnv("GITHUB_APP_ID", "12345");
 		vi.stubEnv("GITHUB_APP_PRIVATE_KEY", "fake-key");
 		vi.stubEnv("GITHUB_TOKEN", "ghp_token");
 
+		const messages: string[] = [];
 		const program = Effect.gen(function* () {
 			return yield* OctokitInstance;
-		});
-		await Effect.runPromiseExit(program.pipe(Effect.provide(GitHubAutoAuth)));
-
-		expect(stderrSpy).toHaveBeenCalledWith(
-			"Warning: Multiple GitHub credential sources found. Using GitHub App authentication (from GITHUB_APP_ID). Ignoring GITHUB_TOKEN.\n",
+		}).pipe(
+			Effect.provide(GitHubAutoAuth),
+			Logger.withMinimumLogLevel(LogLevel.Warning),
+			Effect.tap(() => Effect.logWarning("sentinel")),
 		);
-		stderrSpy.mockRestore();
+
+		await Effect.runPromiseExit(
+			program.pipe(
+				Effect.provide(
+					Logger.replace(
+						Logger.defaultLogger,
+						Logger.make(({ message }) => {
+							messages.push(typeof message === "string" ? message : String(message));
+						}),
+					),
+				),
+			),
+		);
+
+		expect(messages.some((m) => m.includes("Multiple GitHub credential sources found"))).toBe(true);
 	});
 
 	it("attempts app auth with installation ID when GITHUB_APP_INSTALLATION_ID is also set", async () => {

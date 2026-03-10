@@ -19,8 +19,8 @@ export const GitHubAutoAuth: Layer.Layer<OctokitInstance, AuthenticationError> =
 		// Warn when multiple credential sources are detected
 		if (hasApp && hasToken) {
 			const tokenSource = pat ? "GITHUB_PERSONAL_ACCESS_TOKEN" : "GITHUB_TOKEN";
-			process.stderr.write(
-				`Warning: Multiple GitHub credential sources found. Using GitHub App authentication (from GITHUB_APP_ID). Ignoring ${tokenSource}.\n`,
+			yield* Effect.logWarning(
+				`Multiple GitHub credential sources found. Using GitHub App authentication (from GITHUB_APP_ID). Ignoring ${tokenSource}.`,
 			);
 		}
 
