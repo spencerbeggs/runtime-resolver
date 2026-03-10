@@ -103,17 +103,13 @@ describe("BunResolver service", () => {
 	});
 
 	it("resolve fails with VersionNotFoundError for impossible range", async () => {
-		const program = Effect.gen(function* () {
-			const resolver = yield* BunResolver;
-			return yield* resolver.resolve({ semverRange: ">=99.0.0" });
-		});
-
-		const exit = await Effect.runPromiseExit(program.pipe(Effect.provide(makeTestLayer())));
-
-		expect(exit._tag).toBe("Failure");
-		if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
-			expect(exit.cause.error._tag).toBe("VersionNotFoundError");
-		}
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* BunResolver;
+				return yield* resolver.resolve({ semverRange: ">=99.0.0" });
+			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+		);
+		expect(result._tag).toBe("VersionNotFoundError");
 	});
 
 	it("fails with InvalidInputError for invalid semver range", async () => {
@@ -152,6 +148,48 @@ describe("BunResolver service", () => {
 		expect(new Set(minors).size).toBe(minors.length);
 		// Pin expected versions: latest per major.minor from mock data
 		expect(result.versions).toEqual(["1.2.3", "1.1.0", "1.0.15", "0.8.0"]);
+	});
+
+	describe("resolveVersion", () => {
+		it("resolves a specific version", async () => {
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* BunResolver;
+					return yield* resolver.resolveVersion("1.2.3");
+				}).pipe(Effect.provide(makeTestLayer())),
+			);
+			expect(result).toBe("1.2.3");
+		});
+
+		it("resolves a semver range to latest match", async () => {
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* BunResolver;
+					return yield* resolver.resolveVersion("^1.0.0");
+				}).pipe(Effect.provide(makeTestLayer())),
+			);
+			expect(result).toBe("1.2.3");
+		});
+
+		it("fails with VersionNotFoundError for non-existent version", async () => {
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* BunResolver;
+					return yield* resolver.resolveVersion("99.99.99");
+				}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+			);
+			expect(result._tag).toBe("VersionNotFoundError");
+		});
+
+		it("fails with InvalidInputError for invalid range", async () => {
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* BunResolver;
+					return yield* resolver.resolveVersion("not-a-range!!!");
+				}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+			);
+			expect(result._tag).toBe("InvalidInputError");
+		});
 	});
 
 	it("falls back to cache on network error", async () => {

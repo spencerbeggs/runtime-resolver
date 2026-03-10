@@ -45,6 +45,50 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 			);
 
 		return {
+			resolveVersion: (versionOrRange: string) =>
+				Effect.gen(function* () {
+					if (semver.valid(versionOrRange)) {
+						const { tags } = yield* fetchBunTags();
+						const allVersions = tagsToVersions(tags);
+						if (allVersions.includes(versionOrRange)) {
+							return versionOrRange;
+						}
+						return yield* Effect.fail(
+							new VersionNotFoundError({
+								runtime: "bun",
+								constraint: versionOrRange,
+								message: `Bun version "${versionOrRange}" not found`,
+							}),
+						);
+					}
+
+					if (!semver.validRange(versionOrRange)) {
+						return yield* Effect.fail(
+							new InvalidInputError({
+								field: "versionOrRange",
+								value: versionOrRange,
+								message: `Invalid semver range: "${versionOrRange}"`,
+							}),
+						);
+					}
+
+					const { tags } = yield* fetchBunTags();
+					const allVersions = tagsToVersions(tags);
+					const resolved = resolveVersionFromList(versionOrRange, allVersions);
+
+					if (!resolved) {
+						return yield* Effect.fail(
+							new VersionNotFoundError({
+								runtime: "bun",
+								constraint: versionOrRange,
+								message: `No Bun version found matching "${versionOrRange}"`,
+							}),
+						);
+					}
+
+					return resolved;
+				}),
+
 			resolve: (options?: BunResolverOptions) =>
 				Effect.gen(function* () {
 					const semverRange = options?.semverRange ?? "*";

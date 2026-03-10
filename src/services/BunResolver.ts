@@ -24,6 +24,7 @@ type BunResolverError =
 
 export interface BunResolverShape {
 	readonly resolve: (options?: BunResolverOptions) => Effect.Effect<ResolvedVersions, BunResolverError>;
+	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, BunResolverError>;
 }
 
 export class BunResolver extends Context.Tag("BunResolver")<BunResolver, BunResolverShape>() {}

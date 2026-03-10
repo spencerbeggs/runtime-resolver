@@ -45,6 +45,50 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 			);
 
 		return {
+			resolveVersion: (versionOrRange: string) =>
+				Effect.gen(function* () {
+					if (semver.valid(versionOrRange)) {
+						const { tags } = yield* fetchDenoTags();
+						const allVersions = tagsToVersions(tags);
+						if (allVersions.includes(versionOrRange)) {
+							return versionOrRange;
+						}
+						return yield* Effect.fail(
+							new VersionNotFoundError({
+								runtime: "deno",
+								constraint: versionOrRange,
+								message: `Deno version "${versionOrRange}" not found`,
+							}),
+						);
+					}
+
+					if (!semver.validRange(versionOrRange)) {
+						return yield* Effect.fail(
+							new InvalidInputError({
+								field: "versionOrRange",
+								value: versionOrRange,
+								message: `Invalid semver range: "${versionOrRange}"`,
+							}),
+						);
+					}
+
+					const { tags } = yield* fetchDenoTags();
+					const allVersions = tagsToVersions(tags);
+					const resolved = resolveVersionFromList(versionOrRange, allVersions);
+
+					if (!resolved) {
+						return yield* Effect.fail(
+							new VersionNotFoundError({
+								runtime: "deno",
+								constraint: versionOrRange,
+								message: `No Deno version found matching "${versionOrRange}"`,
+							}),
+						);
+					}
+
+					return resolved;
+				}),
+
 			resolve: (options?: DenoResolverOptions) =>
 				Effect.gen(function* () {
 					const semverRange = options?.semverRange ?? "*";

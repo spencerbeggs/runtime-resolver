@@ -24,6 +24,7 @@ type DenoResolverError =
 
 export interface DenoResolverShape {
 	readonly resolve: (options?: DenoResolverOptions) => Effect.Effect<ResolvedVersions, DenoResolverError>;
+	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, DenoResolverError>;
 }
 
 export class DenoResolver extends Context.Tag("DenoResolver")<DenoResolver, DenoResolverShape>() {}
