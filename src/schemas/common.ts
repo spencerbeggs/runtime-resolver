@@ -3,7 +3,11 @@ import { Schema } from "effect";
 export const Runtime = Schema.Literal("node", "bun", "deno");
 export type Runtime = typeof Runtime.Type;
 
+export const Source = Schema.Literal("api", "cache");
+export type Source = typeof Source.Type;
+
 export const ResolvedVersions = Schema.Struct({
+	source: Source,
 	versions: Schema.Array(Schema.String),
 	latest: Schema.String,
 	lts: Schema.optional(Schema.String),

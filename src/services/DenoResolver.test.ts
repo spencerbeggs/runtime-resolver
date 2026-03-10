@@ -31,13 +31,13 @@ const makeTestCache = (): Layer.Layer<VersionCache> => {
 	const shape: VersionCacheShape = {
 		get: (runtime) =>
 			Effect.gen(function* () {
-				const data = store.get(runtime);
-				if (!data) return yield* Effect.fail(new CacheError({ operation: "read", message: `No data for ${runtime}` }));
-				return data as never;
+				const entry = store.get(runtime);
+				if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: `No data for ${runtime}` }));
+				return entry as never;
 			}),
 		set: (runtime, data) =>
 			Effect.sync(() => {
-				store.set(runtime, data);
+				store.set(runtime, { data, source: "api" });
 			}),
 	};
 	return Layer.succeed(VersionCache, shape);
@@ -56,6 +56,7 @@ describe("DenoResolver service", () => {
 
 		expect(result.versions[0]).toBe("2.7.3");
 		expect(result.latest).toBe("2.7.3");
+		expect(result.source).toBe("api");
 		// "latest" tag should be filtered out
 		expect(result.versions).not.toContain("latest");
 		expect(result.versions.length).toBe(5);
@@ -122,13 +123,13 @@ describe("DenoResolver service", () => {
 			VersionCache,
 			Effect.sync(() => {
 				const store = new Map<string, unknown>();
-				store.set("deno", { tags: fixtureTags });
+				store.set("deno", { data: { tags: fixtureTags }, source: "cache" });
 				return {
 					get: (runtime: string) =>
 						Effect.gen(function* () {
-							const data = store.get(runtime);
-							if (!data) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
-							return data as never;
+							const entry = store.get(runtime);
+							if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
+							return entry as never;
 						}),
 					set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
 				};
@@ -146,5 +147,6 @@ describe("DenoResolver service", () => {
 
 		expect(result.versions.length).toBeGreaterThan(0);
 		expect(result.latest).toBe("2.7.3");
+		expect(result.source).toBe("cache");
 	});
 });

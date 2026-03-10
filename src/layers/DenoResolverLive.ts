@@ -4,7 +4,6 @@ import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { resolveVersionFromList } from "../lib/semver-utils.js";
 import { normalizeDenoTag } from "../lib/tag-normalizers.js";
 import type { CachedTagData } from "../schemas/cache.js";
-import type { ResolvedVersions } from "../schemas/common.js";
 import type { GitHubTag } from "../schemas/github.js";
 import type { DenoResolverOptions } from "../services/DenoResolver.js";
 import { DenoResolver } from "../services/DenoResolver.js";
@@ -39,22 +38,22 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 		const fetchDenoTags = () =>
 			retryOnRateLimit(client.listTags("denoland", "deno", { perPage: 100 })).pipe(
 				Effect.tap((tags) => cache.set("deno", { tags: tags as GitHubTag[] })),
-			);
-
-		const fetchWithCacheFallback = () =>
-			fetchDenoTags().pipe(
+				Effect.map((tags) => ({ tags, source: "api" as const })),
 				Effect.catchTag("NetworkError", () =>
 					Effect.gen(function* () {
-						const cached = yield* cache.get("deno");
-						return (cached as CachedTagData).tags;
+						const { data: cached, source } = yield* cache.get("deno");
+						return { tags: (cached as CachedTagData).tags, source };
 					}),
+				),
+				Effect.catchTag("CacheError", () =>
+					Effect.succeed({ tags: [] as ReadonlyArray<GitHubTag>, source: "cache" as const }),
 				),
 			);
 
 		return {
 			resolve: (options?: DenoResolverOptions) =>
 				Effect.gen(function* () {
-					const tags = yield* fetchWithCacheFallback();
+					const { tags, source } = yield* fetchDenoTags();
 					const allVersions = tagsToVersions(tags);
 
 					if (allVersions.length === 0) {
@@ -68,8 +67,9 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 					}
 
 					let versions: string[];
-					if (options?.semverRange) {
-						versions = allVersions.filter((v) => semver.satisfies(v, options.semverRange!));
+					const semverRange = options?.semverRange;
+					if (semverRange) {
+						versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
 					} else {
 						versions = allVersions;
 					}
@@ -97,10 +97,11 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 					const latest = allVersions[0];
 
 					return {
+						source,
 						versions,
 						latest,
 						...(resolvedDefault ? { default: resolvedDefault } : {}),
-					} satisfies ResolvedVersions;
+					};
 				}),
 		};
 	}),

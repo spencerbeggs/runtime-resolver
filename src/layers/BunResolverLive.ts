@@ -1,11 +1,9 @@
 import { Effect, Layer, Schedule } from "effect";
 import * as semver from "semver";
-import type { RateLimitError } from "../errors/RateLimitError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { resolveVersionFromList } from "../lib/semver-utils.js";
 import { normalizeBunTag } from "../lib/tag-normalizers.js";
 import type { CachedTagData } from "../schemas/cache.js";
-import type { ResolvedVersions } from "../schemas/common.js";
 import type { GitHubTag } from "../schemas/github.js";
 import type { BunResolverOptions } from "../services/BunResolver.js";
 import { BunResolver } from "../services/BunResolver.js";
@@ -40,22 +38,22 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 		const fetchBunTags = () =>
 			retryOnRateLimit(client.listTags("oven-sh", "bun", { perPage: 100 })).pipe(
 				Effect.tap((tags) => cache.set("bun", { tags: tags as GitHubTag[] })),
-			);
-
-		const fetchWithCacheFallback = () =>
-			fetchBunTags().pipe(
+				Effect.map((tags) => ({ tags, source: "api" as const })),
 				Effect.catchTag("NetworkError", () =>
 					Effect.gen(function* () {
-						const cached = yield* cache.get("bun");
-						return (cached as CachedTagData).tags;
+						const { data: cached, source } = yield* cache.get("bun");
+						return { tags: (cached as CachedTagData).tags, source };
 					}),
+				),
+				Effect.catchTag("CacheError", () =>
+					Effect.succeed({ tags: [] as ReadonlyArray<GitHubTag>, source: "cache" as const }),
 				),
 			);
 
 		return {
 			resolve: (options?: BunResolverOptions) =>
 				Effect.gen(function* () {
-					const tags = yield* fetchWithCacheFallback();
+					const { tags, source } = yield* fetchBunTags();
 					const allVersions = tagsToVersions(tags);
 
 					if (allVersions.length === 0) {
@@ -69,8 +67,9 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 					}
 
 					let versions: string[];
-					if (options?.semverRange) {
-						versions = allVersions.filter((v) => semver.satisfies(v, options.semverRange!));
+					const semverRange = options?.semverRange;
+					if (semverRange) {
+						versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
 					} else {
 						versions = allVersions;
 					}
@@ -98,10 +97,11 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 					const latest = allVersions[0];
 
 					return {
+						source,
 						versions,
 						latest,
 						...(resolvedDefault ? { default: resolvedDefault } : {}),
-					} satisfies ResolvedVersions;
+					};
 				}),
 		};
 	}),

@@ -75,15 +75,15 @@ const makeTestCache = (): Layer.Layer<VersionCache> => {
 	const shape: VersionCacheShape = {
 		get: (runtime) =>
 			Effect.gen(function* () {
-				const data = store.get(runtime);
-				if (!data) {
+				const entry = store.get(runtime);
+				if (!entry) {
 					return yield* Effect.fail(new CacheError({ operation: "read", message: `No data for ${runtime}` }));
 				}
-				return data as never;
+				return entry as never;
 			}),
 		set: (runtime, data) =>
 			Effect.sync(() => {
-				store.set(runtime, data);
+				store.set(runtime, { data, source: "api" });
 			}),
 	};
 	return Layer.succeed(VersionCache, shape);
@@ -108,6 +108,7 @@ describe("NodeResolver service", () => {
 		expect(result.versions).toContain("22.11.0");
 		expect(result.versions).not.toContain("24.0.0");
 		expect(result.latest).toBe("23.11.0");
+		expect(result.source).toBe("api");
 	});
 
 	it("resolve returns lts field", async () => {
@@ -249,13 +250,13 @@ describe("NodeResolver service", () => {
 			VersionCache,
 			Effect.sync(() => {
 				const store = new Map<string, unknown>();
-				store.set("node", { versions: fixtureVersions, schedule: fixtureSchedule });
+				store.set("node", { data: { versions: fixtureVersions, schedule: fixtureSchedule }, source: "cache" });
 				return {
 					get: (runtime: string) =>
 						Effect.gen(function* () {
-							const data = store.get(runtime);
-							if (!data) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
-							return data as never;
+							const entry = store.get(runtime);
+							if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
+							return entry as never;
 						}),
 					set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
 				};
@@ -273,5 +274,6 @@ describe("NodeResolver service", () => {
 
 		expect(result.versions.length).toBeGreaterThan(0);
 		expect(result.latest).toBeDefined();
+		expect(result.source).toBe("cache");
 	});
 });

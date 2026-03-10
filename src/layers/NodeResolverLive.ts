@@ -5,8 +5,7 @@ import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { findLatestLts, getVersionPhase } from "../lib/node-phases.js";
 import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
 import type { CachedNodeData } from "../schemas/cache.js";
-import type { NodePhase, ResolvedVersions } from "../schemas/common.js";
-import type { NodeDistVersion, NodeReleaseSchedule as NodeReleaseScheduleType } from "../schemas/node.js";
+import type { NodePhase } from "../schemas/common.js";
 import { NodeDistIndex, NodeReleaseSchedule } from "../schemas/node.js";
 import { GitHubClient } from "../services/GitHubClient.js";
 import type { NodeResolverOptions } from "../services/NodeResolver.js";
@@ -57,14 +56,15 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 			Effect.gen(function* () {
 				const fromNetwork = fetchNodeData().pipe(
 					Effect.tap(({ allVersions, schedule }) => cache.set("node", { versions: allVersions, schedule })),
+					Effect.map(({ allVersions, schedule }) => ({ allVersions, schedule, source: "api" as const })),
 				);
 
 				return yield* fromNetwork.pipe(
 					Effect.catchTag("NetworkError", () =>
 						Effect.gen(function* () {
-							const cached = yield* cache.get("node");
+							const { data: cached, source } = yield* cache.get("node");
 							const nodeCache = cached as CachedNodeData;
-							return { allVersions: nodeCache.versions, schedule: nodeCache.schedule };
+							return { allVersions: nodeCache.versions, schedule: nodeCache.schedule, source };
 						}),
 					),
 				);
@@ -73,7 +73,7 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 		return {
 			resolve: (options?: NodeResolverOptions) =>
 				Effect.gen(function* () {
-					const { allVersions, schedule } = yield* fetchWithCacheFallback();
+					const { allVersions, schedule, source } = yield* fetchWithCacheFallback();
 
 					const phases: ReadonlyArray<NodePhase> = options?.phases ?? ["current", "active-lts"];
 					const increments = options?.increments ?? "latest";
@@ -116,11 +116,12 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 					const lts = findLatestLts(sortedVersions, schedule, now);
 
 					return {
+						source,
 						versions: sortedVersions,
 						latest,
 						...(lts ? { lts } : {}),
 						...(resolvedDefault ? { default: resolvedDefault } : {}),
-					} satisfies ResolvedVersions;
+					};
 				}),
 
 			resolveVersion: (versionOrRange: string) =>
