@@ -1,7 +1,13 @@
 import { Data } from "effect";
 import type { Runtime } from "../schemas/common.js";
 
-export class VersionNotFoundError extends Data.TaggedError("VersionNotFoundError")<{
+/**
+ * @internal
+ * Exported for declaration bundling — see AuthenticationError.ts for details.
+ */
+export const VersionNotFoundErrorBase = Data.TaggedError("VersionNotFoundError");
+
+export class VersionNotFoundError extends VersionNotFoundErrorBase<{
 	readonly runtime: Runtime;
 	readonly constraint: string;
 	readonly message: string;

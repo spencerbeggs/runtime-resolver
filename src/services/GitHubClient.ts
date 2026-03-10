@@ -11,7 +11,10 @@ export interface ListOptions {
 	readonly pages?: number;
 }
 
-export interface GitHubClientShape {
+/**
+ * Service interface for GitHub API operations.
+ */
+export interface GitHubClient {
 	readonly listTags: (
 		owner: string,
 		repo: string,
@@ -32,4 +35,10 @@ export interface GitHubClientShape {
 	) => Effect.Effect<A, NetworkError | ParseError>;
 }
 
-export class GitHubClient extends Context.Tag("GitHubClient")<GitHubClient, GitHubClientShape>() {}
+/** @deprecated Use {@link GitHubClient} instead. */
+export type GitHubClientShape = GitHubClient;
+
+/**
+ * @internal Uses GenericTag — see BunResolver.ts for rationale.
+ */
+export const GitHubClient = Context.GenericTag<GitHubClient>("GitHubClient");

@@ -17,7 +17,7 @@ export interface BunResolverOptions {
 	readonly freshness?: Freshness;
 }
 
-type BunResolverError =
+export type BunResolverError =
 	| AuthenticationError
 	| NetworkError
 	| ParseError
@@ -27,9 +27,22 @@ type BunResolverError =
 	| FreshnessError
 	| CacheError;
 
-export interface BunResolverShape {
+/**
+ * Service interface for resolving Bun runtime versions.
+ */
+export interface BunResolver {
 	readonly resolve: (options?: BunResolverOptions) => Effect.Effect<ResolvedVersions, BunResolverError>;
 	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, BunResolverError>;
 }
 
-export class BunResolver extends Context.Tag("BunResolver")<BunResolver, BunResolverShape>() {}
+/** @deprecated Use {@link BunResolver} instead. */
+export type BunResolverShape = BunResolver;
+
+/**
+ * BunResolver tag for dependency injection.
+ *
+ * @internal Uses GenericTag to avoid generating un-nameable `_base` types
+ * that break the declaration bundler (api-extractor) when re-exported via
+ * `export *`.
+ */
+export const BunResolver = Context.GenericTag<BunResolver>("BunResolver");

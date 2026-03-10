@@ -1,6 +1,9 @@
 import { Context } from "effect";
 
-export interface OctokitLike {
+/**
+ * Service interface for Octokit REST API client.
+ */
+export interface OctokitInstance {
 	readonly rest: {
 		readonly repos: {
 			readonly listTags: (params: {
@@ -19,4 +22,10 @@ export interface OctokitLike {
 	};
 }
 
-export class OctokitInstance extends Context.Tag("OctokitInstance")<OctokitInstance, OctokitLike>() {}
+/** @deprecated Use {@link OctokitInstance} instead. */
+export type OctokitLike = OctokitInstance;
+
+/**
+ * @internal Uses GenericTag — see BunResolver.ts for rationale.
+ */
+export const OctokitInstance = Context.GenericTag<OctokitInstance>("OctokitInstance");

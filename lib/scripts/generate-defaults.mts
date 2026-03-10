@@ -8,13 +8,13 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { Effect, Layer, Schema } from "effect";
+import { ParseError } from "../../src/errors/ParseError.js";
 import { GitHubClientLive } from "../../src/layers/GitHubClientLive.js";
 import { GitHubTokenAuth } from "../../src/layers/GitHubTokenAuth.js";
-import { ParseError } from "../../src/errors/ParseError.js";
-import { GitHubTagList } from "../../src/schemas/github.js";
 import type { GitHubTag } from "../../src/schemas/github.js";
-import { NodeDistIndex, NodeReleaseSchedule } from "../../src/schemas/node.js";
+import { GitHubTagList } from "../../src/schemas/github.js";
 import type { NodeDistVersion, ReleaseScheduleEntry } from "../../src/schemas/node.js";
+import { NodeDistIndex, NodeReleaseSchedule } from "../../src/schemas/node.js";
 import { GitHubClient } from "../../src/services/GitHubClient.js";
 
 const DATA_DIR = path.resolve(import.meta.dirname, "../../src/data");
@@ -90,22 +90,15 @@ const program = Effect.gen(function* () {
 		client.listTags("oven-sh", "bun", { perPage: 100 }),
 		client.listTags("denoland", "deno", { perPage: 100 }),
 		client.getJson("https://nodejs.org/dist/index.json", nodeDistSchema),
-		client.getJson(
-			"https://raw.githubusercontent.com/nodejs/Release/main/schedule.json",
-			scheduleSchema,
-		),
+		client.getJson("https://raw.githubusercontent.com/nodejs/Release/main/schedule.json", scheduleSchema),
 	]);
 
 	// Validate tag data through schema
 	const bunTags = yield* decodeTagList(bunTagsRaw).pipe(
-		Effect.mapError(
-			(e) => new ParseError({ source: "bun-tags", message: `Schema validation failed: ${e.message}` }),
-		),
+		Effect.mapError((e) => new ParseError({ source: "bun-tags", message: `Schema validation failed: ${e.message}` })),
 	);
 	const denoTags = yield* decodeTagList(denoTagsRaw).pipe(
-		Effect.mapError(
-			(e) => new ParseError({ source: "deno-tags", message: `Schema validation failed: ${e.message}` }),
-		),
+		Effect.mapError((e) => new ParseError({ source: "deno-tags", message: `Schema validation failed: ${e.message}` })),
 	);
 
 	// Generate TypeScript source files
@@ -118,7 +111,14 @@ const program = Effect.gen(function* () {
 	const bunChanged = writeIfChanged(path.join(DATA_DIR, "bun-defaults.ts"), bunContent);
 	const denoChanged = writeIfChanged(path.join(DATA_DIR, "deno-defaults.ts"), denoContent);
 
-	return { nodeChanged, bunChanged, denoChanged, nodeVersions: nodeVersions.length, bunTags: bunTags.length, denoTags: denoTags.length };
+	return {
+		nodeChanged,
+		bunChanged,
+		denoChanged,
+		nodeVersions: nodeVersions.length,
+		bunTags: bunTags.length,
+		denoTags: denoTags.length,
+	};
 });
 
 const AppLayer = GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth));

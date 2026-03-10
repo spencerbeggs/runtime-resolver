@@ -7,9 +7,6 @@
 			"dependsOn": ["types:check"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
 				"!**/*.test.ts",
 				"!**/*.spec.ts",
 				"!**/*.md",
@@ -17,7 +14,9 @@
 				"!.claude/**",
 				"!.github/**",
 				"!.husky/**",
-				"!.vscode/**"
+				"!.vscode/**",
+				"!vitest.config.ts",
+				"!vitest.setup.ts"
 			],
 			"outputLogs": "full",
 			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
@@ -27,9 +26,6 @@
 			"dependsOn": ["types:check"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
-				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
-				"$TURBO_ROOT$/pnpm-workspace.yaml",
 				"!**/*.test.ts",
 				"!**/*.spec.ts",
 				"!**/*.md",
@@ -37,10 +33,12 @@
 				"!.claude/**",
 				"!.github/**",
 				"!.husky/**",
-				"!.vscode/**"
+				"!.vscode/**",
+				"!vitest.config.ts",
+				"!vitest.setup.ts"
 			],
 			"outputLogs": "full",
-			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
+			"outputs": ["dist/npm/**", "dist/github/**", ".rslib/declarations/npm/**"]
 		},
 		"generate:defaults": {
 			"cache": true,

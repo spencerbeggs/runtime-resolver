@@ -19,7 +19,7 @@ export interface NodeResolverOptions {
 	readonly freshness?: Freshness;
 }
 
-type NodeResolverError =
+export type NodeResolverError =
 	| AuthenticationError
 	| NetworkError
 	| ParseError
@@ -29,10 +29,18 @@ type NodeResolverError =
 	| FreshnessError
 	| CacheError;
 
-export interface NodeResolverShape {
+/**
+ * Service interface for resolving Node.js runtime versions.
+ */
+export interface NodeResolver {
 	readonly resolve: (options?: NodeResolverOptions) => Effect.Effect<ResolvedVersions, NodeResolverError>;
-
 	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, NodeResolverError>;
 }
 
-export class NodeResolver extends Context.Tag("NodeResolver")<NodeResolver, NodeResolverShape>() {}
+/** @deprecated Use {@link NodeResolver} instead. */
+export type NodeResolverShape = NodeResolver;
+
+/**
+ * @internal Uses GenericTag — see BunResolver.ts for rationale.
+ */
+export const NodeResolver = Context.GenericTag<NodeResolver>("NodeResolver");

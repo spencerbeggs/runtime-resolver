@@ -17,7 +17,7 @@ export interface DenoResolverOptions {
 	readonly freshness?: Freshness;
 }
 
-type DenoResolverError =
+export type DenoResolverError =
 	| AuthenticationError
 	| NetworkError
 	| ParseError
@@ -27,9 +27,18 @@ type DenoResolverError =
 	| FreshnessError
 	| CacheError;
 
-export interface DenoResolverShape {
+/**
+ * Service interface for resolving Deno runtime versions.
+ */
+export interface DenoResolver {
 	readonly resolve: (options?: DenoResolverOptions) => Effect.Effect<ResolvedVersions, DenoResolverError>;
 	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, DenoResolverError>;
 }
 
-export class DenoResolver extends Context.Tag("DenoResolver")<DenoResolver, DenoResolverShape>() {}
+/** @deprecated Use {@link DenoResolver} instead. */
+export type DenoResolverShape = DenoResolver;
+
+/**
+ * @internal Uses GenericTag — see BunResolver.ts for rationale.
+ */
+export const DenoResolver = Context.GenericTag<DenoResolver>("DenoResolver");

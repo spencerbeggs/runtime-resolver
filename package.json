@@ -3,6 +3,19 @@
 	"version": "0.0.0",
 	"private": true,
 	"description": "Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes with Effect-based architecture and offline fallback.",
+	"keywords": [
+		"node",
+		"bun",
+		"deno",
+		"runtime",
+		"version",
+		"semver",
+		"resolver",
+		"ci",
+		"github-actions",
+		"effect",
+		"cli"
+	],
 	"homepage": "https://github.com/spencerbeggs/runtime-resolver#readme",
 	"repository": {
 		"type": "git",

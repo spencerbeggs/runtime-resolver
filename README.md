@@ -3,9 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/runtime-resolver)](https://www.npmjs.com/package/runtime-resolver)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes. Fetches
-available versions from GitHub with automatic offline fallback via a build-time
-cache.
+Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes. Fetches available versions from GitHub with automatic offline fallback via a build-time cache.
 
 ## Features
 
@@ -45,12 +43,76 @@ for authenticated requests. Without one, the resolver falls back to cached data.
 ### CLI
 
 ```bash
-runtime-resolver --node ">=20" --bun ">=1.1" --deno ">=2" --increments minor --pretty
+npx runtime-resolver --node ">=22" --bun "^1" --deno ">=2" --pretty
 ```
+
+Output is structured JSON with a `$schema` reference for editor auto-complete. Print the full schema with `--schema`:
+
+```bash
+npx runtime-resolver --schema
+```
+
+#### Useful `jq` recipes
+
+```bash
+# Get the latest resolved Node.js version
+npx runtime-resolver --node ">=22" | jq -r '.results.node.latest'
+
+# List all matching versions as plain lines
+npx runtime-resolver --deno ">=2" | jq -r '.results.deno.versions[]'
+
+# Exit non-zero when any runtime fails to resolve
+npx runtime-resolver --node ">=22" --bun "^1" | jq -e '.ok'
+
+# Extract only the LTS version for Node.js
+npx runtime-resolver --node ">=20" --node-phases active-lts | jq -r '.results.node.lts'
+
+# Build a comma-separated matrix for GitHub Actions
+npx runtime-resolver --node ">=20" --increments minor \
+  | jq -r '[.results.node.versions[]] | join(",")'
+```
+
+### Effect API
+
+Power users can compose resolvers with custom layers and typed error handling instead of the Promise wrappers.
+
+```typescript
+import { Effect, Layer } from "effect";
+import {
+  NodeResolver,
+  NodeResolverLive,
+  GitHubClientLive,
+  GitHubTokenAuth,
+  VersionCacheLive,
+} from "runtime-resolver";
+
+const program = Effect.gen(function* () {
+  const resolver = yield* NodeResolver;
+  return yield* resolver.resolve({
+    semverRange: ">=22",
+    phases: ["active-lts"],
+  });
+});
+
+const layer = NodeResolverLive.pipe(
+  Layer.provide(Layer.merge(
+    GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth)),
+    VersionCacheLive,
+  )),
+);
+
+Effect.runPromise(program.pipe(Effect.provide(layer)));
+```
+
+All services (`NodeResolver`, `BunResolver`, `DenoResolver`, `GitHubClient`,
+`VersionCache`), live layers, auth layers (`GitHubTokenAuth`, `GitHubAppAuth`,
+`GitHubAutoAuth`), and typed errors (`AuthenticationError`, `NetworkError`,
+`RateLimitError`, `VersionNotFoundError`, etc.) are exported from the package
+root.
 
 ## Documentation
 
-For configuration, API reference, and advanced usage, see [docs/](./docs/).
+For configuration, API reference, and advanced usage, see [docs](./docs/).
 
 ## License
 
