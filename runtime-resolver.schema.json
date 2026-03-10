@@ -48,12 +48,16 @@
 		},
 		"CliRuntimeSuccess": {
 			"type": "object",
-			"required": ["ok", "versions", "latest"],
+			"required": ["ok", "source", "versions", "latest"],
 			"properties": {
 				"ok": {
 					"type": "boolean",
 					"enum": [true],
 					"description": "Indicates successful resolution"
+				},
+				"source": {
+					"type": "string",
+					"description": "Data source: 'api' or 'cache'"
 				},
 				"versions": {
 					"type": "array",
@@ -73,7 +77,7 @@
 				},
 				"default": {
 					"type": "string",
-					"description": "Default recommended version (Deno only)"
+					"description": "Default recommended version"
 				}
 			},
 			"additionalProperties": false,
