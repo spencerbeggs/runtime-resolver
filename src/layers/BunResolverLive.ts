@@ -1,11 +1,13 @@
 import { Effect, Layer } from "effect";
 import * as semver from "semver";
+import { FreshnessError } from "../errors/FreshnessError.js";
 import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { retryOnRateLimit } from "../lib/retry.js";
 import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
 import { normalizeBunTag } from "../lib/tag-normalizers.js";
 import type { CachedTagData } from "../schemas/cache.js";
+import type { Freshness } from "../schemas/common.js";
 import type { GitHubTag } from "../schemas/github.js";
 import type { BunResolverOptions } from "../services/BunResolver.js";
 import { BunResolver } from "../services/BunResolver.js";
@@ -29,10 +31,38 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 		const client = yield* GitHubClient;
 		const cache = yield* VersionCache;
 
-		const fetchBunTags = () =>
-			retryOnRateLimit(client.listTags("oven-sh", "bun", { perPage: 100, pages: 3 })).pipe(
+		const fetchBunTags = (freshness: Freshness = "auto") => {
+			if (freshness === "cache") {
+				return Effect.gen(function* () {
+					const { data: cached, source } = yield* cache.get("bun");
+					return { tags: (cached as CachedTagData).tags, source };
+				}).pipe(
+					Effect.catchTag("CacheError", () =>
+						Effect.succeed({ tags: [] as ReadonlyArray<GitHubTag>, source: "cache" as const }),
+					),
+				);
+			}
+
+			const apiCall = retryOnRateLimit(client.listTags("oven-sh", "bun", { perPage: 100, pages: 3 })).pipe(
 				Effect.tap((tags) => cache.set("bun", { tags: tags as GitHubTag[] })),
 				Effect.map((tags) => ({ tags, source: "api" as const })),
+			);
+
+			if (freshness === "api") {
+				return apiCall.pipe(
+					Effect.catchTag("NetworkError", (err) =>
+						Effect.fail(
+							new FreshnessError({
+								strategy: "api",
+								message: `Fresh data required but network unavailable: ${err.message}`,
+							}),
+						),
+					),
+				);
+			}
+
+			// freshness === "auto" (default — current behavior)
+			return apiCall.pipe(
 				Effect.catchTag("NetworkError", () =>
 					Effect.gen(function* () {
 						const { data: cached, source } = yield* cache.get("bun");
@@ -43,6 +73,7 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 					Effect.succeed({ tags: [] as ReadonlyArray<GitHubTag>, source: "cache" as const }),
 				),
 			);
+		};
 
 		return {
 			resolveVersion: (versionOrRange: string) =>
@@ -102,7 +133,7 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 						);
 					}
 
-					const { tags, source } = yield* fetchBunTags();
+					const { tags, source } = yield* fetchBunTags(options?.freshness);
 					const allVersions = tagsToVersions(tags);
 
 					if (allVersions.length === 0) {

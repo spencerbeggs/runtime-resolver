@@ -201,6 +201,87 @@ describe("DenoResolver service", () => {
 		});
 	});
 
+	describe("freshness", () => {
+		it("freshness 'cache' returns cached data without network", async () => {
+			const cacheLayer = Layer.effect(
+				VersionCache,
+				Effect.sync(() => {
+					const store = new Map<string, unknown>();
+					store.set("deno", { data: { tags: fixtureTags }, source: "cache" });
+					return {
+						get: (runtime: string) =>
+							Effect.gen(function* () {
+								const entry = store.get(runtime);
+								if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
+								return entry as never;
+							}),
+						set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
+					};
+				}),
+			);
+
+			const layer = DenoResolverLive.pipe(Layer.provide(Layer.merge(makeTestGitHubClient(), cacheLayer)));
+
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* DenoResolver;
+					return yield* resolver.resolve({ freshness: "cache" });
+				}).pipe(Effect.provide(layer)),
+			);
+			expect(result.source).toBe("cache");
+			expect(result.versions.length).toBeGreaterThan(0);
+		});
+
+		it("freshness 'api' fails with FreshnessError on network failure", async () => {
+			const failingClient = makeTestGitHubClient({
+				listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),
+			});
+
+			const layer = DenoResolverLive.pipe(Layer.provide(Layer.merge(failingClient, makeTestCache())));
+
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* DenoResolver;
+					return yield* resolver.resolve({ freshness: "api" });
+				}).pipe(Effect.provide(layer), Effect.flip),
+			);
+			expect(result._tag).toBe("FreshnessError");
+		});
+
+		it("freshness 'auto' falls back to cache on network failure", async () => {
+			const failingClient = makeTestGitHubClient({
+				listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),
+			});
+
+			const cacheLayer = Layer.effect(
+				VersionCache,
+				Effect.sync(() => {
+					const store = new Map<string, unknown>();
+					store.set("deno", { data: { tags: fixtureTags }, source: "cache" });
+					return {
+						get: (runtime: string) =>
+							Effect.gen(function* () {
+								const entry = store.get(runtime);
+								if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
+								return entry as never;
+							}),
+						set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
+					};
+				}),
+			);
+
+			const layer = DenoResolverLive.pipe(Layer.provide(Layer.merge(failingClient, cacheLayer)));
+
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* DenoResolver;
+					return yield* resolver.resolve({ freshness: "auto" });
+				}).pipe(Effect.provide(layer)),
+			);
+			expect(result.source).toBe("cache");
+		});
+	});
+
 	it("falls back to cache on network error", async () => {
 		const failingClient = makeTestGitHubClient({
 			listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),

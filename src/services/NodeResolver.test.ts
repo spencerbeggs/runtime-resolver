@@ -282,6 +282,87 @@ describe("NodeResolver service", () => {
 		}
 	});
 
+	describe("freshness", () => {
+		it("freshness 'cache' returns cached data without network", async () => {
+			const cacheLayer = Layer.effect(
+				VersionCache,
+				Effect.sync(() => {
+					const store = new Map<string, unknown>();
+					store.set("node", { data: { versions: fixtureVersions, schedule: fixtureSchedule }, source: "cache" });
+					return {
+						get: (runtime: string) =>
+							Effect.gen(function* () {
+								const entry = store.get(runtime);
+								if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
+								return entry as never;
+							}),
+						set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
+					};
+				}),
+			);
+
+			const layer = NodeResolverLive.pipe(Layer.provide(Layer.merge(makeTestGitHubClient(), cacheLayer)));
+
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* NodeResolver;
+					return yield* resolver.resolve({ freshness: "cache", date: testDate });
+				}).pipe(Effect.provide(layer)),
+			);
+			expect(result.source).toBe("cache");
+			expect(result.versions.length).toBeGreaterThan(0);
+		});
+
+		it("freshness 'api' fails with FreshnessError on network failure", async () => {
+			const failingClient = makeTestGitHubClient({
+				getJson: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })) as never,
+			});
+
+			const layer = NodeResolverLive.pipe(Layer.provide(Layer.merge(failingClient, makeTestCache())));
+
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* NodeResolver;
+					return yield* resolver.resolve({ freshness: "api", date: testDate });
+				}).pipe(Effect.provide(layer), Effect.flip),
+			);
+			expect(result._tag).toBe("FreshnessError");
+		});
+
+		it("freshness 'auto' falls back to cache on network failure", async () => {
+			const failingClient = makeTestGitHubClient({
+				getJson: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })) as never,
+			});
+
+			const cacheLayer = Layer.effect(
+				VersionCache,
+				Effect.sync(() => {
+					const store = new Map<string, unknown>();
+					store.set("node", { data: { versions: fixtureVersions, schedule: fixtureSchedule }, source: "cache" });
+					return {
+						get: (runtime: string) =>
+							Effect.gen(function* () {
+								const entry = store.get(runtime);
+								if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
+								return entry as never;
+							}),
+						set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
+					};
+				}),
+			);
+
+			const layer = NodeResolverLive.pipe(Layer.provide(Layer.merge(failingClient, cacheLayer)));
+
+			const result = await Effect.runPromise(
+				Effect.gen(function* () {
+					const resolver = yield* NodeResolver;
+					return yield* resolver.resolve({ freshness: "auto", date: testDate });
+				}).pipe(Effect.provide(layer)),
+			);
+			expect(result.source).toBe("cache");
+		});
+	});
+
 	it("falls back to cache on network error", async () => {
 		const failingClient = makeTestGitHubClient({
 			getJson: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })) as never,

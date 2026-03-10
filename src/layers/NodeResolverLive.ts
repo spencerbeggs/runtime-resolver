@@ -1,12 +1,13 @@
 import { Effect, Layer, Schema } from "effect";
 import * as semver from "semver";
+import { FreshnessError } from "../errors/FreshnessError.js";
 import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { ParseError } from "../errors/ParseError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { findLatestLts, getVersionPhase } from "../lib/node-phases.js";
 import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
 import type { CachedNodeData } from "../schemas/cache.js";
-import type { NodePhase } from "../schemas/common.js";
+import type { Freshness, NodePhase } from "../schemas/common.js";
 import { NodeDistIndex, NodeReleaseSchedule } from "../schemas/node.js";
 import { GitHubClient } from "../services/GitHubClient.js";
 import type { NodeResolverOptions } from "../services/NodeResolver.js";
@@ -53,13 +54,33 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 				return { allVersions, schedule };
 			});
 
-		const fetchWithCacheFallback = () =>
+		const fetchWithCacheFallback = (freshness: Freshness = "auto") =>
 			Effect.gen(function* () {
+				if (freshness === "cache") {
+					const { data: cached, source } = yield* cache.get("node");
+					const nodeCache = cached as CachedNodeData;
+					return { allVersions: nodeCache.versions, schedule: nodeCache.schedule, source };
+				}
+
 				const fromNetwork = fetchNodeData().pipe(
 					Effect.tap(({ allVersions, schedule }) => cache.set("node", { versions: allVersions, schedule })),
 					Effect.map(({ allVersions, schedule }) => ({ allVersions, schedule, source: "api" as const })),
 				);
 
+				if (freshness === "api") {
+					return yield* fromNetwork.pipe(
+						Effect.catchTag("NetworkError", (err) =>
+							Effect.fail(
+								new FreshnessError({
+									strategy: "api",
+									message: `Fresh data required but network unavailable: ${err.message}`,
+								}),
+							),
+						),
+					);
+				}
+
+				// "auto" — current behavior
 				return yield* fromNetwork.pipe(
 					Effect.catchTag("NetworkError", () =>
 						Effect.gen(function* () {
@@ -85,7 +106,7 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 						);
 					}
 
-					const { allVersions, schedule, source } = yield* fetchWithCacheFallback();
+					const { allVersions, schedule, source } = yield* fetchWithCacheFallback(options?.freshness);
 
 					const phases: ReadonlyArray<NodePhase> = options?.phases ?? ["current", "active-lts"];
 					const increments = options?.increments ?? "latest";
