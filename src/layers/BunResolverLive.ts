@@ -30,7 +30,7 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 		const cache = yield* VersionCache;
 
 		const fetchBunTags = () =>
-			retryOnRateLimit(client.listTags("oven-sh", "bun", { perPage: 100 })).pipe(
+			retryOnRateLimit(client.listTags("oven-sh", "bun", { perPage: 100, pages: 3 })).pipe(
 				Effect.tap((tags) => cache.set("bun", { tags: tags as GitHubTag[] })),
 				Effect.map((tags) => ({ tags, source: "api" as const })),
 				Effect.catchTag("NetworkError", () =>
@@ -141,7 +141,7 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 						}
 					}
 
-					const latest = allVersions[0];
+					const latest = versions[0];
 
 					return {
 						source,

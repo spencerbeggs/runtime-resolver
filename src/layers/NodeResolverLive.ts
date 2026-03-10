@@ -131,6 +131,7 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 						versions: sortedVersions,
 						latest,
 						...(lts ? { lts } : {}),
+						...(lts ? { default: lts } : {}),
 						...(resolvedDefault ? { default: resolvedDefault } : {}),
 					};
 				}),
@@ -138,7 +139,18 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 			resolveVersion: (versionOrRange: string) =>
 				Effect.gen(function* () {
 					if (semver.valid(versionOrRange)) {
-						return versionOrRange;
+						const { allVersions } = yield* fetchWithCacheFallback();
+						const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
+						if (cleanVersions.includes(versionOrRange)) {
+							return versionOrRange;
+						}
+						return yield* Effect.fail(
+							new VersionNotFoundError({
+								runtime: "node",
+								constraint: versionOrRange,
+								message: `Node.js version "${versionOrRange}" not found`,
+							}),
+						);
 					}
 
 					if (!semver.validRange(versionOrRange)) {

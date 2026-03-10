@@ -30,7 +30,7 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 		const cache = yield* VersionCache;
 
 		const fetchDenoTags = () =>
-			retryOnRateLimit(client.listTags("denoland", "deno", { perPage: 100 })).pipe(
+			retryOnRateLimit(client.listTags("denoland", "deno", { perPage: 100, pages: 3 })).pipe(
 				Effect.tap((tags) => cache.set("deno", { tags: tags as GitHubTag[] })),
 				Effect.map((tags) => ({ tags, source: "api" as const })),
 				Effect.catchTag("NetworkError", () =>
@@ -141,7 +141,7 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 						}
 					}
 
-					const latest = allVersions[0];
+					const latest = versions[0];
 
 					return {
 						source,

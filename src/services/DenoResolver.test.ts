@@ -63,6 +63,16 @@ describe("DenoResolver service", () => {
 		expect(result.versions.length).toBe(5);
 	});
 
+	it("latest reflects filtered versions, not global", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* DenoResolver;
+				return yield* resolver.resolve({ semverRange: "^2.0.0" });
+			}).pipe(Effect.provide(makeTestLayer())),
+		);
+		expect(result.versions).toContain(result.latest);
+	});
+
 	it("resolve filters by semver range", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* DenoResolver;

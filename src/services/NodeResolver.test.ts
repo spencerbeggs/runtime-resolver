@@ -214,6 +214,18 @@ describe("NodeResolver service", () => {
 		expect(result._tag).toBe("InvalidInputError");
 	});
 
+	it("sets default to latest LTS when no defaultVersion is provided", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* NodeResolver;
+				return yield* resolver.resolve({ semverRange: ">=18", phases: ["current", "active-lts"], date: testDate });
+			}).pipe(Effect.provide(makeTestLayer())),
+		);
+		if (result.lts) {
+			expect(result.default).toBe(result.lts);
+		}
+	});
+
 	it("resolveVersion returns exact version as-is", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* NodeResolver;
@@ -223,6 +235,16 @@ describe("NodeResolver service", () => {
 		const result = await Effect.runPromise(program.pipe(Effect.provide(makeTestLayer())));
 
 		expect(result).toBe("22.11.0");
+	});
+
+	it("resolveVersion fails with VersionNotFoundError for non-existent exact version", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* NodeResolver;
+				return yield* resolver.resolveVersion("99.99.99");
+			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+		);
+		expect(result._tag).toBe("VersionNotFoundError");
 	});
 
 	it("resolveVersion resolves range to latest match", async () => {
