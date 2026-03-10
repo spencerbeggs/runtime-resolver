@@ -1,12 +1,25 @@
 {
-	"name": "@spencerbeggs/pnpm-module-template",
+	"name": "runtime-resolver",
 	"version": "0.0.0",
 	"private": true,
-	"description": "A template repository for developing and deploying Node.js modules from a pnpm monorepo structure.",
-	"homepage": "https://github.com/spencerbeggs/pnpm-module-template#readme",
+	"description": "Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes with Effect-based architecture and offline fallback.",
+	"keywords": [
+		"node",
+		"bun",
+		"deno",
+		"runtime",
+		"version",
+		"semver",
+		"resolver",
+		"ci",
+		"github-actions",
+		"effect",
+		"cli"
+	],
+	"homepage": "https://github.com/spencerbeggs/runtime-resolver#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/spencerbeggs/pnpm-module-template.git"
+		"url": "https://github.com/spencerbeggs/runtime-resolver.git"
 	},
 	"license": "MIT",
 	"author": {
@@ -18,6 +31,9 @@
 	"exports": {
 		".": "./src/index.ts"
 	},
+	"bin": {
+		"runtime-resolver": "./src/cli/index.ts"
+	},
 	"scripts": {
 		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
@@ -28,6 +44,8 @@
 		"ci:version": "savvy-changesets version && biome format --write .",
 		"commit:check": "savvy-commit check",
 		"commit:init": "savvy-commit init",
+		"generate:defaults": "tsx lib/scripts/generate-defaults.mts",
+		"generate:json-schema": "tsx lib/scripts/generate-json-schema.mts",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
@@ -40,12 +58,23 @@
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
 	},
+	"dependencies": {
+		"@effect/cli": "^0.73.2",
+		"@effect/platform": "^0.94.5",
+		"@effect/platform-node": "^0.104.1",
+		"@octokit/auth-app": "^8.2.0",
+		"effect": "^3.19.19",
+		"octokit": "^5.0.5",
+		"semver": "^7.7.4"
+	},
 	"devDependencies": {
 		"@savvy-web/changesets": "^0.4.2",
 		"@savvy-web/commitlint": "^0.4.0",
 		"@savvy-web/lint-staged": "^0.5.1",
-		"@savvy-web/rslib-builder": "^0.16.0",
-		"@savvy-web/vitest": "^0.2.0"
+		"@savvy-web/rslib-builder": "^0.17.0",
+		"@savvy-web/vitest": "^0.2.0",
+		"@types/semver": "^7.7.1",
+		"tsx": "catalog:silk"
 	},
 	"packageManager": "pnpm@10.30.1+sha512.3590e550d5384caa39bd5c7c739f72270234b2f6059e13018f975c313b1eb9fefcc09714048765d4d9efe961382c312e624572c0420762bdc5d5940cdf9be73a",
 	"devEngines": {
@@ -70,7 +99,7 @@
 			{
 				"protocol": "npm",
 				"registry": "https://npm.pkg.github.com/",
-				"directory": "dist/npm",
+				"directory": "dist/github",
 				"access": "public",
 				"provenance": true
 			},

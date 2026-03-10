@@ -1,0 +1,146 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$defs": {
+		"CliResponse": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/CliSuccessResponse"
+				},
+				{
+					"$ref": "#/$defs/CliErrorResponse"
+				}
+			],
+			"description": "CLI response envelope. Contains an ok discriminator and a results map with per-runtime resolution outcomes.",
+			"title": "RuntimeResolverResponse"
+		},
+		"CliSuccessResponse": {
+			"type": "object",
+			"required": ["ok", "results"],
+			"properties": {
+				"ok": {
+					"type": "boolean",
+					"enum": [true],
+					"description": "True when all requested runtimes resolved successfully"
+				},
+				"results": {
+					"type": "object",
+					"required": [],
+					"properties": {},
+					"additionalProperties": {
+						"$ref": "#/$defs/CliRuntimeResult"
+					},
+					"description": "Map of runtime name to resolution result"
+				}
+			},
+			"additionalProperties": false,
+			"description": "All requested runtimes resolved successfully"
+		},
+		"CliRuntimeResult": {
+			"anyOf": [
+				{
+					"$ref": "#/$defs/CliRuntimeSuccess"
+				},
+				{
+					"$ref": "#/$defs/CliRuntimeError"
+				}
+			],
+			"description": "Per-runtime resolution result: either success with versions or error with details"
+		},
+		"CliRuntimeSuccess": {
+			"type": "object",
+			"required": ["ok", "source", "versions", "latest"],
+			"properties": {
+				"ok": {
+					"type": "boolean",
+					"enum": [true],
+					"description": "Indicates successful resolution"
+				},
+				"source": {
+					"type": "string",
+					"description": "Data source: 'api' or 'cache'"
+				},
+				"versions": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"description": "Semver version string"
+					},
+					"description": "All resolved versions matching the semver range"
+				},
+				"latest": {
+					"type": "string",
+					"description": "Most recent version matching the range"
+				},
+				"lts": {
+					"type": "string",
+					"description": "Current LTS version (Node.js only)"
+				},
+				"default": {
+					"type": "string",
+					"description": "Default recommended version"
+				}
+			},
+			"additionalProperties": false,
+			"description": "Successful version resolution for a single runtime"
+		},
+		"CliRuntimeError": {
+			"type": "object",
+			"required": ["ok", "error"],
+			"properties": {
+				"ok": {
+					"type": "boolean",
+					"enum": [false],
+					"description": "Indicates failed resolution"
+				},
+				"error": {
+					"$ref": "#/$defs/CliErrorDetail"
+				}
+			},
+			"additionalProperties": false,
+			"description": "Failed version resolution for a single runtime"
+		},
+		"CliErrorDetail": {
+			"type": "object",
+			"required": ["_tag", "message"],
+			"properties": {
+				"_tag": {
+					"type": "string",
+					"description": "Error type identifier (e.g. RateLimitError, SemverError)"
+				},
+				"message": {
+					"type": "string",
+					"description": "Human-readable error message"
+				}
+			},
+			"additionalProperties": {
+				"$id": "/schemas/unknown",
+				"description": "Additional error-specific metadata",
+				"title": "ErrorMetadata"
+			},
+			"description": "Structured error with type tag, message, and optional metadata"
+		},
+		"CliErrorResponse": {
+			"type": "object",
+			"required": ["ok", "results"],
+			"properties": {
+				"ok": {
+					"type": "boolean",
+					"enum": [false],
+					"description": "False when one or more requested runtimes failed to resolve"
+				},
+				"results": {
+					"type": "object",
+					"required": [],
+					"properties": {},
+					"additionalProperties": {
+						"$ref": "#/$defs/CliRuntimeResult"
+					},
+					"description": "Map of runtime name to resolution result"
+				}
+			},
+			"additionalProperties": false,
+			"description": "One or more requested runtimes failed to resolve"
+		}
+	},
+	"$ref": "#/$defs/CliResponse"
+}
