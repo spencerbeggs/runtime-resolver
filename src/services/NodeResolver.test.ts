@@ -4,10 +4,8 @@ import { CacheError } from "../errors/CacheError.js";
 import { NetworkError } from "../errors/NetworkError.js";
 import { NodeResolverLive } from "../layers/NodeResolverLive.js";
 import type { NodeDistVersion, NodeReleaseSchedule } from "../schemas/node.js";
-import type { GitHubClientShape } from "./GitHubClient.js";
 import { GitHubClient } from "./GitHubClient.js";
 import { NodeResolver } from "./NodeResolver.js";
-import type { VersionCacheShape } from "./VersionCache.js";
 import { VersionCache } from "./VersionCache.js";
 
 const fixtureVersions: ReadonlyArray<NodeDistVersion> = [
@@ -54,7 +52,7 @@ const fixtureSchedule: NodeReleaseSchedule = {
 	},
 };
 
-const makeTestGitHubClient = (overrides?: Partial<GitHubClientShape>): Layer.Layer<GitHubClient> =>
+const makeTestGitHubClient = (overrides?: Partial<GitHubClient>): Layer.Layer<GitHubClient> =>
 	Layer.succeed(GitHubClient, {
 		listTags: () => Effect.succeed([]),
 		listReleases: () => Effect.succeed([]),
@@ -72,7 +70,7 @@ const makeTestGitHubClient = (overrides?: Partial<GitHubClientShape>): Layer.Lay
 
 const makeTestCache = (): Layer.Layer<VersionCache> => {
 	const store = new Map<string, unknown>();
-	const shape: VersionCacheShape = {
+	const shape: VersionCache = {
 		get: (runtime) =>
 			Effect.gen(function* () {
 				const entry = store.get(runtime);

@@ -14,9 +14,6 @@ export interface VersionCache {
 	readonly set: (runtime: Runtime, data: CachedData) => Effect.Effect<void, CacheError>;
 }
 
-/** @deprecated Use {@link VersionCache} instead. */
-export type VersionCacheShape = VersionCache;
-
 /**
  * @internal Uses GenericTag — see BunResolver.ts for rationale.
  */

@@ -22,9 +22,6 @@ export interface OctokitInstance {
 	};
 }
 
-/** @deprecated Use {@link OctokitInstance} instead. */
-export type OctokitLike = OctokitInstance;
-
 /**
  * @internal Uses GenericTag — see BunResolver.ts for rationale.
  */

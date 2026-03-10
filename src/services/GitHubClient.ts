@@ -35,9 +35,6 @@ export interface GitHubClient {
 	) => Effect.Effect<A, NetworkError | ParseError>;
 }
 
-/** @deprecated Use {@link GitHubClient} instead. */
-export type GitHubClientShape = GitHubClient;
-
 /**
  * @internal Uses GenericTag — see BunResolver.ts for rationale.
  */

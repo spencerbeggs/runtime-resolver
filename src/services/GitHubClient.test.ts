@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { NetworkError } from "../errors/NetworkError.js";
 import { ParseError } from "../errors/ParseError.js";
 import { RateLimitError } from "../errors/RateLimitError.js";
-import type { GitHubClientShape } from "./GitHubClient.js";
 import { GitHubClient } from "./GitHubClient.js";
 
 const mockTags = [
@@ -33,7 +32,7 @@ const mockReleases = [
 	},
 ];
 
-const makeTestClient = (overrides?: Partial<GitHubClientShape>): Layer.Layer<GitHubClient> =>
+const makeTestClient = (overrides?: Partial<GitHubClient>): Layer.Layer<GitHubClient> =>
 	Layer.succeed(GitHubClient, {
 		listTags: () => Effect.succeed(mockTags),
 		listReleases: () => Effect.succeed(mockReleases),

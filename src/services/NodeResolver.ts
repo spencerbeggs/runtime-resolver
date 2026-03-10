@@ -37,9 +37,6 @@ export interface NodeResolver {
 	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, NodeResolverError>;
 }
 
-/** @deprecated Use {@link NodeResolver} instead. */
-export type NodeResolverShape = NodeResolver;
-
 /**
  * @internal Uses GenericTag — see BunResolver.ts for rationale.
  */

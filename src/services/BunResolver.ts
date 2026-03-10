@@ -35,9 +35,6 @@ export interface BunResolver {
 	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, BunResolverError>;
 }
 
-/** @deprecated Use {@link BunResolver} instead. */
-export type BunResolverShape = BunResolver;
-
 /**
  * BunResolver tag for dependency injection.
  *

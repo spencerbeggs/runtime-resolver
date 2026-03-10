@@ -35,9 +35,6 @@ export interface DenoResolver {
 	readonly resolveVersion: (versionOrRange: string) => Effect.Effect<string, DenoResolverError>;
 }
 
-/** @deprecated Use {@link DenoResolver} instead. */
-export type DenoResolverShape = DenoResolver;
-
 /**
  * @internal Uses GenericTag — see BunResolver.ts for rationale.
  */

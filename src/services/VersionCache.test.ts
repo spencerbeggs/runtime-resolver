@@ -4,7 +4,7 @@ import { CacheError } from "../errors/CacheError.js";
 import { VersionCacheLive } from "../layers/VersionCacheLive.js";
 import type { CachedNodeData, CachedTagData } from "../schemas/cache.js";
 import type { Source } from "../schemas/common.js";
-import type { CachedData, VersionCacheShape } from "./VersionCache.js";
+import type { CachedData } from "./VersionCache.js";
 import { VersionCache } from "./VersionCache.js";
 
 const mockNodeData: CachedNodeData = {
@@ -44,7 +44,7 @@ const makeTestCache = (): Layer.Layer<VersionCache> => {
 	store.set("node", { data: mockNodeData, source: "cache" });
 	store.set("bun", { data: mockBunData, source: "cache" });
 
-	const shape: VersionCacheShape = {
+	const shape: VersionCache = {
 		get: (runtime) =>
 			Effect.gen(function* () {
 				const entry = store.get(runtime);
