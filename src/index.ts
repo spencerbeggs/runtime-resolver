@@ -6,13 +6,8 @@
  *
  * @packageDocumentation
  */
-import { Effect, Layer } from "effect";
-import { BunResolverLive } from "./layers/BunResolverLive.js";
-import { DenoResolverLive } from "./layers/DenoResolverLive.js";
-import { GitHubClientLive } from "./layers/GitHubClientLive.js";
-import { GitHubTokenAuth } from "./layers/GitHubTokenAuth.js";
-import { NodeResolverLive } from "./layers/NodeResolverLive.js";
-import { VersionCacheLive } from "./layers/VersionCacheLive.js";
+import { Effect } from "effect";
+import { BunLayer, DenoLayer, NodeLayer } from "./layers/index.js";
 import type { ResolvedVersions } from "./schemas/common.js";
 import type { BunResolverOptions } from "./services/BunResolver.js";
 import { BunResolver } from "./services/BunResolver.js";
@@ -25,13 +20,6 @@ export type { Increments, NodePhase, ResolvedVersions } from "./schemas/common.j
 export type { BunResolverOptions } from "./services/BunResolver.js";
 export type { DenoResolverOptions } from "./services/DenoResolver.js";
 export type { NodeResolverOptions } from "./services/NodeResolver.js";
-
-const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth));
-const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive);
-
-const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer));
-const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer));
-const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer));
 
 /**
  * Resolve Node.js versions matching the given options.

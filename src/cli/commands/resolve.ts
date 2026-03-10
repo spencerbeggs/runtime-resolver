@@ -1,12 +1,7 @@
 /* v8 ignore start */
 import { Options } from "@effect/cli";
-import { Console, Effect, Layer, Option } from "effect";
-import { BunResolverLive } from "../../layers/BunResolverLive.js";
-import { DenoResolverLive } from "../../layers/DenoResolverLive.js";
-import { GitHubClientLive } from "../../layers/GitHubClientLive.js";
-import { GitHubTokenAuth } from "../../layers/GitHubTokenAuth.js";
-import { NodeResolverLive } from "../../layers/NodeResolverLive.js";
-import { VersionCacheLive } from "../../layers/VersionCacheLive.js";
+import { Console, Effect, Option } from "effect";
+import { BunLayer, DenoLayer, NodeLayer } from "../../layers/index.js";
 import type { Increments, NodePhase } from "../../schemas/common.js";
 import { BunResolver } from "../../services/BunResolver.js";
 import { DenoResolver } from "../../services/DenoResolver.js";
@@ -24,15 +19,6 @@ export const nodePhasesOption = Options.text("node-phases").pipe(Options.optiona
 export const nodeIncrementsOption = Options.text("node-increments").pipe(Options.optional);
 export const prettyOption = Options.boolean("pretty").pipe(Options.withDefault(false));
 export const schemaOption = Options.boolean("schema").pipe(Options.withDefault(false));
-
-// --- Layers ---
-
-const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth));
-const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive);
-
-const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer));
-const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer));
-const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer));
 
 // --- Error serialization ---
 
@@ -112,6 +98,13 @@ const resolveDeno = (semverRange: string): Effect.Effect<RuntimeEntry> =>
 		Effect.catchAll((error) => Effect.succeed(toError("deno", error))),
 	);
 
+// --- Response serialization ---
+
+const formatResponse = (ok: CliResponse["ok"], results: Record<string, CliRuntimeResult>, pretty: boolean): string => {
+	const response = { $schema: SCHEMA_URL, ok, results } satisfies CliResponse & { $schema: string };
+	return JSON.stringify(response, null, pretty ? 2 : undefined);
+};
+
 // --- Handler ---
 
 export const resolveHandler = (args: {
@@ -137,13 +130,7 @@ export const resolveHandler = (args: {
 
 		// No runtime specified — output JSON error envelope and exit 0
 		if (!hasNode && !hasBun && !hasDeno) {
-			const response = {
-				$schema: SCHEMA_URL,
-				ok: false as const,
-				results: {},
-			} satisfies CliResponse & { $schema: string };
-			const indent = args.pretty ? 2 : undefined;
-			yield* Console.error(JSON.stringify(response, null, indent));
+			yield* Console.error(formatResponse(false, {}, args.pretty));
 			return;
 		}
 
@@ -162,14 +149,7 @@ export const resolveHandler = (args: {
 
 		const entries = yield* Effect.all(tasks, { concurrency: "unbounded" });
 		const results: Record<string, CliRuntimeResult> = Object.fromEntries(entries);
-
 		const hasError = Object.values(results).some((r) => !r.ok);
-		const response = {
-			$schema: SCHEMA_URL,
-			ok: !hasError as CliResponse["ok"],
-			results,
-		} satisfies CliResponse & { $schema: string };
 
-		const indent = args.pretty ? 2 : undefined;
-		yield* Console.log(JSON.stringify(response, null, indent));
+		yield* Console.log(formatResponse(!hasError as CliResponse["ok"], results, args.pretty));
 	});
