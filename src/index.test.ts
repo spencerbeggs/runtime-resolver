@@ -36,6 +36,13 @@ describe("Effect API exports", () => {
 		expect(mod.VersionCacheLive).toBeDefined();
 	});
 
+	it("exports GitHubAutoAuth and AuthenticationError from effect entry point", async () => {
+		const mod = await import("./effect.js");
+		expect(mod.GitHubAutoAuth).toBeDefined();
+		expect(mod.AuthenticationError).toBeDefined();
+		expect(mod.GitHubTokenAuthFromToken).toBeDefined();
+	});
+
 	it("exports errors from effect entry point", async () => {
 		const mod = await import("./effect.js");
 		expect(mod.CacheError).toBeDefined();

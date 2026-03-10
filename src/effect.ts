@@ -8,6 +8,7 @@
  */
 
 // Errors
+export { AuthenticationError } from "./errors/AuthenticationError.js";
 export { CacheError } from "./errors/CacheError.js";
 export { FreshnessError } from "./errors/FreshnessError.js";
 export { InvalidInputError } from "./errors/InvalidInputError.js";
@@ -20,6 +21,7 @@ export { BunResolverLive } from "./layers/BunResolverLive.js";
 export { DenoResolverLive } from "./layers/DenoResolverLive.js";
 export type { GitHubAppAuthConfig } from "./layers/GitHubAppAuth.js";
 export { GitHubAppAuth } from "./layers/GitHubAppAuth.js";
+export { GitHubAutoAuth } from "./layers/GitHubAutoAuth.js";
 export { GitHubClientLive } from "./layers/GitHubClientLive.js";
 export { GitHubTokenAuth, GitHubTokenAuthFromToken } from "./layers/GitHubTokenAuth.js";
 export { NodeResolverLive } from "./layers/NodeResolverLive.js";
