@@ -84,13 +84,24 @@ Thrown when the requested freshness strategy cannot be satisfied. For example,
 | `strategy` | `Freshness` | The freshness strategy that was set |
 | `message` | `string` | Human-readable description |
 
+### AuthenticationError
+
+Thrown when GitHub authentication fails. This includes invalid tokens (HTTP 401)
+and GitHub App credential failures (invalid private key, no installations
+found).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `method` | `"token"` or `"app"` | Which authentication method failed |
+| `message` | `string` | Human-readable description |
+
 ## Error Unions by Runtime
 
 Each resolver's error union includes all relevant error types:
 
-- **Node.js**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
-- **Bun**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
-- **Deno**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
+- **Node.js**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
+- **Bun**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
+- **Deno**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
 
 ## Promise API Error Handling
 

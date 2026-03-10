@@ -33,6 +33,10 @@ npx runtime-resolver --node ">=20"
 | `--node-date <date>` | ISO date for reproducible Node.js phase calculations | `--node-date "2024-01-15"` |
 | `--freshness <strategy>` | Data freshness strategy: `auto`, `api`, or `cache` | `--freshness cache` |
 | `--pretty` | Pretty-print the JSON output | |
+| `--token <token>` | GitHub personal access token for authentication | `--token "ghp_..."` |
+| `--app-id <id>` | GitHub App ID for app authentication | `--app-id "123456"` |
+| `--app-private-key <key>` | GitHub App private key (literal or `@/path/to/key.pem`) | `--app-private-key @key.pem` |
+| `--app-installation-id <id>` | GitHub App installation ID (auto-discovered if omitted) | `--app-installation-id "789"` |
 | `--schema` | Print the JSON Schema for the response format and exit | |
 | `--version` | Print the CLI version and exit | |
 
@@ -62,6 +66,37 @@ runtime-resolver --node ">=20" --freshness api
 # Offline mode -- never contact the network
 runtime-resolver --node ">=20" --freshness cache
 ```
+
+### Authentication Flags
+
+The `--token`, `--app-id`, `--app-private-key`, and `--app-installation-id`
+flags provide explicit authentication, overriding any environment variables.
+
+**Token authentication:**
+
+```bash
+runtime-resolver --node ">=20" --token "ghp_..."
+```
+
+**GitHub App authentication:**
+
+```bash
+# With literal private key
+runtime-resolver --node ">=20" --app-id "123456" --app-private-key "-----BEGIN RSA..."
+
+# With private key from file (@ prefix)
+runtime-resolver --node ">=20" --app-id "123456" --app-private-key @/path/to/key.pem
+
+# With explicit installation ID
+runtime-resolver --node ">=20" --app-id "123456" --app-private-key @key.pem --app-installation-id "789"
+```
+
+**Validation rules:**
+
+- `--token` and `--app-id`/`--app-private-key` are mutually exclusive
+- `--app-id` and `--app-private-key` must both be provided
+- `--app-installation-id` requires `--app-id` and `--app-private-key`
+- Auth flags cannot be combined with `--schema`
 
 ### Schema Validation
 
@@ -181,6 +216,7 @@ field, and additional metadata specific to the error:
 | `VersionNotFoundError` | No versions match the given range | `runtime`, `constraint` |
 | `InvalidInputError` | Invalid semver range or option value | `field`, `value` |
 | `FreshnessError` | Freshness strategy cannot be satisfied | `strategy` |
+| `AuthenticationError` | Authentication failed | `method` |
 
 ## Usage with jq
 
@@ -278,18 +314,24 @@ echo "Using Node.js $NODE_VERSION"
 
 ## Authentication
 
-The CLI uses the GitHub API to fetch runtime version data. To avoid rate
-limiting, set one of the following environment variables:
+The CLI detects GitHub credentials automatically using this priority chain
+(first match wins):
 
-- `GITHUB_PERSONAL_ACCESS_TOKEN` (checked first)
-- `GITHUB_TOKEN`
+1. **CLI flags** -- `--token` or `--app-id` + `--app-private-key`
+2. **App env vars** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
+3. **Token env vars** -- `GITHUB_PERSONAL_ACCESS_TOKEN`, then `GITHUB_TOKEN`
+4. **Unauthenticated** -- subject to 60 requests per hour
 
 ```bash
+# Explicit token via flag
+runtime-resolver --node ">=20" --token "ghp_..."
+
+# Or via environment variable
 export GITHUB_TOKEN="ghp_..."
 runtime-resolver --node ">=20"
 ```
 
-When neither variable is set, the CLI falls back to unauthenticated requests.
-Unauthenticated requests are subject to stricter rate limits (60 requests per
-hour). If version data has been cached locally, the CLI uses cached results when
-the API is unavailable.
+When multiple credential sources are detected (for example, both app env vars
+and token env vars are set), a warning is emitted to stderr indicating which
+source was selected. No warning when CLI flags are provided -- explicit flags
+are unambiguous.

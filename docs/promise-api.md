@@ -263,22 +263,31 @@ interface ResolvedVersions {
 
 ## Authentication
 
-The resolvers fetch version data from GitHub and the Node.js release index. For
-GitHub API calls, authentication increases your rate limit from 60 to 5,000
-requests per hour.
+The Promise API automatically detects authentication from environment
+variables. The detection chain runs in this order (first match wins):
 
-Set one of these environment variables:
+1. **GitHub App** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
+   (+ optional `GITHUB_APP_INSTALLATION_ID`)
+2. **Personal Access Token** -- `GITHUB_PERSONAL_ACCESS_TOKEN`
+3. **GitHub Token** -- `GITHUB_TOKEN`
+4. **Unauthenticated** -- no auth, subject to 60 req/hr rate limit
 
 ```bash
+# GitHub App authentication
+export GITHUB_APP_ID="123456"
+export GITHUB_APP_PRIVATE_KEY="$(cat /path/to/key.pem)"
+
+# Or token authentication
 export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_..."
 # or
 export GITHUB_TOKEN="ghp_..."
 ```
 
-`GITHUB_PERSONAL_ACCESS_TOKEN` is checked first, then `GITHUB_TOKEN`. If
-neither is set, requests are made without authentication. When the network is
-unavailable, all resolvers fall back to bundled offline data that ships with
-the package.
+When multiple credential sources are present (for example, both app and token
+env vars), a warning is emitted to stderr indicating which source was selected.
+
+For explicit auth control, use the [Effect API](./effect-api.md) with specific
+layers like `GitHubTokenAuthFromToken` or `GitHubAppAuth`.
 
 ## Error Handling
 

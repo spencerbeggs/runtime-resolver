@@ -7,7 +7,7 @@ error handling, and dependency injection using Effect's standard patterns.
 ```typescript
 import {
   NodeResolver, NodeResolverLive,
-  GitHubClientLive, GitHubTokenAuth,
+  GitHubClientLive, GitHubAutoAuth, GitHubTokenAuth,
   VersionCacheLive,
 } from "runtime-resolver/effect"
 ```
@@ -86,11 +86,11 @@ interface DenoResolverShape {
 interface GitHubClientShape {
   listTags(
     owner: string, repo: string, options?: ListOptions,
-  ): Effect<ReadonlyArray<GitHubTag>, NetworkError | RateLimitError | ParseError>
+  ): Effect<ReadonlyArray<GitHubTag>, NetworkError | RateLimitError | ParseError | AuthenticationError>
 
   listReleases(
     owner: string, repo: string, options?: ListOptions,
-  ): Effect<ReadonlyArray<GitHubRelease>, NetworkError | RateLimitError | ParseError>
+  ): Effect<ReadonlyArray<GitHubRelease>, NetworkError | RateLimitError | ParseError | AuthenticationError>
 
   getJson<A>(
     url: string,
@@ -155,6 +155,11 @@ interface GitHubAppAuthConfig {
 }
 ```
 
+**`GitHubAutoAuth`** -- runs the full detection chain: GitHub App env vars →
+token env vars → unauthenticated. This is the default layer used by the
+pre-built `NodeLayer`, `BunLayer`, and `DenoLayer`. Emits a warning to stderr
+when multiple credential sources are detected.
+
 ### Composing a full layer stack
 
 ```typescript
@@ -167,6 +172,7 @@ import {
 } from "runtime-resolver/effect"
 import { Effect, Layer } from "effect"
 
+// GitHubAutoAuth is now the default, but GitHubTokenAuth is still available for explicit use
 const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth))
 const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive)
 const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer))
@@ -213,12 +219,13 @@ All errors extend `Data.TaggedError`. Discriminate with `Effect.catchTag`.
 | `InvalidInputError` | `"InvalidInputError"` | `field`, `value`, `message` |
 | `CacheError` | `"CacheError"` | `operation` (`"read"` or `"write"`), `message` |
 | `FreshnessError` | `"FreshnessError"` | `strategy`, `message` |
+| `AuthenticationError` | `"AuthenticationError"` | `method` (`"token"` or `"app"`), `message` |
 
 All three resolver error unions include `InvalidInputError` and `FreshnessError`:
 
-- **`NodeResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
-- **`BunResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
-- **`DenoResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
+- **`NodeResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
+- **`BunResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
+- **`DenoResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
 
 ### Handling errors with catchTag
 
@@ -303,8 +310,8 @@ const program = Effect.gen(function* () {
 const result = await Effect.runPromise(program.pipe(Effect.provide(FullLayer)))
 ```
 
-Because `GitHubAppAuth` can itself fail with `NetworkError` (during
-installation token exchange), the layer type is
-`Layer<OctokitInstance, NetworkError>`. Effect surfaces this as a defect if the
+Because `GitHubAppAuth` can fail during credential validation or installation
+token exchange, the layer type is `Layer<OctokitInstance, AuthenticationError>`.
+Effect surfaces this as a defect if the
 layer fails to build. Handle it at the edge with `Effect.catchAllDefect` if you
 need graceful recovery.
