@@ -3,7 +3,7 @@ import * as semver from "semver";
 import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { retryOnRateLimit } from "../lib/retry.js";
-import { resolveVersionFromList } from "../lib/semver-utils.js";
+import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
 import { normalizeBunTag } from "../lib/tag-normalizers.js";
 import type { CachedTagData } from "../schemas/cache.js";
 import type { GitHubTag } from "../schemas/github.js";
@@ -82,6 +82,10 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 							}),
 						);
 					}
+
+					const increments = options?.increments ?? "patch";
+					versions = filterByIncrements(versions, increments);
+					versions = semver.rsort(versions);
 
 					let resolvedDefault: string | undefined;
 					if (options?.defaultVersion) {

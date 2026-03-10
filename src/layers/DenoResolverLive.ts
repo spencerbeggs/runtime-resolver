@@ -3,7 +3,7 @@ import * as semver from "semver";
 import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { retryOnRateLimit } from "../lib/retry.js";
-import { resolveVersionFromList } from "../lib/semver-utils.js";
+import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
 import { normalizeDenoTag } from "../lib/tag-normalizers.js";
 import type { CachedTagData } from "../schemas/cache.js";
 import type { GitHubTag } from "../schemas/github.js";
@@ -82,6 +82,10 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 							}),
 						);
 					}
+
+					const increments = options?.increments ?? "patch";
+					versions = filterByIncrements(versions, increments);
+					versions = semver.rsort(versions);
 
 					let resolvedDefault: string | undefined;
 					if (options?.defaultVersion) {

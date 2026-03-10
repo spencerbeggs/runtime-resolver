@@ -6,11 +6,12 @@ import type { NetworkError } from "../errors/NetworkError.js";
 import type { ParseError } from "../errors/ParseError.js";
 import type { RateLimitError } from "../errors/RateLimitError.js";
 import type { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
-import type { ResolvedVersions } from "../schemas/common.js";
+import type { Increments, ResolvedVersions } from "../schemas/common.js";
 
 export interface BunResolverOptions {
 	readonly semverRange?: string;
 	readonly defaultVersion?: string;
+	readonly increments?: Increments;
 }
 
 type BunResolverError =

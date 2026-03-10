@@ -1,4 +1,5 @@
 import { Effect, Layer } from "effect";
+import * as semver from "semver";
 import { describe, expect, it } from "vitest";
 import { CacheError } from "../errors/CacheError.js";
 import { NetworkError } from "../errors/NetworkError.js";
@@ -122,6 +123,34 @@ describe("DenoResolver service", () => {
 			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
 		);
 		expect(result._tag).toBe("InvalidInputError");
+	});
+
+	it("filters versions by increments 'latest'", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* DenoResolver;
+				return yield* resolver.resolve({ increments: "latest" });
+			}).pipe(Effect.provide(makeTestLayer())),
+		);
+		// Should have at most one version per major
+		const majors = result.versions.map((v) => semver.major(v));
+		expect(new Set(majors).size).toBe(majors.length);
+		// Pin expected versions: latest per major from mock data
+		expect(result.versions).toEqual(["2.7.3", "1.40.0"]);
+	});
+
+	it("filters versions by increments 'minor'", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* DenoResolver;
+				return yield* resolver.resolve({ increments: "minor" });
+			}).pipe(Effect.provide(makeTestLayer())),
+		);
+		// Should have at most one version per major.minor
+		const minors = result.versions.map((v) => `${semver.major(v)}.${semver.minor(v)}`);
+		expect(new Set(minors).size).toBe(minors.length);
+		// Pin expected versions: latest per major.minor from mock data
+		expect(result.versions).toEqual(["2.7.3", "2.6.0", "2.1.0", "1.40.0"]);
 	});
 
 	it("falls back to cache on network error", async () => {
