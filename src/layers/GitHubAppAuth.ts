@@ -1,7 +1,7 @@
 import { createAppAuth } from "@octokit/auth-app";
 import { Effect, Layer } from "effect";
 import { Octokit } from "octokit";
-import { NetworkError } from "../errors/NetworkError.js";
+import { AuthenticationError } from "../errors/AuthenticationError.js";
 import { OctokitInstance } from "../services/OctokitInstance.js";
 
 export interface GitHubAppAuthConfig {
@@ -38,7 +38,7 @@ const resolveInstallationId = async (
 	return installations[0].id;
 };
 
-export const GitHubAppAuth = (config: GitHubAppAuthConfig): Layer.Layer<OctokitInstance, NetworkError> =>
+export const GitHubAppAuth = (config: GitHubAppAuthConfig): Layer.Layer<OctokitInstance, AuthenticationError> =>
 	Layer.effect(
 		OctokitInstance,
 		Effect.tryPromise({
@@ -58,8 +58,8 @@ export const GitHubAppAuth = (config: GitHubAppAuthConfig): Layer.Layer<OctokitI
 				return new Octokit({ auth: result.token });
 			},
 			catch: (error) =>
-				new NetworkError({
-					url: "github-app-auth",
+				new AuthenticationError({
+					method: "app",
 					message: error instanceof Error ? error.message : String(error),
 				}),
 		}),

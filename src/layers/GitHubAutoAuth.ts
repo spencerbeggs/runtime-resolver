@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 import { Octokit } from "octokit";
-import { AuthenticationError } from "../errors/AuthenticationError.js";
+import type { AuthenticationError } from "../errors/AuthenticationError.js";
 import { OctokitInstance } from "../services/OctokitInstance.js";
 import { GitHubAppAuth } from "./GitHubAppAuth.js";
 
@@ -31,15 +31,7 @@ export const GitHubAutoAuth: Layer.Layer<OctokitInstance, AuthenticationError> =
 				privateKey: privateKey,
 				...(installationId ? { installationId: Number(installationId) } : {}),
 			});
-			return yield* Effect.provide(OctokitInstance, appLayer).pipe(
-				Effect.mapError(
-					(error) =>
-						new AuthenticationError({
-							method: "app",
-							message: error.message,
-						}),
-				),
-			);
+			return yield* Effect.provide(OctokitInstance, appLayer);
 		}
 
 		// Priority 2: Token env vars (PAT first, then GITHUB_TOKEN)
