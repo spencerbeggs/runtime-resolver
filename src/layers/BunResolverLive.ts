@@ -1,6 +1,7 @@
-import { Effect, Layer, Schedule } from "effect";
+import { Effect, Layer } from "effect";
 import * as semver from "semver";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
+import { retryOnRateLimit } from "../lib/retry.js";
 import { resolveVersionFromList } from "../lib/semver-utils.js";
 import { normalizeBunTag } from "../lib/tag-normalizers.js";
 import type { CachedTagData } from "../schemas/cache.js";
@@ -20,14 +21,6 @@ const tagsToVersions = (tags: ReadonlyArray<GitHubTag>): string[] => {
 	}
 	return semver.rsort(versions);
 };
-
-const retryOnRateLimit = <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
-	effect.pipe(
-		Effect.retry({
-			schedule: Schedule.exponential("1 second").pipe(Schedule.compose(Schedule.recurs(3))),
-			while: (error) => (error as { _tag?: string })._tag === "RateLimitError",
-		}),
-	);
 
 export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | VersionCache> = Layer.effect(
 	BunResolver,

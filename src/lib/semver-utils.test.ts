@@ -51,4 +51,12 @@ describe("resolveVersionFromList", () => {
 	it("returns undefined for no match", () => {
 		expect(resolveVersionFromList("^99.0.0", versions)).toBeUndefined();
 	});
+
+	it("returns undefined for exact version not in list", () => {
+		expect(resolveVersionFromList("99.99.99", ["1.0.0", "2.0.0"])).toBeUndefined();
+	});
+
+	it("returns exact version when it exists in list", () => {
+		expect(resolveVersionFromList("2.0.0", ["1.0.0", "2.0.0", "3.0.0"])).toBe("2.0.0");
+	});
 });

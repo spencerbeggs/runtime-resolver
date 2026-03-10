@@ -60,7 +60,7 @@ export function filterByIncrements(versions: string[], increment: Increments): s
  */
 export function resolveVersionFromList(versionOrRange: string, versions: string[]): string | undefined {
 	if (semver.valid(versionOrRange)) {
-		return versionOrRange;
+		return versions.includes(versionOrRange) ? versionOrRange : undefined;
 	}
 
 	const matching = versions.filter((v) => semver.satisfies(v, versionOrRange));
