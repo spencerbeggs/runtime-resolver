@@ -25,7 +25,7 @@ export { NodeResolverLive } from "./layers/NodeResolverLive.js";
 export { VersionCacheLive } from "./layers/VersionCacheLive.js";
 export type { CachedNodeData, CachedTagData } from "./schemas/cache.js";
 // Schemas
-export type { Increments, NodePhase, ResolvedVersions, Runtime } from "./schemas/common.js";
+export type { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
 export type { GitHubRelease, GitHubReleaseList, GitHubTag, GitHubTagList } from "./schemas/github.js";
 export type { NodeDistIndex, NodeDistVersion, NodeReleaseSchedule, ReleaseScheduleEntry } from "./schemas/node.js";
 // Services

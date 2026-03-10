@@ -34,7 +34,7 @@ export const CliRuntimeSuccess = Schema.Struct({
 	}),
 	latest: Schema.String.annotations({ description: "Most recent version matching the range" }),
 	lts: Schema.optional(Schema.String.annotations({ description: "Current LTS version (Node.js only)" })),
-	default: Schema.optional(Schema.String.annotations({ description: "Default recommended version (Deno only)" })),
+	default: Schema.optional(Schema.String.annotations({ description: "Default recommended version" })),
 }).annotations({
 	identifier: "CliRuntimeSuccess",
 	description: "Successful version resolution for a single runtime",
@@ -62,15 +62,17 @@ export const CliRuntimeResult = Schema.Union(CliRuntimeSuccess, CliRuntimeError)
 });
 export type CliRuntimeResult = typeof CliRuntimeResult.Type;
 
+const CliResultsMap = Schema.Record({
+	key: Schema.String.annotations({ description: "Runtime name (node, bun, or deno)" }),
+	value: CliRuntimeResult,
+}).annotations({ description: "Map of runtime name to resolution result" });
+
 /**
  * Full CLI success response — all runtimes resolved.
  */
 export const CliSuccessResponse = Schema.Struct({
 	ok: Schema.Literal(true).annotations({ description: "True when all requested runtimes resolved successfully" }),
-	results: Schema.Record({
-		key: Schema.String.annotations({ description: "Runtime name (node, bun, or deno)" }),
-		value: CliRuntimeResult,
-	}).annotations({ description: "Map of runtime name to resolution result" }),
+	results: CliResultsMap,
 }).annotations({
 	identifier: "CliSuccessResponse",
 	description: "All requested runtimes resolved successfully",
@@ -84,10 +86,7 @@ export const CliErrorResponse = Schema.Struct({
 	ok: Schema.Literal(false).annotations({
 		description: "False when one or more requested runtimes failed to resolve",
 	}),
-	results: Schema.Record({
-		key: Schema.String.annotations({ description: "Runtime name (node, bun, or deno)" }),
-		value: CliRuntimeResult,
-	}).annotations({ description: "Map of runtime name to resolution result" }),
+	results: CliResultsMap,
 }).annotations({
 	identifier: "CliErrorResponse",
 	description: "One or more requested runtimes failed to resolve",
