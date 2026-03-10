@@ -1,5 +1,6 @@
 import type { Effect } from "effect";
 import { Context } from "effect";
+import type { AuthenticationError } from "../errors/AuthenticationError.js";
 import type { NetworkError } from "../errors/NetworkError.js";
 import type { ParseError } from "../errors/ParseError.js";
 import type { RateLimitError } from "../errors/RateLimitError.js";
@@ -15,13 +16,13 @@ export interface GitHubClientShape {
 		owner: string,
 		repo: string,
 		options?: ListOptions,
-	) => Effect.Effect<ReadonlyArray<GitHubTag>, NetworkError | RateLimitError | ParseError>;
+	) => Effect.Effect<ReadonlyArray<GitHubTag>, AuthenticationError | NetworkError | RateLimitError | ParseError>;
 
 	readonly listReleases: (
 		owner: string,
 		repo: string,
 		options?: ListOptions,
-	) => Effect.Effect<ReadonlyArray<GitHubRelease>, NetworkError | RateLimitError | ParseError>;
+	) => Effect.Effect<ReadonlyArray<GitHubRelease>, AuthenticationError | NetworkError | RateLimitError | ParseError>;
 
 	readonly getJson: <A>(
 		url: string,

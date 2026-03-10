@@ -1,5 +1,6 @@
 import type { Effect } from "effect";
 import { Context } from "effect";
+import type { AuthenticationError } from "../errors/AuthenticationError.js";
 import type { CacheError } from "../errors/CacheError.js";
 import type { FreshnessError } from "../errors/FreshnessError.js";
 import type { InvalidInputError } from "../errors/InvalidInputError.js";
@@ -17,6 +18,7 @@ export interface DenoResolverOptions {
 }
 
 type DenoResolverError =
+	| AuthenticationError
 	| NetworkError
 	| ParseError
 	| RateLimitError

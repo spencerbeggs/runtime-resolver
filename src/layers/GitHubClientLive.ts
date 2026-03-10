@@ -1,4 +1,5 @@
 import { Effect, Layer, Schema } from "effect";
+import { AuthenticationError } from "../errors/AuthenticationError.js";
 import { NetworkError } from "../errors/NetworkError.js";
 import { ParseError } from "../errors/ParseError.js";
 import { RateLimitError } from "../errors/RateLimitError.js";
@@ -7,8 +8,15 @@ import type { ListOptions } from "../services/GitHubClient.js";
 import { GitHubClient } from "../services/GitHubClient.js";
 import { OctokitInstance } from "../services/OctokitInstance.js";
 
-const mapOctokitError = (error: unknown, url: string): NetworkError | RateLimitError => {
+const mapOctokitError = (error: unknown, url: string): NetworkError | RateLimitError | AuthenticationError => {
 	const err = error as { status?: number; response?: { headers?: Record<string, string> } };
+
+	if (err.status === 401) {
+		return new AuthenticationError({
+			method: "token",
+			message: `GitHub API authentication failed for ${url}`,
+		});
+	}
 
 	if (err.status === 403 || err.status === 429) {
 		const headers = err.response?.headers ?? {};
