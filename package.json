@@ -17,9 +17,12 @@
 		"cli"
 	],
 	"homepage": "https://github.com/spencerbeggs/runtime-resolver#readme",
+	"bugs": {
+		"url": "https://github.com/spencerbeggs/runtime-resolver/issues"
+	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/spencerbeggs/runtime-resolver.git"
+		"url": "git+https://github.com/spencerbeggs/runtime-resolver.git"
 	},
 	"license": "MIT",
 	"author": {
