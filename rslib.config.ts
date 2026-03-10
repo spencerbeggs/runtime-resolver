@@ -10,7 +10,6 @@ export default NodeLibraryBuilder.create({
 		delete pkg.scripts;
 		delete pkg.publishConfig;
 		delete pkg.devEngines;
-		delete pkg.devEngines;
 		return pkg;
 	},
 });
