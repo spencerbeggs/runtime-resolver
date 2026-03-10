@@ -29,6 +29,7 @@ export type CliErrorDetail = typeof CliErrorDetail.Type;
  */
 export const CliRuntimeSuccess = Schema.Struct({
 	ok: Schema.Literal(true).annotations({ description: "Indicates successful resolution" }),
+	source: Schema.String.annotations({ description: "Data source: 'api' or 'cache'" }),
 	versions: Schema.Array(Schema.String.annotations({ description: "Semver version string" })).annotations({
 		description: "All resolved versions matching the semver range",
 	}),

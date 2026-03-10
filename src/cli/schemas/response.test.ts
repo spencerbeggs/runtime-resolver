@@ -47,6 +47,7 @@ describe("CliRuntimeSuccess", () => {
 	it("decodes a valid success with all fields", () => {
 		const input = {
 			ok: true,
+			source: "api",
 			versions: ["22.0.0", "20.0.0"],
 			latest: "22.0.0",
 			lts: "20.0.0",
@@ -54,6 +55,7 @@ describe("CliRuntimeSuccess", () => {
 		};
 		const result = decode(CliRuntimeSuccess)(input);
 		expect(result.ok).toBe(true);
+		expect(result.source).toBe("api");
 		expect(result.versions).toEqual(["22.0.0", "20.0.0"]);
 		expect(result.latest).toBe("22.0.0");
 		expect(result.lts).toBe("20.0.0");
@@ -63,11 +65,13 @@ describe("CliRuntimeSuccess", () => {
 	it("decodes a valid success without optional fields", () => {
 		const input = {
 			ok: true,
+			source: "cache",
 			versions: ["1.0.0"],
 			latest: "1.0.0",
 		};
 		const result = decode(CliRuntimeSuccess)(input);
 		expect(result.ok).toBe(true);
+		expect(result.source).toBe("cache");
 		expect(result.versions).toEqual(["1.0.0"]);
 		expect(result.latest).toBe("1.0.0");
 		expect(result.lts).toBeUndefined();
@@ -77,6 +81,7 @@ describe("CliRuntimeSuccess", () => {
 	it("rejects invalid ok value", () => {
 		const input = {
 			ok: false,
+			source: "api",
 			versions: ["1.0.0"],
 			latest: "1.0.0",
 		};
@@ -121,6 +126,7 @@ describe("CliRuntimeResult", () => {
 	it("decodes a success variant", () => {
 		const input = {
 			ok: true,
+			source: "api",
 			versions: ["1.0.0"],
 			latest: "1.0.0",
 		};
@@ -148,12 +154,14 @@ describe("CliResponse", () => {
 			results: {
 				node: {
 					ok: true,
+					source: "api",
 					versions: ["22.0.0", "20.0.0"],
 					latest: "22.0.0",
 					lts: "20.0.0",
 				},
 				bun: {
 					ok: true,
+					source: "cache",
 					versions: ["1.1.0"],
 					latest: "1.1.0",
 				},
@@ -170,6 +178,7 @@ describe("CliResponse", () => {
 			results: {
 				node: {
 					ok: true,
+					source: "api",
 					versions: ["22.0.0"],
 					latest: "22.0.0",
 				},
@@ -193,6 +202,7 @@ describe("CliResponse", () => {
 			results: {
 				bun: {
 					ok: true,
+					source: "api",
 					versions: ["1.0.0"],
 					latest: "1.0.0",
 				},

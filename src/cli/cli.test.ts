@@ -17,6 +17,7 @@ describe("CLI schemas integration", () => {
 			results: {
 				node: {
 					ok: true as const,
+					source: "api",
 					versions: ["22.15.0", "20.19.0"],
 					latest: "22.15.0",
 					lts: "20.19.0",
@@ -33,6 +34,7 @@ describe("CLI schemas integration", () => {
 			results: {
 				node: {
 					ok: true as const,
+					source: "api",
 					versions: ["22.15.0"],
 					latest: "22.15.0",
 				},
@@ -57,6 +59,7 @@ describe("CLI schemas integration", () => {
 			results: {
 				deno: {
 					ok: true as const,
+					source: "cache",
 					versions: ["2.0.0", "1.45.0"],
 					latest: "2.0.0",
 				},

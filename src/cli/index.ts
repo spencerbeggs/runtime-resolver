@@ -5,9 +5,13 @@ import { NodeContext, NodeRuntime } from "@effect/platform-node";
 import { Cause, Console, Effect } from "effect";
 
 import {
+	bunDefaultOption,
 	bunOption,
+	denoDefaultOption,
 	denoOption,
-	nodeIncrementsOption,
+	incrementsOption,
+	nodeDateOption,
+	nodeDefaultOption,
 	nodeOption,
 	nodePhasesOption,
 	prettyOption,
@@ -22,7 +26,11 @@ const rootCommand = Command.make(
 		bun: bunOption,
 		deno: denoOption,
 		nodePhases: nodePhasesOption,
-		nodeIncrements: nodeIncrementsOption,
+		increments: incrementsOption,
+		nodeDefault: nodeDefaultOption,
+		bunDefault: bunDefaultOption,
+		denoDefault: denoDefaultOption,
+		nodeDate: nodeDateOption,
 		pretty: prettyOption,
 		schema: schemaOption,
 	},

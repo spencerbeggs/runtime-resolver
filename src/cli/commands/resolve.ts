@@ -16,9 +16,35 @@ export const nodeOption = Options.text("node").pipe(Options.optional);
 export const bunOption = Options.text("bun").pipe(Options.optional);
 export const denoOption = Options.text("deno").pipe(Options.optional);
 export const nodePhasesOption = Options.text("node-phases").pipe(Options.optional);
-export const nodeIncrementsOption = Options.text("node-increments").pipe(Options.optional);
+export const incrementsOption = Options.text("increments").pipe(Options.optional);
+export const nodeDefaultOption = Options.text("node-default").pipe(Options.optional);
+export const bunDefaultOption = Options.text("bun-default").pipe(Options.optional);
+export const denoDefaultOption = Options.text("deno-default").pipe(Options.optional);
+export const nodeDateOption = Options.text("node-date").pipe(Options.optional);
 export const prettyOption = Options.boolean("pretty").pipe(Options.withDefault(false));
 export const schemaOption = Options.boolean("schema").pipe(Options.withDefault(false));
+
+// --- Validation helpers ---
+
+const VALID_PHASES = ["current", "active-lts", "maintenance-lts", "end-of-life"] as const;
+const VALID_INCREMENTS = ["latest", "minor", "patch"] as const;
+
+const validatePhases = (raw: string): NodePhase[] => {
+	const phases = raw.split(",").map((s) => s.trim());
+	for (const p of phases) {
+		if (!(VALID_PHASES as readonly string[]).includes(p)) {
+			throw new Error(`Invalid phase: "${p}". Valid values: ${VALID_PHASES.join(", ")}`);
+		}
+	}
+	return phases as NodePhase[];
+};
+
+const validateIncrements = (raw: string): Increments => {
+	if (!(VALID_INCREMENTS as readonly string[]).includes(raw)) {
+		throw new Error(`Invalid increments value: "${raw}". Valid values: ${VALID_INCREMENTS.join(", ")}`);
+	}
+	return raw as Increments;
+};
 
 // --- Error serialization ---
 
@@ -39,11 +65,18 @@ type RuntimeEntry = readonly [string, CliRuntimeResult];
 
 const toSuccess = (
 	name: string,
-	result: { versions: readonly string[]; latest: string; lts?: string | undefined; default?: string | undefined },
+	result: {
+		source: string;
+		versions: readonly string[];
+		latest: string;
+		lts?: string | undefined;
+		default?: string | undefined;
+	},
 ): RuntimeEntry => [
 	name,
 	{
 		ok: true as const,
+		source: result.source,
 		versions: [...result.versions],
 		latest: result.latest,
 		...(result.lts !== undefined ? { lts: result.lts } : {}),
@@ -58,19 +91,19 @@ const toError = (name: string, error: unknown): RuntimeEntry => [
 
 const resolveNode = (
 	semverRange: string,
-	phases: Option.Option<string>,
-	increments: Option.Option<string>,
+	phases?: NodePhase[],
+	increments?: Increments,
+	defaultVersion?: string,
+	date?: Date,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* NodeResolver;
-		const nodePhases = Option.isSome(phases)
-			? (phases.value.split(",").map((s) => s.trim()) as NodePhase[])
-			: undefined;
-		const nodeIncrements = Option.isSome(increments) ? (increments.value as Increments) : undefined;
 		const result = yield* resolver.resolve({
 			semverRange,
-			...(nodePhases ? { phases: nodePhases } : {}),
-			...(nodeIncrements ? { increments: nodeIncrements } : {}),
+			...(phases ? { phases } : {}),
+			...(increments ? { increments } : {}),
+			...(defaultVersion ? { defaultVersion } : {}),
+			...(date ? { date } : {}),
 		});
 		return toSuccess("node", result);
 	}).pipe(
@@ -78,20 +111,36 @@ const resolveNode = (
 		Effect.catchAll((error) => Effect.succeed(toError("node", error))),
 	);
 
-const resolveBun = (semverRange: string): Effect.Effect<RuntimeEntry> =>
+const resolveBun = (
+	semverRange: string,
+	increments?: Increments,
+	defaultVersion?: string,
+): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* BunResolver;
-		const result = yield* resolver.resolve({ semverRange });
+		const result = yield* resolver.resolve({
+			semverRange,
+			...(increments ? { increments } : {}),
+			...(defaultVersion ? { defaultVersion } : {}),
+		});
 		return toSuccess("bun", result);
 	}).pipe(
 		Effect.provide(BunLayer),
 		Effect.catchAll((error) => Effect.succeed(toError("bun", error))),
 	);
 
-const resolveDeno = (semverRange: string): Effect.Effect<RuntimeEntry> =>
+const resolveDeno = (
+	semverRange: string,
+	increments?: Increments,
+	defaultVersion?: string,
+): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* DenoResolver;
-		const result = yield* resolver.resolve({ semverRange });
+		const result = yield* resolver.resolve({
+			semverRange,
+			...(increments ? { increments } : {}),
+			...(defaultVersion ? { defaultVersion } : {}),
+		});
 		return toSuccess("deno", result);
 	}).pipe(
 		Effect.provide(DenoLayer),
@@ -112,7 +161,11 @@ export const resolveHandler = (args: {
 	readonly bun: Option.Option<string>;
 	readonly deno: Option.Option<string>;
 	readonly nodePhases: Option.Option<string>;
-	readonly nodeIncrements: Option.Option<string>;
+	readonly increments: Option.Option<string>;
+	readonly nodeDefault: Option.Option<string>;
+	readonly bunDefault: Option.Option<string>;
+	readonly denoDefault: Option.Option<string>;
+	readonly nodeDate: Option.Option<string>;
 	readonly pretty: boolean;
 	readonly schema: boolean;
 }) =>
@@ -128,23 +181,54 @@ export const resolveHandler = (args: {
 		const hasBun = Option.isSome(args.bun);
 		const hasDeno = Option.isSome(args.deno);
 
-		// No runtime specified — output JSON error envelope and exit 0
 		if (!hasNode && !hasBun && !hasDeno) {
-			yield* Console.error(formatResponse(false, {}, args.pretty));
+			yield* Console.error(
+				"No runtime specified. Use --node, --bun, or --deno to resolve versions.\nRun with --help for usage information.",
+			);
 			return;
+		}
+
+		// Validate and extract phases
+		let validatedPhases: NodePhase[] | undefined;
+		if (Option.isSome(args.nodePhases)) {
+			try {
+				validatedPhases = validatePhases(args.nodePhases.value);
+			} catch (e) {
+				yield* Console.error((e as Error).message);
+				return;
+			}
+		}
+
+		// Validate and extract increments
+		let validatedIncrements: Increments | undefined;
+		if (Option.isSome(args.increments)) {
+			validatedIncrements = validateIncrements(args.increments.value);
+		}
+
+		// Parse node date
+		let nodeDate: Date | undefined;
+		if (Option.isSome(args.nodeDate)) {
+			nodeDate = new Date(args.nodeDate.value);
+			if (Number.isNaN(nodeDate.getTime())) {
+				yield* Console.error(`Invalid date: "${args.nodeDate.value}". Use ISO 8601 format (e.g. 2024-01-15).`);
+				return;
+			}
 		}
 
 		// Resolve each requested runtime independently
 		const tasks: Effect.Effect<RuntimeEntry>[] = [];
 
 		if (hasNode) {
-			tasks.push(resolveNode(args.node.value, args.nodePhases, args.nodeIncrements));
+			const nodeDefaultVersion = Option.isSome(args.nodeDefault) ? args.nodeDefault.value : undefined;
+			tasks.push(resolveNode(args.node.value, validatedPhases, validatedIncrements, nodeDefaultVersion, nodeDate));
 		}
 		if (hasBun) {
-			tasks.push(resolveBun(args.bun.value));
+			const bunDefaultVersion = Option.isSome(args.bunDefault) ? args.bunDefault.value : undefined;
+			tasks.push(resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion));
 		}
 		if (hasDeno) {
-			tasks.push(resolveDeno(args.deno.value));
+			const denoDefaultVersion = Option.isSome(args.denoDefault) ? args.denoDefault.value : undefined;
+			tasks.push(resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion));
 		}
 
 		const entries = yield* Effect.all(tasks, { concurrency: "unbounded" });
