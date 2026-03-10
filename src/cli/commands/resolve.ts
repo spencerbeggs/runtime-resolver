@@ -2,7 +2,7 @@
 import { Options } from "@effect/cli";
 import { Console, Effect, Option } from "effect";
 import { BunLayer, DenoLayer, NodeLayer } from "../../layers/index.js";
-import type { Increments, NodePhase } from "../../schemas/common.js";
+import type { Freshness, Increments, NodePhase } from "../../schemas/common.js";
 import { BunResolver } from "../../services/BunResolver.js";
 import { DenoResolver } from "../../services/DenoResolver.js";
 import { NodeResolver } from "../../services/NodeResolver.js";
@@ -20,6 +20,7 @@ export const incrementsOption = Options.text("increments").pipe(Options.optional
 export const nodeDefaultOption = Options.text("node-default").pipe(Options.optional);
 export const bunDefaultOption = Options.text("bun-default").pipe(Options.optional);
 export const denoDefaultOption = Options.text("deno-default").pipe(Options.optional);
+export const freshnessOption = Options.text("freshness").pipe(Options.optional);
 export const nodeDateOption = Options.text("node-date").pipe(Options.optional);
 export const prettyOption = Options.boolean("pretty").pipe(Options.withDefault(false));
 export const schemaOption = Options.boolean("schema").pipe(Options.withDefault(false));
@@ -28,6 +29,7 @@ export const schemaOption = Options.boolean("schema").pipe(Options.withDefault(f
 
 const VALID_PHASES = ["current", "active-lts", "maintenance-lts", "end-of-life"] as const;
 const VALID_INCREMENTS = ["latest", "minor", "patch"] as const;
+const VALID_FRESHNESS = ["auto", "api", "cache"] as const;
 
 const validatePhases = (raw: string): NodePhase[] => {
 	const phases = raw.split(",").map((s) => s.trim());
@@ -44,6 +46,13 @@ const validateIncrements = (raw: string): Increments => {
 		throw new Error(`Invalid increments value: "${raw}". Valid values: ${VALID_INCREMENTS.join(", ")}`);
 	}
 	return raw as Increments;
+};
+
+const validateFreshness = (raw: string): Freshness => {
+	if (!(VALID_FRESHNESS as readonly string[]).includes(raw)) {
+		throw new Error(`Invalid freshness value: "${raw}". Valid values: ${VALID_FRESHNESS.join(", ")}`);
+	}
+	return raw as Freshness;
 };
 
 // --- Error serialization ---
@@ -95,6 +104,7 @@ const resolveNode = (
 	increments?: Increments,
 	defaultVersion?: string,
 	date?: Date,
+	freshness?: Freshness,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* NodeResolver;
@@ -104,6 +114,7 @@ const resolveNode = (
 			...(increments ? { increments } : {}),
 			...(defaultVersion ? { defaultVersion } : {}),
 			...(date ? { date } : {}),
+			...(freshness ? { freshness } : {}),
 		});
 		return toSuccess("node", result);
 	}).pipe(
@@ -115,6 +126,7 @@ const resolveBun = (
 	semverRange: string,
 	increments?: Increments,
 	defaultVersion?: string,
+	freshness?: Freshness,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* BunResolver;
@@ -122,6 +134,7 @@ const resolveBun = (
 			semverRange,
 			...(increments ? { increments } : {}),
 			...(defaultVersion ? { defaultVersion } : {}),
+			...(freshness ? { freshness } : {}),
 		});
 		return toSuccess("bun", result);
 	}).pipe(
@@ -133,6 +146,7 @@ const resolveDeno = (
 	semverRange: string,
 	increments?: Increments,
 	defaultVersion?: string,
+	freshness?: Freshness,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
 		const resolver = yield* DenoResolver;
@@ -140,6 +154,7 @@ const resolveDeno = (
 			semverRange,
 			...(increments ? { increments } : {}),
 			...(defaultVersion ? { defaultVersion } : {}),
+			...(freshness ? { freshness } : {}),
 		});
 		return toSuccess("deno", result);
 	}).pipe(
@@ -162,6 +177,7 @@ export const resolveHandler = (args: {
 	readonly deno: Option.Option<string>;
 	readonly nodePhases: Option.Option<string>;
 	readonly increments: Option.Option<string>;
+	readonly freshness: Option.Option<string>;
 	readonly nodeDefault: Option.Option<string>;
 	readonly bunDefault: Option.Option<string>;
 	readonly denoDefault: Option.Option<string>;
@@ -170,8 +186,26 @@ export const resolveHandler = (args: {
 	readonly schema: boolean;
 }) =>
 	Effect.gen(function* () {
-		// Handle --schema flag
+		// Handle --schema flag with strict validation
 		if (args.schema) {
+			const resolveFlags = [
+				args.node,
+				args.bun,
+				args.deno,
+				args.nodePhases,
+				args.increments,
+				args.freshness,
+				args.nodeDefault,
+				args.bunDefault,
+				args.denoDefault,
+				args.nodeDate,
+			];
+			const hasResolveFlags = resolveFlags.some((f) => Option.isSome(f));
+			if (hasResolveFlags) {
+				yield* Console.error("Error: --schema cannot be combined with resolve flags (--node, --bun, --deno, etc.)");
+				return;
+			}
+
 			const { cliJsonSchema } = yield* Effect.promise(() => import("../schemas/json-schema.js"));
 			yield* Console.log(JSON.stringify(cliJsonSchema, null, 2));
 			return;
@@ -205,6 +239,17 @@ export const resolveHandler = (args: {
 			validatedIncrements = validateIncrements(args.increments.value);
 		}
 
+		// Validate and extract freshness
+		let validatedFreshness: Freshness | undefined;
+		if (Option.isSome(args.freshness)) {
+			try {
+				validatedFreshness = validateFreshness(args.freshness.value);
+			} catch (e) {
+				yield* Console.error((e as Error).message);
+				return;
+			}
+		}
+
 		// Parse node date
 		let nodeDate: Date | undefined;
 		if (Option.isSome(args.nodeDate)) {
@@ -220,15 +265,24 @@ export const resolveHandler = (args: {
 
 		if (hasNode) {
 			const nodeDefaultVersion = Option.isSome(args.nodeDefault) ? args.nodeDefault.value : undefined;
-			tasks.push(resolveNode(args.node.value, validatedPhases, validatedIncrements, nodeDefaultVersion, nodeDate));
+			tasks.push(
+				resolveNode(
+					args.node.value,
+					validatedPhases,
+					validatedIncrements,
+					nodeDefaultVersion,
+					nodeDate,
+					validatedFreshness,
+				),
+			);
 		}
 		if (hasBun) {
 			const bunDefaultVersion = Option.isSome(args.bunDefault) ? args.bunDefault.value : undefined;
-			tasks.push(resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion));
+			tasks.push(resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion, validatedFreshness));
 		}
 		if (hasDeno) {
 			const denoDefaultVersion = Option.isSome(args.denoDefault) ? args.denoDefault.value : undefined;
-			tasks.push(resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion));
+			tasks.push(resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion, validatedFreshness));
 		}
 
 		const entries = yield* Effect.all(tasks, { concurrency: "unbounded" });
