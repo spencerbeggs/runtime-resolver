@@ -46,6 +46,7 @@ phase and semver range.
 | `defaultVersion` | `string` | -- | Version to include if it matches |
 | `phases` | `NodePhase[]` | `["current", "active-lts"]` | Filter by release phase |
 | `increments` | `Increments` | `"latest"` | Version granularity |
+| `freshness` | `Freshness` | `"auto"` | Data freshness strategy |
 | `date` | `Date` | `new Date()` | Reference date for phase calculation |
 
 #### semverRange
@@ -136,6 +137,25 @@ const all = await resolveNode({
 console.log(all.versions); // ["22.15.2", "22.15.1", "22.15.0"]
 ```
 
+#### freshness
+
+Control how the resolver fetches version data. The `Freshness` type is
+`"auto" | "api" | "cache"`:
+
+- `"auto"` (default) -- Try the API first, fall back to the bundled cache on
+  network failure.
+- `"api"` -- Require fresh data from the API. Fails with an error if the
+  network is unavailable.
+- `"cache"` -- Use the bundled cache only, skipping all network requests.
+
+```typescript
+// Require live data -- fail if the network is down
+const result = await resolveNode({ freshness: "api" });
+
+// Offline mode -- never hit the network
+const cached = await resolveNode({ freshness: "cache" });
+```
+
 #### date
 
 Override the reference date used for phase calculation. Useful for reproducible
@@ -159,6 +179,7 @@ Resolves Bun versions from GitHub tags.
 | `semverRange` | `string` | `"*"` (all versions) | Semver range to filter versions |
 | `defaultVersion` | `string` | -- | Version to include if it matches |
 | `increments` | `Increments` | `"latest"` | Version granularity |
+| `freshness` | `Freshness` | `"auto"` | Data freshness strategy |
 
 ```typescript
 import { resolveBun } from "runtime-resolver";
@@ -194,6 +215,7 @@ Resolves Deno versions from GitHub tags.
 | `semverRange` | `string` | `"*"` (all versions) | Semver range to filter versions |
 | `defaultVersion` | `string` | -- | Version to include if it matches |
 | `increments` | `Increments` | `"latest"` | Version granularity |
+| `freshness` | `Freshness` | `"auto"` | Data freshness strategy |
 
 ```typescript
 import { resolveDeno } from "runtime-resolver";
@@ -296,6 +318,7 @@ import type {
   ResolvedVersions,
   NodePhase,
   Increments,
+  Freshness,
   Source,
 } from "runtime-resolver";
 ```

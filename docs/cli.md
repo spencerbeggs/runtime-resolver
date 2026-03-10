@@ -31,6 +31,7 @@ npx runtime-resolver --node ">=20"
 | `--bun-default <version>` | Pin a default version for Bun | `--bun-default "1.1.0"` |
 | `--deno-default <version>` | Pin a default version for Deno | `--deno-default "2.0.0"` |
 | `--node-date <date>` | ISO date for reproducible Node.js phase calculations | `--node-date "2024-01-15"` |
+| `--freshness <strategy>` | Data freshness strategy: `auto`, `api`, or `cache` | `--freshness cache` |
 | `--pretty` | Pretty-print the JSON output | |
 | `--schema` | Print the JSON Schema for the response format and exit | |
 | `--version` | Print the CLI version and exit | |
@@ -43,6 +44,41 @@ requested runtimes (Node.js, Bun, and Deno):
 - `latest` -- only the latest matching version per major line (default)
 - `minor` -- one version per minor release
 - `patch` -- every patch version
+
+### Freshness
+
+The `--freshness` flag controls how version data is fetched:
+
+- `auto` -- Try the API first, fall back to the bundled cache on network
+  failure. This is the default.
+- `api` -- Require fresh data from the API. Fails with a `FreshnessError` if
+  the network is unavailable.
+- `cache` -- Use the bundled cache only, skipping all network requests.
+
+```bash
+# Require live data in CI
+runtime-resolver --node ">=20" --freshness api
+
+# Offline mode -- never contact the network
+runtime-resolver --node ">=20" --freshness cache
+```
+
+### Schema Validation
+
+The `--schema` flag prints the JSON Schema for the response format and exits.
+It cannot be combined with any resolve flags (`--node`, `--bun`, `--deno`,
+`--freshness`, `--increments`, `--node-phases`, `--node-default`,
+`--bun-default`, `--deno-default`, `--node-date`). If `--schema` is used
+alongside any of these flags, the CLI prints an error and exits:
+
+```bash
+# Valid: print the schema
+runtime-resolver --schema
+
+# Invalid: --schema with resolve flags
+runtime-resolver --schema --node ">=20"
+# Error: --schema cannot be combined with resolve flags (--node, --bun, --deno, etc.)
+```
 
 ### Node.js Phases
 
@@ -144,6 +180,7 @@ field, and additional metadata specific to the error:
 | `ParseError` | Upstream data could not be parsed | `source` |
 | `VersionNotFoundError` | No versions match the given range | `runtime`, `constraint` |
 | `InvalidInputError` | Invalid semver range or option value | `field`, `value` |
+| `FreshnessError` | Freshness strategy cannot be satisfied | `strategy` |
 
 ## Usage with jq
 

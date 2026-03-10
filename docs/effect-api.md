@@ -34,10 +34,12 @@ interface NodeResolverShape {
 | `defaultVersion` | `string` | -- |
 | `phases` | `NodePhase[]` | `["current", "active-lts"]` |
 | `increments` | `Increments` | `"latest"` |
+| `freshness` | `Freshness` | `"auto"` |
 | `date` | `Date` | `new Date()` |
 
 `NodePhase` is `"current" | "active-lts" | "maintenance-lts" | "end-of-life"`.
 `Increments` is `"latest" | "minor" | "patch"`.
+`Freshness` is `"auto" | "api" | "cache"`.
 
 When no `defaultVersion` is provided, the `default` field in the result is
 automatically set to the latest LTS version.
@@ -58,6 +60,7 @@ interface BunResolverShape {
 | `semverRange` | `string` | `"*"` |
 | `defaultVersion` | `string` | -- |
 | `increments` | `Increments` | `"latest"` |
+| `freshness` | `Freshness` | `"auto"` |
 
 ### DenoResolver
 
@@ -75,6 +78,7 @@ interface DenoResolverShape {
 | `semverRange` | `string` | `"*"` |
 | `defaultVersion` | `string` | -- |
 | `increments` | `Increments` | `"latest"` |
+| `freshness` | `Freshness` | `"auto"` |
 
 ### GitHubClient
 
@@ -208,12 +212,13 @@ All errors extend `Data.TaggedError`. Discriminate with `Effect.catchTag`.
 | `VersionNotFoundError` | `"VersionNotFoundError"` | `runtime`, `constraint`, `message` |
 | `InvalidInputError` | `"InvalidInputError"` | `field`, `value`, `message` |
 | `CacheError` | `"CacheError"` | `operation` (`"read"` or `"write"`), `message` |
+| `FreshnessError` | `"FreshnessError"` | `strategy`, `message` |
 
-All three resolver error unions include `InvalidInputError`:
+All three resolver error unions include `InvalidInputError` and `FreshnessError`:
 
-- **`NodeResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
-- **`BunResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
-- **`DenoResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+- **`NodeResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
+- **`BunResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
+- **`DenoResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
 
 ### Handling errors with catchTag
 
@@ -223,6 +228,7 @@ import {
   NodeResolver,
   VersionNotFoundError,
   RateLimitError,
+  FreshnessError,
 } from "runtime-resolver/effect"
 
 const program = Effect.gen(function* () {

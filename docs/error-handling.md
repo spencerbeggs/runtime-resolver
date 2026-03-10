@@ -74,13 +74,23 @@ Thrown when the version cache fails to read or write.
 | `operation` | `"read"` or `"write"` | Which cache operation failed |
 | `message` | `string` | Human-readable description |
 
+### FreshnessError
+
+Thrown when the requested freshness strategy cannot be satisfied. For example,
+`freshness: "api"` fails with this error when the network is unavailable.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `strategy` | `Freshness` | The freshness strategy that was set |
+| `message` | `string` | Human-readable description |
+
 ## Error Unions by Runtime
 
 Each resolver's error union includes all relevant error types:
 
-- **Node.js**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
-- **Bun**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
-- **Deno**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError`
+- **Node.js**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
+- **Bun**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
+- **Deno**: `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError`
 
 ## Promise API Error Handling
 

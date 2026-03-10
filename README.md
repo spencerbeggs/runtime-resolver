@@ -13,6 +13,7 @@ cache.
 - Filter Node.js results by release phase (current, active-lts, maintenance-lts)
 - Control version granularity with increment levels (latest, minor, patch) for all runtimes
 - Resolve a single version from a semver range with `resolveVersion`
+- Control data freshness with `freshness` option (`"auto"`, `"api"`, or `"cache"`)
 - Track data provenance with the `source` field (`"api"` or `"cache"`)
 - Input validation with typed `InvalidInputError` for all resolvers
 - Offline fallback using bundled version data when GitHub is unreachable
