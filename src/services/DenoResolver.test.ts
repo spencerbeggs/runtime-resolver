@@ -114,6 +114,16 @@ describe("DenoResolver service", () => {
 		}
 	});
 
+	it("fails with InvalidInputError for invalid semver range", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* DenoResolver;
+				return yield* resolver.resolve({ semverRange: "not-a-range!!!" });
+			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+		);
+		expect(result._tag).toBe("InvalidInputError");
+	});
+
 	it("falls back to cache on network error", async () => {
 		const failingClient = makeTestGitHubClient({
 			listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),

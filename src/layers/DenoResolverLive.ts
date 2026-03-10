@@ -1,5 +1,6 @@
 import { Effect, Layer } from "effect";
 import * as semver from "semver";
+import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { retryOnRateLimit } from "../lib/retry.js";
 import { resolveVersionFromList } from "../lib/semver-utils.js";
@@ -46,6 +47,17 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 		return {
 			resolve: (options?: DenoResolverOptions) =>
 				Effect.gen(function* () {
+					const semverRange = options?.semverRange ?? "*";
+					if (!semver.validRange(semverRange)) {
+						return yield* Effect.fail(
+							new InvalidInputError({
+								field: "semverRange",
+								value: semverRange,
+								message: `Invalid semver range: "${semverRange}"`,
+							}),
+						);
+					}
+
 					const { tags, source } = yield* fetchDenoTags();
 					const allVersions = tagsToVersions(tags);
 
@@ -53,26 +65,20 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "deno",
-								constraint: options?.semverRange ?? "*",
+								constraint: semverRange,
 								message: "No valid Deno versions found",
 							}),
 						);
 					}
 
-					let versions: string[];
-					const semverRange = options?.semverRange;
-					if (semverRange) {
-						versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
-					} else {
-						versions = allVersions;
-					}
+					let versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
 
 					if (versions.length === 0) {
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "deno",
-								constraint: options?.semverRange ?? "*",
-								message: `No Deno versions found matching "${options?.semverRange}"`,
+								constraint: semverRange,
+								message: `No Deno versions found matching "${semverRange}"`,
 							}),
 						);
 					}

@@ -1,5 +1,6 @@
 import { Effect, Layer, Schema } from "effect";
 import * as semver from "semver";
+import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { ParseError } from "../errors/ParseError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { findLatestLts, getVersionPhase } from "../lib/node-phases.js";
@@ -73,11 +74,21 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 		return {
 			resolve: (options?: NodeResolverOptions) =>
 				Effect.gen(function* () {
+					const semverRange = options?.semverRange ?? "*";
+					if (!semver.validRange(semverRange)) {
+						return yield* Effect.fail(
+							new InvalidInputError({
+								field: "semverRange",
+								value: semverRange,
+								message: `Invalid semver range: "${semverRange}"`,
+							}),
+						);
+					}
+
 					const { allVersions, schedule, source } = yield* fetchWithCacheFallback();
 
 					const phases: ReadonlyArray<NodePhase> = options?.phases ?? ["current", "active-lts"];
 					const increments = options?.increments ?? "latest";
-					const semverRange = options?.semverRange ?? ">=0.0.0";
 					const now = options?.date ?? new Date();
 
 					const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
@@ -128,6 +139,16 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 				Effect.gen(function* () {
 					if (semver.valid(versionOrRange)) {
 						return versionOrRange;
+					}
+
+					if (!semver.validRange(versionOrRange)) {
+						return yield* Effect.fail(
+							new InvalidInputError({
+								field: "versionOrRange",
+								value: versionOrRange,
+								message: `Invalid semver range: "${versionOrRange}"`,
+							}),
+						);
 					}
 
 					const { allVersions } = yield* fetchWithCacheFallback();

@@ -204,6 +204,16 @@ describe("NodeResolver service", () => {
 		}
 	});
 
+	it("fails with InvalidInputError for invalid semver range", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* NodeResolver;
+				return yield* resolver.resolve({ semverRange: "not-a-range!!!" });
+			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+		);
+		expect(result._tag).toBe("InvalidInputError");
+	});
+
 	it("resolveVersion returns exact version as-is", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* NodeResolver;
@@ -224,6 +234,16 @@ describe("NodeResolver service", () => {
 		const result = await Effect.runPromise(program.pipe(Effect.provide(makeTestLayer())));
 
 		expect(result).toBe("22.11.0");
+	});
+
+	it("resolveVersion fails with InvalidInputError for invalid range", async () => {
+		const result = await Effect.runPromise(
+			Effect.gen(function* () {
+				const resolver = yield* NodeResolver;
+				return yield* resolver.resolveVersion("not-a-range!!!");
+			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+		);
+		expect(result._tag).toBe("InvalidInputError");
 	});
 
 	it("resolveVersion fails for no match", async () => {

@@ -1,5 +1,6 @@
 import { Effect, Layer } from "effect";
 import * as semver from "semver";
+import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import { retryOnRateLimit } from "../lib/retry.js";
 import { resolveVersionFromList } from "../lib/semver-utils.js";
@@ -46,6 +47,17 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 		return {
 			resolve: (options?: BunResolverOptions) =>
 				Effect.gen(function* () {
+					const semverRange = options?.semverRange ?? "*";
+					if (!semver.validRange(semverRange)) {
+						return yield* Effect.fail(
+							new InvalidInputError({
+								field: "semverRange",
+								value: semverRange,
+								message: `Invalid semver range: "${semverRange}"`,
+							}),
+						);
+					}
+
 					const { tags, source } = yield* fetchBunTags();
 					const allVersions = tagsToVersions(tags);
 
@@ -53,26 +65,20 @@ export const BunResolverLive: Layer.Layer<BunResolver, never, GitHubClient | Ver
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "bun",
-								constraint: options?.semverRange ?? "*",
+								constraint: semverRange,
 								message: "No valid Bun versions found",
 							}),
 						);
 					}
 
-					let versions: string[];
-					const semverRange = options?.semverRange;
-					if (semverRange) {
-						versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
-					} else {
-						versions = allVersions;
-					}
+					let versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
 
 					if (versions.length === 0) {
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "bun",
-								constraint: options?.semverRange ?? "*",
-								message: `No Bun versions found matching "${options?.semverRange}"`,
+								constraint: semverRange,
+								message: `No Bun versions found matching "${semverRange}"`,
 							}),
 						);
 					}
