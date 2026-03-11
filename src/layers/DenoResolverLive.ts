@@ -1,5 +1,5 @@
-import { Effect, Layer } from "effect";
-import * as semver from "semver";
+import { Effect, Layer, Option } from "effect";
+import { Range, SemVer } from "semver-effect";
 import { FreshnessError } from "../errors/FreshnessError.js";
 import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
@@ -14,15 +14,27 @@ import { DenoResolver } from "../services/DenoResolver.js";
 import { GitHubClient } from "../services/GitHubClient.js";
 import { VersionCache } from "../services/VersionCache.js";
 
+function tryParseSemVer(input: string): Option.Option<SemVer.SemVer> {
+	return Effect.runSync(
+		SemVer.fromString(input).pipe(
+			Effect.map(Option.some),
+			Effect.orElseSucceed(() => Option.none()),
+		),
+	);
+}
+
 const tagsToVersions = (tags: ReadonlyArray<GitHubTag>): string[] => {
-	const versions: string[] = [];
+	const parsed: SemVer.SemVer[] = [];
 	for (const tag of tags) {
 		const normalized = normalizeDenoTag(tag.name);
 		if (normalized) {
-			versions.push(normalized);
+			const opt = tryParseSemVer(normalized);
+			if (Option.isSome(opt)) {
+				parsed.push(opt.value);
+			}
 		}
 	}
-	return semver.rsort(versions);
+	return SemVer.rsort(parsed).map((v) => v.toString());
 };
 
 export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | VersionCache> = Layer.effect(
@@ -78,7 +90,8 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 		return {
 			resolveVersion: (versionOrRange: string) =>
 				Effect.gen(function* () {
-					if (semver.valid(versionOrRange)) {
+					const exactOpt = tryParseSemVer(versionOrRange);
+					if (Option.isSome(exactOpt)) {
 						const { tags } = yield* fetchDenoTags();
 						const allVersions = tagsToVersions(tags);
 						if (allVersions.includes(versionOrRange)) {
@@ -93,7 +106,13 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 						);
 					}
 
-					if (!semver.validRange(versionOrRange)) {
+					const rangeOpt = Effect.runSync(
+						Range.fromString(versionOrRange).pipe(
+							Effect.map(Option.some),
+							Effect.orElseSucceed(() => Option.none()),
+						),
+					);
+					if (Option.isNone(rangeOpt)) {
 						return yield* Effect.fail(
 							new InvalidInputError({
 								field: "versionOrRange",
@@ -123,15 +142,16 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 			resolve: (options?: DenoResolverOptions) =>
 				Effect.gen(function* () {
 					const semverRange = options?.semverRange ?? "*";
-					if (!semver.validRange(semverRange)) {
-						return yield* Effect.fail(
-							new InvalidInputError({
-								field: "semverRange",
-								value: semverRange,
-								message: `Invalid semver range: "${semverRange}"`,
-							}),
-						);
-					}
+					const range = yield* Range.fromString(semverRange).pipe(
+						Effect.mapError(
+							() =>
+								new InvalidInputError({
+									field: "semverRange",
+									value: semverRange,
+									message: `Invalid semver range: "${semverRange}"`,
+								}),
+						),
+					);
 
 					const { tags, source } = yield* fetchDenoTags(options?.freshness);
 					const allVersions = tagsToVersions(tags);
@@ -146,9 +166,13 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 						);
 					}
 
-					let versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
+					const matchingVersions = allVersions.filter((v) => {
+						const opt = tryParseSemVer(v);
+						if (Option.isNone(opt)) return false;
+						return Range.satisfies(opt.value, range);
+					});
 
-					if (versions.length === 0) {
+					if (matchingVersions.length === 0) {
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "deno",
@@ -159,16 +183,25 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 					}
 
 					const increments = options?.increments ?? "patch";
-					versions = filterByIncrements(versions, increments);
-					versions = semver.rsort(versions);
+					const filteredVersions = filterByIncrements(matchingVersions, increments);
+
+					const parsedForSort = filteredVersions
+						.map((v) => tryParseSemVer(v))
+						.filter(Option.isSome)
+						.map((o) => o.value);
+					let versions = SemVer.rsort(parsedForSort).map((v) => v.toString());
 
 					let resolvedDefault: string | undefined;
 					if (options?.defaultVersion) {
 						resolvedDefault = resolveVersionFromList(options.defaultVersion, allVersions);
 
 						if (resolvedDefault && !versions.includes(resolvedDefault)) {
-							versions = [...versions, resolvedDefault];
-							versions = semver.rsort(versions);
+							const withDefault = [...versions, resolvedDefault];
+							const reParsed = withDefault
+								.map((v) => tryParseSemVer(v))
+								.filter(Option.isSome)
+								.map((o) => o.value);
+							versions = SemVer.rsort(reParsed).map((v) => v.toString());
 						}
 					}
 
