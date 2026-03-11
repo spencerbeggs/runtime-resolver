@@ -18,7 +18,7 @@ export type NodeReleaseInput = typeof NodeReleaseInput.Type;
 /**
  * A Node.js release with parsed SemVer version and DateTime date.
  *
- * Plain class (not Data.TaggedClass) because it holds a Ref<NodeSchedule>
+ * Plain class (not Data.TaggedClass) because it holds a `Ref<NodeSchedule>`
  * which would break structural equality semantics. Uses manual _tag field.
  */
 export class NodeRelease {

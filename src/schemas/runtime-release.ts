@@ -4,7 +4,7 @@ import type { SemVer } from "semver-effect";
 
 /**
  * Base constraint for all runtime release classes.
- * Enables generic RuntimeCache<R extends RuntimeRelease>.
+ * Enables generic `RuntimeCache<R extends RuntimeRelease>`.
  */
 export interface RuntimeRelease {
 	readonly _tag: string;

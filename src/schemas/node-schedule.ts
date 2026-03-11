@@ -32,7 +32,7 @@ const NodeScheduleBase = Data.TaggedClass("NodeSchedule");
 
 /**
  * Immutable schedule holding all Node.js release schedule entries.
- * Lives in a Ref<NodeSchedule> singleton for shared mutable access.
+ * Lives in a `Ref<NodeSchedule>` singleton for shared mutable access.
  */
 export class NodeSchedule extends NodeScheduleBase<{
 	readonly entries: ReadonlyArray<NodeScheduleEntry>;

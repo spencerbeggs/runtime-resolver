@@ -5,7 +5,7 @@ import type { RuntimeRelease } from "../schemas/runtime-release.js";
 import type { RuntimeCache } from "../services/RuntimeCache.js";
 
 /**
- * Creates a RuntimeCache<R> backed by semver-effect's VersionCache.
+ * Creates a `RuntimeCache<R>` backed by semver-effect's VersionCache.
  * Must be called within an Effect that has SemVerVersionCache provided.
  */
 export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
