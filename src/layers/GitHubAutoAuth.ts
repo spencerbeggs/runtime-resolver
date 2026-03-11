@@ -4,6 +4,44 @@ import type { AuthenticationError } from "../errors/AuthenticationError.js";
 import { OctokitInstance } from "../services/OctokitInstance.js";
 import { GitHubAppAuth } from "./GitHubAppAuth.js";
 
+/**
+ * Provides an {@link OctokitInstance} by auto-detecting the available
+ * authentication credentials from environment variables at layer construction
+ * time.
+ *
+ * Credentials are evaluated in the following priority order:
+ * 1. **GitHub App** — when both `GITHUB_APP_ID` and `GITHUB_APP_PRIVATE_KEY`
+ *    are set, authenticates as a GitHub App installation via {@link GitHubAppAuth}.
+ *    `GITHUB_APP_INSTALLATION_ID` is optional; if absent the first installation
+ *    is used automatically.
+ * 2. **Personal Access Token** — when `GITHUB_PERSONAL_ACCESS_TOKEN` is set,
+ *    authenticates with that token.
+ * 3. **`GITHUB_TOKEN`** — when `GITHUB_TOKEN` is set (e.g., the default token
+ *    injected in GitHub Actions), authenticates with that token.
+ * 4. **Unauthenticated** — falls back to an unauthenticated Octokit instance
+ *    when no credentials are found (lower rate limits apply).
+ *
+ * If both App and token credentials are present, App auth takes precedence and
+ * a warning is logged. This layer fails with `AuthenticationError` only when
+ * App credentials are present but the App authentication itself fails.
+ *
+ * Use this layer as the default auth strategy in most applications. Switch to
+ * {@link GitHubTokenAuth} or {@link GitHubAppAuth} when you need explicit control
+ * over which credential source is used.
+ *
+ * @example
+ * ```ts
+ * import { GitHubClientLive, GitHubAutoAuth } from "runtime-resolver";
+ * import { Layer } from "effect";
+ *
+ * const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+ * ```
+ *
+ * @see {@link OctokitInstance}
+ * @see {@link GitHubTokenAuth}
+ * @see {@link GitHubAppAuth}
+ * @public
+ */
 export const GitHubAutoAuth: Layer.Layer<OctokitInstance, AuthenticationError> = Layer.effect(
 	OctokitInstance,
 	Effect.gen(function* () {

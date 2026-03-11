@@ -1,7 +1,6 @@
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { CachedNodeData, CachedTagData } from "./cache.js";
-import { Freshness, Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./common.js";
+import { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./common.js";
 import { GitHubRelease, GitHubReleaseList, GitHubTag, GitHubTagCommit, GitHubTagList } from "./github.js";
 import { NodeDistIndex, NodeDistVersion, NodeReleaseSchedule, ReleaseScheduleEntry } from "./node.js";
 
@@ -31,19 +30,6 @@ describe("common schemas", () => {
 		it("rejects invalid source values", () => {
 			expect(() => decode(Source)("network")).toThrow();
 			expect(() => decode(Source)(null)).toThrow();
-		});
-	});
-
-	describe("Freshness", () => {
-		it("accepts valid freshness values", () => {
-			expect(decode(Freshness)("auto")).toBe("auto");
-			expect(decode(Freshness)("api")).toBe("api");
-			expect(decode(Freshness)("cache")).toBe("cache");
-		});
-
-		it("rejects invalid freshness values", () => {
-			expect(() => decode(Freshness)("stale")).toThrow();
-			expect(() => decode(Freshness)(undefined)).toThrow();
 		});
 	});
 
@@ -347,82 +333,6 @@ describe("github schemas", () => {
 				},
 			];
 			expect(decode(GitHubReleaseList)(input)).toHaveLength(1);
-		});
-	});
-});
-
-describe("cache schemas", () => {
-	describe("CachedNodeData", () => {
-		it("accepts valid cached node data", () => {
-			const input = {
-				versions: [
-					{
-						version: "v22.0.0",
-						date: "2024-04-24",
-						files: ["linux-x64"],
-						lts: false,
-						security: false,
-					},
-				],
-				schedule: {
-					v22: { start: "2024-04-24", end: "2027-04-30" },
-				},
-			};
-			const result = decode(CachedNodeData)(input);
-			expect(result.versions).toHaveLength(1);
-			expect(result.schedule.v22.start).toBe("2024-04-24");
-		});
-
-		it("accepts empty versions and schedule", () => {
-			const input = { versions: [], schedule: {} };
-			const result = decode(CachedNodeData)(input);
-			expect(result.versions).toEqual([]);
-			expect(result.schedule).toEqual({});
-		});
-
-		it("rejects missing fields", () => {
-			expect(() => decode(CachedNodeData)({ versions: [] })).toThrow();
-			expect(() => decode(CachedNodeData)({ schedule: {} })).toThrow();
-		});
-
-		it("rejects invalid version entries", () => {
-			expect(() =>
-				decode(CachedNodeData)({
-					versions: [{ version: "v22.0.0" }],
-					schedule: {},
-				}),
-			).toThrow();
-		});
-	});
-
-	describe("CachedTagData", () => {
-		it("accepts valid cached tag data", () => {
-			const input = {
-				tags: [
-					{
-						name: "v1.0.0",
-						zipball_url: "https://example.com/zip",
-						tarball_url: "https://example.com/tar",
-						commit: { sha: "abc", url: "https://example.com/c" },
-						node_id: "id1",
-					},
-				],
-			};
-			const result = decode(CachedTagData)(input);
-			expect(result.tags).toHaveLength(1);
-		});
-
-		it("accepts empty tags array", () => {
-			const result = decode(CachedTagData)({ tags: [] });
-			expect(result.tags).toEqual([]);
-		});
-
-		it("rejects missing tags field", () => {
-			expect(() => decode(CachedTagData)({})).toThrow();
-		});
-
-		it("rejects invalid tag entries", () => {
-			expect(() => decode(CachedTagData)({ tags: [{ name: "v1.0.0" }] })).toThrow();
 		});
 	});
 });

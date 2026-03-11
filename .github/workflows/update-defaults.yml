@@ -1,0 +1,69 @@
+name: Update Runtime Defaults
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Daily at 6am UTC
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-defaults:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate defaults
+        run: pnpm tsx lib/scripts/generate-defaults.mts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet src/data/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build, typecheck, and test
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          pnpm run lint:fix
+          pnpm run typecheck
+          pnpm run build
+          pnpm run test
+
+      - name: Create PR with updated defaults
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          BRANCH="chore/update-defaults-$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add src/data/
+          git commit -m "chore: update runtime defaults
+
+          Signed-off-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: update runtime defaults" \
+            --body "Automated daily update of bundled runtime version data." \
+            --base main \
+            --head "$BRANCH"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,205 +1,151 @@
-import { Effect, Layer, Schema } from "effect";
-import * as semver from "semver";
-import { FreshnessError } from "../errors/FreshnessError.js";
-import { InvalidInputError } from "../errors/InvalidInputError.js";
-import { ParseError } from "../errors/ParseError.js";
+import { DateTime, Effect, Layer } from "effect";
+import { SemVer } from "semver-effect";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
-import { findLatestLts, getVersionPhase } from "../lib/node-phases.js";
-import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
-import type { CachedNodeData } from "../schemas/cache.js";
-import type { Freshness, NodePhase } from "../schemas/common.js";
-import { NodeDistIndex, NodeReleaseSchedule } from "../schemas/node.js";
-import { GitHubClient } from "../services/GitHubClient.js";
+import type { Increments, NodePhase } from "../schemas/common.js";
+import type { NodeRelease } from "../schemas/node-release.js";
+import { NodeReleaseCache } from "../services/NodeReleaseCache.js";
 import type { NodeResolverOptions } from "../services/NodeResolver.js";
 import { NodeResolver } from "../services/NodeResolver.js";
-import { VersionCache } from "../services/VersionCache.js";
 
-const NODE_DIST_URL = "https://nodejs.org/dist/index.json";
-const NODE_SCHEDULE_URL = "https://raw.githubusercontent.com/nodejs/Release/refs/heads/main/schedule.json";
-
-const decodeDistIndex = (input: unknown) =>
-	Schema.decodeUnknown(NodeDistIndex)(input).pipe(
-		Effect.mapError(
-			(e) =>
-				new ParseError({
-					source: NODE_DIST_URL,
-					message: `Schema validation failed: ${e.message}`,
-				}),
-		),
-	);
-
-const decodeSchedule = (input: unknown) =>
-	Schema.decodeUnknown(NodeReleaseSchedule)(input).pipe(
-		Effect.mapError(
-			(e) =>
-				new ParseError({
-					source: NODE_SCHEDULE_URL,
-					message: `Schema validation failed: ${e.message}`,
-				}),
-		),
-	);
-
-export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | VersionCache> = Layer.effect(
+/**
+ * Provides the {@link NodeResolver} service backed by a {@link NodeReleaseCache}.
+ *
+ * This layer composes with any of the three Node cache strategy layers to form
+ * a complete resolver stack. In addition to semver range filtering and increment
+ * grouping, it supports filtering by Node.js release phase (e.g., `"current"`,
+ * `"active-lts"`, `"maintenance-lts"`, `"end-of-life"`) and automatically
+ * determines the current LTS version from the loaded schedule data.
+ *
+ * @example
+ * ```ts
+ * import {
+ *   NodeResolverLive, AutoNodeCacheLive,
+ *   NodeVersionFetcherLive, NodeScheduleFetcherLive,
+ *   GitHubClientLive, GitHubAutoAuth,
+ * } from "runtime-resolver";
+ * import { NodeResolver } from "runtime-resolver";
+ * import { Effect, Layer } from "effect";
+ *
+ * const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+ * const FetchersLayer = Layer.merge(
+ *   NodeVersionFetcherLive.pipe(Layer.provide(GitHubLayer)),
+ *   NodeScheduleFetcherLive.pipe(Layer.provide(GitHubLayer)),
+ * );
+ * const CacheLayer = AutoNodeCacheLive.pipe(Layer.provide(FetchersLayer));
+ * const ResolverLayer = NodeResolverLive.pipe(Layer.provide(CacheLayer));
+ *
+ * const program = Effect.gen(function* () {
+ *   const resolver = yield* NodeResolver;
+ *   // Resolve only active-LTS and maintenance-LTS releases in the ^20 range
+ *   const result = yield* resolver.resolve({
+ *     semverRange: "^20.0.0",
+ *     phases: ["active-lts", "maintenance-lts"],
+ *   });
+ *   console.log(result.lts);
+ * });
+ *
+ * Effect.runPromise(program.pipe(Effect.provide(ResolverLayer)));
+ * ```
+ *
+ * @see {@link NodeResolver}
+ * @see {@link NodeReleaseCache}
+ * @see {@link AutoNodeCacheLive}
+ * @see {@link FreshNodeCacheLive}
+ * @see {@link OfflineNodeCacheLive}
+ * @public
+ */
+export const NodeResolverLive: Layer.Layer<NodeResolver, never, NodeReleaseCache> = Layer.effect(
 	NodeResolver,
 	Effect.gen(function* () {
-		const client = yield* GitHubClient;
-		const cache = yield* VersionCache;
-
-		const fetchNodeData = () =>
-			Effect.gen(function* () {
-				const [allVersions, schedule] = yield* Effect.all([
-					client.getJson(NODE_DIST_URL, { decode: decodeDistIndex }),
-					client.getJson(NODE_SCHEDULE_URL, { decode: decodeSchedule }),
-				]);
-				return { allVersions, schedule };
-			});
-
-		const fetchWithCacheFallback = (freshness: Freshness = "auto") =>
-			Effect.gen(function* () {
-				if (freshness === "cache") {
-					const { data: cached, source } = yield* cache.get("node");
-					const nodeCache = cached as CachedNodeData;
-					return { allVersions: nodeCache.versions, schedule: nodeCache.schedule, source };
-				}
-
-				const fromNetwork = fetchNodeData().pipe(
-					Effect.tap(({ allVersions, schedule }) => cache.set("node", { versions: allVersions, schedule })),
-					Effect.map(({ allVersions, schedule }) => ({ allVersions, schedule, source: "api" as const })),
-				);
-
-				if (freshness === "api") {
-					return yield* fromNetwork.pipe(
-						Effect.catchTag("NetworkError", (err) =>
-							Effect.fail(
-								new FreshnessError({
-									strategy: "api",
-									message: `Fresh data required but network unavailable: ${err.message}`,
-								}),
-							),
-						),
-					);
-				}
-
-				// "auto" — only network failures fall back to cache; schema errors
-				// (ParseError) propagate because they signal genuinely unexpected data.
-				return yield* fromNetwork.pipe(
-					Effect.catchTag("NetworkError", () =>
-						Effect.gen(function* () {
-							const { data: cached, source } = yield* cache.get("node");
-							const nodeCache = cached as CachedNodeData;
-							return { allVersions: nodeCache.versions, schedule: nodeCache.schedule, source };
-						}),
-					),
-				);
-			});
+		const cache = yield* NodeReleaseCache;
 
 		return {
 			resolve: (options?: NodeResolverOptions) =>
 				Effect.gen(function* () {
 					const semverRange = options?.semverRange ?? "*";
-					if (!semver.validRange(semverRange)) {
-						return yield* Effect.fail(
-							new InvalidInputError({
-								field: "semverRange",
-								value: semverRange,
-								message: `Invalid semver range: "${semverRange}"`,
-							}),
-						);
-					}
-
-					const { allVersions, schedule, source } = yield* fetchWithCacheFallback(options?.freshness);
-
 					const phases: ReadonlyArray<NodePhase> = options?.phases ?? ["current", "active-lts"];
-					const increments = options?.increments ?? "latest";
-					const now = options?.date ?? new Date();
+					const increments: Increments = options?.increments ?? "latest";
+					const now = options?.date ? DateTime.unsafeMake(options.date) : DateTime.unsafeMake(new Date());
 
-					const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
+					// Get all releases matching range
+					const matching = yield* cache
+						.filter(semverRange)
+						.pipe(Effect.catchAll(() => Effect.succeed([] as ReadonlyArray<NodeRelease>)));
 
-					const matchingVersions = cleanVersions.filter((version) => {
-						if (!semver.satisfies(version, semverRange)) return false;
-						const phase = getVersionPhase(version, schedule, now);
-						if (!phase || !phases.includes(phase)) return false;
-						return true;
-					});
-
-					const filteredVersions = filterByIncrements(matchingVersions, increments);
-					const sortedVersions = semver.rsort([...filteredVersions]);
-
-					let resolvedDefault: string | undefined;
-					if (options?.defaultVersion) {
-						resolvedDefault = resolveVersionFromList(options.defaultVersion, cleanVersions);
-
-						if (resolvedDefault && !sortedVersions.includes(resolvedDefault)) {
-							sortedVersions.push(resolvedDefault);
-							sortedVersions.sort((a, b) => semver.rcompare(a, b));
+					// Filter by phase
+					const phaseFiltered: NodeRelease[] = [];
+					for (const r of matching) {
+						const phase = yield* r.phase(now);
+						if (phase && phases.includes(phase)) {
+							phaseFiltered.push(r);
 						}
 					}
 
-					if (sortedVersions.length === 0) {
+					// Apply increments
+					let resultReleases: NodeRelease[];
+					if (increments === "latest") {
+						const groups = new Map<number, NodeRelease>();
+						for (const r of phaseFiltered) {
+							const existing = groups.get(r.version.major);
+							if (!existing || SemVer.gt(r.version, existing.version)) {
+								groups.set(r.version.major, r);
+							}
+						}
+						resultReleases = [...groups.values()];
+					} else if (increments === "minor") {
+						const groups = new Map<string, NodeRelease>();
+						for (const r of phaseFiltered) {
+							const key = `${r.version.major}.${r.version.minor}`;
+							const existing = groups.get(key);
+							if (!existing || SemVer.gt(r.version, existing.version)) {
+								groups.set(key, r);
+							}
+						}
+						resultReleases = [...groups.values()];
+					} else {
+						resultReleases = phaseFiltered;
+					}
+
+					if (resultReleases.length === 0) {
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "node",
 								constraint: semverRange,
-								message: `No Node.js versions found matching range "${semverRange}" with phases [${phases.join(", ")}]`,
+								message: `No Node.js versions found matching "${semverRange}" with phases [${phases.join(", ")}]`,
 							}),
 						);
 					}
 
-					const latest = sortedVersions[0];
-					const lts = findLatestLts(sortedVersions, schedule, now);
+					// Sort descending
+					const sorted = SemVer.rsort(resultReleases.map((r) => r.version));
+					const sortedReleases = sorted
+						.map((v) => resultReleases.find((r) => SemVer.equal(r.version, v)))
+						.filter((r): r is NodeRelease => r !== undefined);
+
+					const versions = sortedReleases.map((r) => r.version.toString());
+					const latest = versions[0];
+
+					// Determine LTS
+					const ltsReleases = yield* cache.ltsReleases(now);
+					const ltsVersions = ltsReleases.filter((r) => versions.includes(r.version.toString())).map((r) => r.version);
+					const lts = ltsVersions.length > 0 ? SemVer.rsort(ltsVersions)[0].toString() : undefined;
+
+					// Handle default version
+					let resolvedDefault: string | undefined;
+					if (options?.defaultVersion) {
+						resolvedDefault = yield* cache.resolve(options.defaultVersion).pipe(
+							Effect.map((r) => r.version.toString()),
+							Effect.catchAll(() => Effect.succeed(undefined)),
+						);
+					}
 
 					return {
-						source,
-						versions: sortedVersions,
+						source: "api" as const,
+						versions,
 						latest,
 						...(lts ? { lts } : {}),
-						...(lts ? { default: lts } : {}),
-						...(resolvedDefault ? { default: resolvedDefault } : {}),
+						...(resolvedDefault ? { default: resolvedDefault } : { ...(lts ? { default: lts } : {}) }),
 					};
-				}),
-
-			resolveVersion: (versionOrRange: string) =>
-				Effect.gen(function* () {
-					if (semver.valid(versionOrRange)) {
-						const { allVersions } = yield* fetchWithCacheFallback();
-						const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
-						if (cleanVersions.includes(versionOrRange)) {
-							return versionOrRange;
-						}
-						return yield* Effect.fail(
-							new VersionNotFoundError({
-								runtime: "node",
-								constraint: versionOrRange,
-								message: `Node.js version "${versionOrRange}" not found`,
-							}),
-						);
-					}
-
-					if (!semver.validRange(versionOrRange)) {
-						return yield* Effect.fail(
-							new InvalidInputError({
-								field: "versionOrRange",
-								value: versionOrRange,
-								message: `Invalid semver range: "${versionOrRange}"`,
-							}),
-						);
-					}
-
-					const { allVersions } = yield* fetchWithCacheFallback();
-					const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
-					const resolved = resolveVersionFromList(versionOrRange, cleanVersions);
-
-					if (!resolved) {
-						return yield* Effect.fail(
-							new VersionNotFoundError({
-								runtime: "node",
-								constraint: versionOrRange,
-								message: `No Node.js version found matching "${versionOrRange}"`,
-							}),
-						);
-					}
-
-					return resolved;
 				}),
 		};
 	}),

@@ -1,8 +1,6 @@
 # Promise API
 
-The Promise API is the simplest way to use runtime-resolver. It exposes three
-functions -- `resolveNode`, `resolveBun`, and `resolveDeno` -- that each return
-a `Promise<ResolvedVersions>`. No knowledge of Effect is required.
+The Promise API is the simplest way to use runtime-resolver. It exposes three functions -- `resolveNode`, `resolveBun`, and `resolveDeno` -- that each return a `Promise<ResolvedVersions>`. No knowledge of Effect is required.
 
 ## Installation
 
@@ -20,15 +18,12 @@ console.log(node.versions); // ["24.1.0", "22.15.0"]
 console.log(node.latest);   // "24.1.0"
 console.log(node.lts);      // "22.15.0"
 console.log(node.default);  // "22.15.0" (latest LTS when no defaultVersion is set)
-console.log(node.source);   // "api" or "cache"
 
 const bun = await resolveBun();
 console.log(bun.latest);  // "1.2.14"
-console.log(bun.source);  // "api"
 
 const deno = await resolveDeno();
 console.log(deno.latest); // "2.3.2"
-console.log(deno.source); // "api"
 ```
 
 ## Functions
@@ -46,13 +41,11 @@ phase and semver range.
 | `defaultVersion` | `string` | -- | Version to include if it matches |
 | `phases` | `NodePhase[]` | `["current", "active-lts"]` | Filter by release phase |
 | `increments` | `Increments` | `"latest"` | Version granularity |
-| `freshness` | `Freshness` | `"auto"` | Data freshness strategy |
 | `date` | `Date` | `new Date()` | Reference date for phase calculation |
 
 #### semverRange
 
-Filter results to versions matching a semver range. Invalid semver ranges cause
-an `InvalidInputError` to be thrown.
+Filter results to versions matching a semver range.
 
 ```typescript
 // Only Node.js 20.x versions
@@ -137,29 +130,9 @@ const all = await resolveNode({
 console.log(all.versions); // ["22.15.2", "22.15.1", "22.15.0"]
 ```
 
-#### freshness
-
-Control how the resolver fetches version data. The `Freshness` type is
-`"auto" | "api" | "cache"`:
-
-- `"auto"` (default) -- Try the API first, fall back to the bundled cache on
-  network failure.
-- `"api"` -- Require fresh data from the API. Fails with an error if the
-  network is unavailable.
-- `"cache"` -- Use the bundled cache only, skipping all network requests.
-
-```typescript
-// Require live data -- fail if the network is down
-const result = await resolveNode({ freshness: "api" });
-
-// Offline mode -- never hit the network
-const cached = await resolveNode({ freshness: "cache" });
-```
-
 #### date
 
-Override the reference date used for phase calculation. Useful for reproducible
-builds or testing what versions were active at a past date.
+Override the reference date used for phase calculation. Useful for reproducible builds or testing what versions were active at a past date.
 
 ```typescript
 // What was current/active-lts on Jan 1, 2024?
@@ -170,7 +143,7 @@ const result = await resolveNode({
 
 ### resolveBun(options?)
 
-Resolves Bun versions from GitHub tags.
+Resolves Bun versions from GitHub releases.
 
 #### Options
 
@@ -179,7 +152,6 @@ Resolves Bun versions from GitHub tags.
 | `semverRange` | `string` | `"*"` (all versions) | Semver range to filter versions |
 | `defaultVersion` | `string` | -- | Version to include if it matches |
 | `increments` | `Increments` | `"latest"` | Version granularity |
-| `freshness` | `Freshness` | `"auto"` | Data freshness strategy |
 
 ```typescript
 import { resolveBun } from "runtime-resolver";
@@ -187,7 +159,6 @@ import { resolveBun } from "runtime-resolver";
 // All Bun versions
 const all = await resolveBun();
 console.log(all.latest); // "1.2.14"
-console.log(all.source); // "api"
 
 // Only Bun 1.1.x
 const result = await resolveBun({ semverRange: "~1.1.0" });
@@ -206,7 +177,7 @@ const pinned = await resolveBun({
 
 ### resolveDeno(options?)
 
-Resolves Deno versions from GitHub tags.
+Resolves Deno versions from GitHub releases.
 
 #### Options
 
@@ -215,7 +186,6 @@ Resolves Deno versions from GitHub tags.
 | `semverRange` | `string` | `"*"` (all versions) | Semver range to filter versions |
 | `defaultVersion` | `string` | -- | Version to include if it matches |
 | `increments` | `Increments` | `"latest"` | Version granularity |
-| `freshness` | `Freshness` | `"auto"` | Data freshness strategy |
 
 ```typescript
 import { resolveDeno } from "runtime-resolver";
@@ -223,7 +193,6 @@ import { resolveDeno } from "runtime-resolver";
 // All Deno versions
 const all = await resolveDeno();
 console.log(all.latest); // "2.3.2"
-console.log(all.source); // "api"
 
 // Only Deno 2.x
 const result = await resolveDeno({ semverRange: "^2.0.0" });
@@ -248,23 +217,14 @@ interface ResolvedVersions {
 }
 ```
 
-- **`source`** -- Indicates whether the data was fetched live from the API
-  (`"api"`) or loaded from the bundled build-time cache (`"cache"`). Useful for
-  detecting offline fallback scenarios.
 - **`versions`** -- All matching versions, sorted newest to oldest.
-- **`latest`** -- The single newest version. For Node.js this is the newest
-  version matching your filters. For Bun and Deno this is always the newest
-  release regardless of your `semverRange`.
-- **`lts`** -- Present only for Node.js. The newest version in the result set
-  that has LTS status.
-- **`default`** -- Present only when you pass a `defaultVersion` option and it
-  resolves to an actual release. For Node.js, when no `defaultVersion` is
-  provided, this defaults to the latest LTS version.
+- **`latest`** -- The single newest version. For Node.js this is the newest version matching your filters. For Bun and Deno this is always the newest release regardless of your `semverRange`.
+- **`lts`** -- Present only for Node.js. The newest version in the result set that has LTS status.
+- **`default`** -- Present only when you pass a `defaultVersion` option and it resolves to an actual release. For Node.js, when no `defaultVersion` is provided, this defaults to the latest LTS version.
 
 ## Authentication
 
-The Promise API automatically detects authentication from environment
-variables. The detection chain runs in this order (first match wins):
+The Promise API automatically detects authentication from environment variables. The detection chain runs in this order (first match wins):
 
 1. **GitHub App** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
    (+ optional `GITHUB_APP_INSTALLATION_ID`)
@@ -283,16 +243,13 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_..."
 export GITHUB_TOKEN="ghp_..."
 ```
 
-When multiple credential sources are present (for example, both app and token
-env vars), a warning is emitted to stderr indicating which source was selected.
+When multiple credential sources are present (for example, both app and token env vars), a warning is emitted to stderr indicating which source was selected.
 
-For explicit auth control, use the [Effect API](./effect-api.md) with specific
-layers like `GitHubTokenAuthFromToken` or `GitHubAppAuth`.
+For explicit auth control, use the [Effect API](./effect-api.md) with specific layers like `GitHubTokenAuthFromToken` or `GitHubAppAuth`.
 
 ## Error Handling
 
-The Promise API functions throw on failure. Wrap calls in try/catch to handle
-errors gracefully:
+The Promise API functions throw on failure. Wrap calls in try/catch to handle errors gracefully:
 
 ```typescript
 import { resolveNode } from "runtime-resolver";
@@ -307,13 +264,8 @@ try {
 
 Common failure scenarios:
 
-- **Invalid input** -- The semver range is not a valid semver expression.
-- **No matching versions** -- The semver range or phase filters exclude
-  everything.
-- **Network failure without cache** -- GitHub API is unreachable and no cached
-  data is available.
-- **Rate limiting** -- GitHub API rate limit exceeded (the library retries
-  automatically with exponential backoff, but may still fail after retries).
+- **No matching versions** -- The semver range or phase filters exclude everything.
+- **Network failure without cache** -- Only when using `Fresh*CacheLive` layers via the Effect API.
 
 ## Types
 
@@ -327,7 +279,6 @@ import type {
   ResolvedVersions,
   NodePhase,
   Increments,
-  Freshness,
   Source,
 } from "runtime-resolver";
 ```

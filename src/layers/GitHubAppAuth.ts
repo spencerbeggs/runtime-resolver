@@ -4,6 +4,12 @@ import { Octokit } from "octokit";
 import { AuthenticationError } from "../errors/AuthenticationError.js";
 import { OctokitInstance } from "../services/OctokitInstance.js";
 
+/**
+ * Configuration required to authenticate as a GitHub App installation.
+ *
+ * @see {@link GitHubAppAuth}
+ * @public
+ */
 export interface GitHubAppAuthConfig {
 	readonly appId: string;
 	readonly privateKey: string;
@@ -40,6 +46,26 @@ const resolveInstallationId = async (
 	return installations[0].id;
 };
 
+/**
+ * Provides an {@link OctokitInstance} authenticated as a GitHub App installation.
+ *
+ * Accepts a {@link GitHubAppAuthConfig} and uses `@octokit/auth-app` to obtain
+ * an installation access token. If `installationId` is omitted, the first
+ * installation returned by the GitHub API is used automatically (suitable for
+ * apps with a single installation). If authentication fails for any reason the
+ * layer fails with an `AuthenticationError`.
+ *
+ * Use this auth method when your integration runs as a GitHub App rather than
+ * as an individual user or a CI token.
+ *
+ * @param config - App credentials and optional installation ID.
+ *
+ * @see {@link GitHubAppAuthConfig}
+ * @see {@link OctokitInstance}
+ * @see {@link GitHubAutoAuth}
+ * @see {@link GitHubTokenAuth}
+ * @public
+ */
 export const GitHubAppAuth = (config: GitHubAppAuthConfig): Layer.Layer<OctokitInstance, AuthenticationError> =>
 	Layer.effect(
 		OctokitInstance,

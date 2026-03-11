@@ -39,6 +39,26 @@ const mapOctokitError = (error: unknown, url: string): NetworkError | RateLimitE
 const decodeTagList = Schema.decodeUnknown(GitHubTagList);
 const decodeReleaseList = Schema.decodeUnknown(GitHubReleaseList);
 
+/**
+ * Provides the {@link GitHubClient} service backed by an {@link OctokitInstance}.
+ *
+ * This layer wraps an Octokit instance and exposes a typed, Effect-native API
+ * for listing GitHub releases, listing tags, and fetching arbitrary JSON from
+ * URLs. HTTP errors are mapped to typed domain errors (`NetworkError`,
+ * `RateLimitError`, `AuthenticationError`) so they can be handled precisely in
+ * calling code.
+ *
+ * Pair this layer with one of the auth layers to form a complete GitHub
+ * integration stack:
+ * - {@link GitHubAutoAuth} — auto-detects auth from environment variables
+ * - {@link GitHubTokenAuth} — authenticates using a personal access token
+ * - {@link GitHubAppAuth} — authenticates as a GitHub App installation
+ *
+ * @see {@link GitHubClient}
+ * @see {@link OctokitInstance}
+ * @see {@link GitHubAutoAuth}
+ * @public
+ */
 export const GitHubClientLive: Layer.Layer<GitHubClient, never, OctokitInstance> = Layer.effect(
 	GitHubClient,
 	Effect.gen(function* () {

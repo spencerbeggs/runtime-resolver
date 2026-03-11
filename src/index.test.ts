@@ -22,7 +22,13 @@ describe("Effect API exports", () => {
 		expect(mod.DenoResolver).toBeDefined();
 		expect(mod.NodeResolver).toBeDefined();
 		expect(mod.GitHubClient).toBeDefined();
-		expect(mod.VersionCache).toBeDefined();
+		expect(mod.BunReleaseCache).toBeDefined();
+		expect(mod.DenoReleaseCache).toBeDefined();
+		expect(mod.NodeReleaseCache).toBeDefined();
+		expect(mod.BunVersionFetcher).toBeDefined();
+		expect(mod.DenoVersionFetcher).toBeDefined();
+		expect(mod.NodeVersionFetcher).toBeDefined();
+		expect(mod.NodeScheduleFetcher).toBeDefined();
 	});
 
 	it("exports layers", async () => {
@@ -35,7 +41,23 @@ describe("Effect API exports", () => {
 		expect(mod.GitHubAppAuth).toBeDefined();
 		expect(mod.GitHubAutoAuth).toBeDefined();
 		expect(mod.GitHubTokenAuthFromToken).toBeDefined();
-		expect(mod.VersionCacheLive).toBeDefined();
+		expect(mod.AutoBunCacheLive).toBeDefined();
+		expect(mod.AutoDenoCacheLive).toBeDefined();
+		expect(mod.AutoNodeCacheLive).toBeDefined();
+		expect(mod.FreshBunCacheLive).toBeDefined();
+		expect(mod.FreshDenoCacheLive).toBeDefined();
+		expect(mod.FreshNodeCacheLive).toBeDefined();
+		expect(mod.OfflineBunCacheLive).toBeDefined();
+		expect(mod.OfflineDenoCacheLive).toBeDefined();
+		expect(mod.OfflineNodeCacheLive).toBeDefined();
+		expect(mod.BunReleaseCacheLive).toBeDefined();
+		expect(mod.DenoReleaseCacheLive).toBeDefined();
+		expect(mod.NodeReleaseCacheLive).toBeDefined();
+		expect(mod.createRuntimeCache).toBeDefined();
+		expect(mod.BunVersionFetcherLive).toBeDefined();
+		expect(mod.DenoVersionFetcherLive).toBeDefined();
+		expect(mod.NodeVersionFetcherLive).toBeDefined();
+		expect(mod.NodeScheduleFetcherLive).toBeDefined();
 	});
 
 	it("exports errors", async () => {
@@ -48,5 +70,13 @@ describe("Effect API exports", () => {
 		expect(mod.VersionNotFoundError).toBeDefined();
 		expect(mod.InvalidInputError).toBeDefined();
 		expect(mod.FreshnessError).toBeDefined();
+	});
+
+	it("exports domain classes", async () => {
+		const mod = await import("./index.js");
+		expect(mod.BunRelease).toBeDefined();
+		expect(mod.DenoRelease).toBeDefined();
+		expect(mod.NodeRelease).toBeDefined();
+		expect(mod.NodeSchedule).toBeDefined();
 	});
 });

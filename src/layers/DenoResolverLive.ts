@@ -1,154 +1,86 @@
 import { Effect, Layer } from "effect";
-import * as semver from "semver";
-import { FreshnessError } from "../errors/FreshnessError.js";
-import { InvalidInputError } from "../errors/InvalidInputError.js";
+import { SemVer } from "semver-effect";
 import { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
-import { retryOnRateLimit } from "../lib/retry.js";
-import { filterByIncrements, resolveVersionFromList } from "../lib/semver-utils.js";
-import { normalizeDenoTag } from "../lib/tag-normalizers.js";
-import type { CachedTagData } from "../schemas/cache.js";
-import type { Freshness } from "../schemas/common.js";
-import type { GitHubTag } from "../schemas/github.js";
+import type { Increments } from "../schemas/common.js";
+import type { DenoRelease } from "../schemas/deno-release.js";
+import { DenoReleaseCache } from "../services/DenoReleaseCache.js";
 import type { DenoResolverOptions } from "../services/DenoResolver.js";
 import { DenoResolver } from "../services/DenoResolver.js";
-import { GitHubClient } from "../services/GitHubClient.js";
-import { VersionCache } from "../services/VersionCache.js";
 
-const tagsToVersions = (tags: ReadonlyArray<GitHubTag>): string[] => {
-	const versions: string[] = [];
-	for (const tag of tags) {
-		const normalized = normalizeDenoTag(tag.name);
-		if (normalized) {
-			versions.push(normalized);
-		}
-	}
-	return semver.rsort(versions);
-};
-
-export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | VersionCache> = Layer.effect(
+/**
+ * Provides the {@link DenoResolver} service backed by a {@link DenoReleaseCache}.
+ *
+ * This layer composes with any of the three Deno cache strategy layers to form
+ * a complete resolver stack. It implements semver range filtering and increment
+ * grouping (latest per major, latest per minor, or all patch versions) using
+ * the releases already loaded into the cache.
+ *
+ * @example
+ * ```ts
+ * import { DenoResolverLive, AutoDenoCacheLive, DenoVersionFetcherLive, GitHubClientLive, GitHubAutoAuth } from "runtime-resolver";
+ * import { DenoResolver } from "runtime-resolver";
+ * import { Effect, Layer } from "effect";
+ *
+ * const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+ * const CacheLayer = AutoDenoCacheLive.pipe(Layer.provide(DenoVersionFetcherLive.pipe(Layer.provide(GitHubLayer))));
+ * const ResolverLayer = DenoResolverLive.pipe(Layer.provide(CacheLayer));
+ *
+ * const program = Effect.gen(function* () {
+ *   const resolver = yield* DenoResolver;
+ *   const result = yield* resolver.resolve({ semverRange: "^2.0.0" });
+ *   console.log(result.latest);
+ * });
+ *
+ * Effect.runPromise(program.pipe(Effect.provide(ResolverLayer)));
+ * ```
+ *
+ * @see {@link DenoResolver}
+ * @see {@link DenoReleaseCache}
+ * @see {@link AutoDenoCacheLive}
+ * @see {@link FreshDenoCacheLive}
+ * @see {@link OfflineDenoCacheLive}
+ * @public
+ */
+export const DenoResolverLive: Layer.Layer<DenoResolver, never, DenoReleaseCache> = Layer.effect(
 	DenoResolver,
 	Effect.gen(function* () {
-		const client = yield* GitHubClient;
-		const cache = yield* VersionCache;
-
-		const fetchDenoTags = (freshness: Freshness = "auto") => {
-			if (freshness === "cache") {
-				return Effect.gen(function* () {
-					const { data: cached, source } = yield* cache.get("deno");
-					return { tags: (cached as CachedTagData).tags, source };
-				}).pipe(
-					Effect.catchTag("CacheError", () =>
-						Effect.succeed({ tags: [] as ReadonlyArray<GitHubTag>, source: "cache" as const }),
-					),
-				);
-			}
-
-			const apiCall = retryOnRateLimit(client.listTags("denoland", "deno", { perPage: 100, pages: 3 })).pipe(
-				Effect.tap((tags) => cache.set("deno", { tags: tags as GitHubTag[] })),
-				Effect.map((tags) => ({ tags, source: "api" as const })),
-			);
-
-			if (freshness === "api") {
-				return apiCall.pipe(
-					Effect.catchTag("NetworkError", (err) =>
-						Effect.fail(
-							new FreshnessError({
-								strategy: "api",
-								message: `Fresh data required but network unavailable: ${err.message}`,
-							}),
-						),
-					),
-				);
-			}
-
-			// freshness === "auto" (default — current behavior)
-			return apiCall.pipe(
-				Effect.catchTag("NetworkError", () =>
-					Effect.gen(function* () {
-						const { data: cached, source } = yield* cache.get("deno");
-						return { tags: (cached as CachedTagData).tags, source };
-					}),
-				),
-				Effect.catchTag("CacheError", () =>
-					Effect.succeed({ tags: [] as ReadonlyArray<GitHubTag>, source: "cache" as const }),
-				),
-			);
-		};
+		const cache = yield* DenoReleaseCache;
 
 		return {
-			resolveVersion: (versionOrRange: string) =>
-				Effect.gen(function* () {
-					if (semver.valid(versionOrRange)) {
-						const { tags } = yield* fetchDenoTags();
-						const allVersions = tagsToVersions(tags);
-						if (allVersions.includes(versionOrRange)) {
-							return versionOrRange;
-						}
-						return yield* Effect.fail(
-							new VersionNotFoundError({
-								runtime: "deno",
-								constraint: versionOrRange,
-								message: `Deno version "${versionOrRange}" not found`,
-							}),
-						);
-					}
-
-					if (!semver.validRange(versionOrRange)) {
-						return yield* Effect.fail(
-							new InvalidInputError({
-								field: "versionOrRange",
-								value: versionOrRange,
-								message: `Invalid semver range: "${versionOrRange}"`,
-							}),
-						);
-					}
-
-					const { tags } = yield* fetchDenoTags();
-					const allVersions = tagsToVersions(tags);
-					const resolved = resolveVersionFromList(versionOrRange, allVersions);
-
-					if (!resolved) {
-						return yield* Effect.fail(
-							new VersionNotFoundError({
-								runtime: "deno",
-								constraint: versionOrRange,
-								message: `No Deno version found matching "${versionOrRange}"`,
-							}),
-						);
-					}
-
-					return resolved;
-				}),
-
 			resolve: (options?: DenoResolverOptions) =>
 				Effect.gen(function* () {
 					const semverRange = options?.semverRange ?? "*";
-					if (!semver.validRange(semverRange)) {
-						return yield* Effect.fail(
-							new InvalidInputError({
-								field: "semverRange",
-								value: semverRange,
-								message: `Invalid semver range: "${semverRange}"`,
-							}),
-						);
+					const increments: Increments = options?.increments ?? "latest";
+
+					const matching = yield* cache
+						.filter(semverRange)
+						.pipe(Effect.catchAll(() => Effect.succeed([] as ReadonlyArray<DenoRelease>)));
+
+					let resultReleases: DenoRelease[];
+					if (increments === "latest") {
+						const groups = new Map<number, DenoRelease>();
+						for (const r of matching) {
+							const existing = groups.get(r.version.major);
+							if (!existing || SemVer.gt(r.version, existing.version)) {
+								groups.set(r.version.major, r);
+							}
+						}
+						resultReleases = [...groups.values()];
+					} else if (increments === "minor") {
+						const groups = new Map<string, DenoRelease>();
+						for (const r of matching) {
+							const key = `${r.version.major}.${r.version.minor}`;
+							const existing = groups.get(key);
+							if (!existing || SemVer.gt(r.version, existing.version)) {
+								groups.set(key, r);
+							}
+						}
+						resultReleases = [...groups.values()];
+					} else {
+						resultReleases = [...matching];
 					}
 
-					const { tags, source } = yield* fetchDenoTags(options?.freshness);
-					const allVersions = tagsToVersions(tags);
-
-					if (allVersions.length === 0) {
-						return yield* Effect.fail(
-							new VersionNotFoundError({
-								runtime: "deno",
-								constraint: semverRange,
-								message: "No valid Deno versions found",
-							}),
-						);
-					}
-
-					let versions = allVersions.filter((v) => semver.satisfies(v, semverRange));
-
-					if (versions.length === 0) {
+					if (resultReleases.length === 0) {
 						return yield* Effect.fail(
 							new VersionNotFoundError({
 								runtime: "deno",
@@ -158,24 +90,20 @@ export const DenoResolverLive: Layer.Layer<DenoResolver, never, GitHubClient | V
 						);
 					}
 
-					const increments = options?.increments ?? "patch";
-					versions = filterByIncrements(versions, increments);
-					versions = semver.rsort(versions);
+					const sorted = SemVer.rsort(resultReleases.map((r) => r.version));
+					const versions = sorted.map((v) => v.toString());
+					const latest = versions[0];
 
 					let resolvedDefault: string | undefined;
 					if (options?.defaultVersion) {
-						resolvedDefault = resolveVersionFromList(options.defaultVersion, allVersions);
-
-						if (resolvedDefault && !versions.includes(resolvedDefault)) {
-							versions = [...versions, resolvedDefault];
-							versions = semver.rsort(versions);
-						}
+						resolvedDefault = yield* cache.resolve(options.defaultVersion).pipe(
+							Effect.map((r) => r.version.toString()),
+							Effect.catchAll(() => Effect.succeed(undefined)),
+						);
 					}
 
-					const latest = versions[0];
-
 					return {
-						source,
+						source: "api" as const,
 						versions,
 						latest,
 						...(resolvedDefault ? { default: resolvedDefault } : {}),
