@@ -14,6 +14,23 @@ const normalizeBunTag = (tagName: string): Effect.Effect<Option.Option<import("s
 	return tryParseSemVer(stripped);
 };
 
+/**
+ * Provides the {@link BunVersionFetcher} service using the live GitHub API.
+ *
+ * Fetches Bun releases from the `oven-sh/bun` GitHub repository using the
+ * provided {@link GitHubClient}. Draft releases and pre-releases are excluded.
+ * Tag names are normalized by stripping the `bun-` prefix and any leading `v`
+ * or `V` before parsing as semver.
+ *
+ * This layer is a required dependency of {@link AutoBunCacheLive} and
+ * {@link FreshBunCacheLive}. It is not needed by {@link OfflineBunCacheLive}.
+ *
+ * @see {@link BunVersionFetcher}
+ * @see {@link GitHubClient}
+ * @see {@link AutoBunCacheLive}
+ * @see {@link FreshBunCacheLive}
+ * @public
+ */
 export const BunVersionFetcherLive: Layer.Layer<BunVersionFetcher, never, GitHubClient> = Layer.effect(
 	BunVersionFetcher,
 	Effect.gen(function* () {

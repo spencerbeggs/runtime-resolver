@@ -2,10 +2,7 @@
 
 ## Overview
 
-runtime-resolver uses typed errors built on Effect's `Data.TaggedError`. Every
-error carries a `_tag` string discriminator, which allows precise pattern
-matching in both the Effect API (`Effect.catchTag`) and the CLI JSON envelope
-(`error._tag`).
+runtime-resolver uses typed errors built on Effect's `Data.TaggedError`. Every error carries a `_tag` string discriminator, which allows precise pattern matching in both the Effect API (`Effect.catchTag`) and the CLI JSON envelope (`error._tag`).
 
 ## Error Types
 
@@ -51,9 +48,7 @@ Thrown when no versions match the semver constraint.
 
 ### FreshnessError
 
-Thrown when the `FreshNodeCacheLive` (or Bun/Deno equivalents) layer cannot
-fetch data from the API. This error only surfaces when you explicitly use
-a `Fresh*CacheLive` layer.
+Thrown when the `FreshNodeCacheLive` (or Bun/Deno equivalents) layer cannot fetch data from the API. This error only surfaces when you explicitly use a `Fresh*CacheLive` layer.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -62,9 +57,7 @@ a `Fresh*CacheLive` layer.
 
 ### AuthenticationError
 
-Thrown when GitHub authentication fails. This includes invalid tokens (HTTP 401)
-and GitHub App credential failures (invalid private key, no installations
-found).
+Thrown when GitHub authentication fails. This includes invalid tokens (HTTP 401) and GitHub App credential failures (invalid private key, no installations found).
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -73,9 +66,7 @@ found).
 
 ## Error Unions by Runtime
 
-Each resolver's error type has been simplified to just `VersionNotFoundError`.
-Network, parse, rate limit, and authentication errors are handled internally
-by the cache layers:
+Each resolver's error type has been simplified to just `VersionNotFoundError`. Network, parse, rate limit, and authentication errors are handled internally by the cache layers:
 
 - **Auto cache layers** catch `NetworkError` and `ParseError`, falling back to
   bundled defaults
@@ -86,8 +77,7 @@ Resolver error union: `VersionNotFoundError`
 
 ## Promise API Error Handling
 
-The Promise API (`resolveNode`, `resolveBun`, `resolveDeno`) surfaces errors
-as standard rejected promises. Wrap calls in `try`/`catch`:
+The Promise API (`resolveNode`, `resolveBun`, `resolveDeno`) surfaces errors as standard rejected promises. Wrap calls in `try`/`catch`:
 
 ```typescript
 import { resolveNode } from "runtime-resolver";
@@ -102,8 +92,7 @@ try {
 
 ## Effect API Error Handling
 
-The Effect API exposes every error class so you can use `Effect.catchTag` for
-precise discrimination:
+The Effect API exposes every error class so you can use `Effect.catchTag` for precise discrimination:
 
 ```typescript
 import { NodeResolver } from "runtime-resolver";
@@ -121,9 +110,7 @@ const program = Effect.gen(function* () {
 
 ## CLI Error Handling
 
-The CLI always exits with code 0. Errors are encoded in the JSON response
-envelope. The top-level `ok` field is `false` when any runtime fails, and
-each runtime entry in `results` carries its own `ok` field:
+The CLI always exits with code 0. Errors are encoded in the JSON response envelope. The top-level `ok` field is `false` when any runtime fails, and each runtime entry in `results` carries its own `ok` field:
 
 ```json
 {
@@ -142,8 +129,7 @@ each runtime entry in `results` carries its own `ok` field:
 }
 ```
 
-Check the `ok` field at either level for programmatic use. To exit non-zero on
-failure from a shell script, pipe through `jq`:
+Check the `ok` field at either level for programmatic use. To exit non-zero on failure from a shell script, pipe through `jq`:
 
 ```bash
 runtime-resolver --node ">=20" | jq -e '.ok' > /dev/null

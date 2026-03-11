@@ -7,6 +7,53 @@ import { NodeReleaseCache } from "../services/NodeReleaseCache.js";
 import type { NodeResolverOptions } from "../services/NodeResolver.js";
 import { NodeResolver } from "../services/NodeResolver.js";
 
+/**
+ * Provides the {@link NodeResolver} service backed by a {@link NodeReleaseCache}.
+ *
+ * This layer composes with any of the three Node cache strategy layers to form
+ * a complete resolver stack. In addition to semver range filtering and increment
+ * grouping, it supports filtering by Node.js release phase (e.g., `"current"`,
+ * `"active-lts"`, `"maintenance-lts"`, `"end-of-life"`) and automatically
+ * determines the current LTS version from the loaded schedule data.
+ *
+ * @example
+ * ```ts
+ * import {
+ *   NodeResolverLive, AutoNodeCacheLive,
+ *   NodeVersionFetcherLive, NodeScheduleFetcherLive,
+ *   GitHubClientLive, GitHubAutoAuth,
+ * } from "runtime-resolver";
+ * import { NodeResolver } from "runtime-resolver";
+ * import { Effect, Layer } from "effect";
+ *
+ * const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+ * const FetchersLayer = Layer.merge(
+ *   NodeVersionFetcherLive.pipe(Layer.provide(GitHubLayer)),
+ *   NodeScheduleFetcherLive.pipe(Layer.provide(GitHubLayer)),
+ * );
+ * const CacheLayer = AutoNodeCacheLive.pipe(Layer.provide(FetchersLayer));
+ * const ResolverLayer = NodeResolverLive.pipe(Layer.provide(CacheLayer));
+ *
+ * const program = Effect.gen(function* () {
+ *   const resolver = yield* NodeResolver;
+ *   // Resolve only active-LTS and maintenance-LTS releases in the ^20 range
+ *   const result = yield* resolver.resolve({
+ *     semverRange: "^20.0.0",
+ *     phases: ["active-lts", "maintenance-lts"],
+ *   });
+ *   console.log(result.lts);
+ * });
+ *
+ * Effect.runPromise(program.pipe(Effect.provide(ResolverLayer)));
+ * ```
+ *
+ * @see {@link NodeResolver}
+ * @see {@link NodeReleaseCache}
+ * @see {@link AutoNodeCacheLive}
+ * @see {@link FreshNodeCacheLive}
+ * @see {@link OfflineNodeCacheLive}
+ * @public
+ */
 export const NodeResolverLive: Layer.Layer<NodeResolver, never, NodeReleaseCache> = Layer.effect(
 	NodeResolver,
 	Effect.gen(function* () {

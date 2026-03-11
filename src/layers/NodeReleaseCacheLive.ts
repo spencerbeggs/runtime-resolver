@@ -8,6 +8,28 @@ import { NodeSchedule } from "../schemas/node-schedule.js";
 import { NodeReleaseCache } from "../services/NodeReleaseCache.js";
 import { createRuntimeCache } from "./RuntimeCacheLive.js";
 
+/**
+ * Low-level layer that constructs the {@link NodeReleaseCache} service backed by
+ * a `SemVerVersionCache` instance from `semver-effect`.
+ *
+ * This layer is more complex than the Bun and Deno equivalents because it manages
+ * additional LTS schedule state via an internal `Ref`. The schedule is stored
+ * separately from the version list so that calling `updateSchedule` can
+ * transparently rebuild all release objects with the latest phase information
+ * without reloading data from the network.
+ *
+ * This layer wires up the cache storage but does not populate it with any
+ * release data. Callers are responsible for calling `updateSchedule` and
+ * `loadFromInputs` after construction. In normal usage you should prefer the
+ * higher-level cache strategy layers instead of using this layer directly:
+ * - {@link AutoNodeCacheLive} — API with fallback to bundled defaults
+ * - {@link FreshNodeCacheLive} — API only, fails if unavailable
+ * - {@link OfflineNodeCacheLive} — bundled defaults only
+ *
+ * @see {@link NodeReleaseCache}
+ * @see {@link createRuntimeCache}
+ * @internal
+ */
 export const NodeReleaseCacheLive: Layer.Layer<NodeReleaseCache, never, SemVerVersionCache> = Layer.effect(
 	NodeReleaseCache,
 	Effect.gen(function* () {

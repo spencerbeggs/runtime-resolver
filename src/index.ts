@@ -43,7 +43,9 @@ const DenoCacheLayer = AutoDenoCacheLive.pipe(Layer.provide(DenoVersionFetcherLi
 const DenoLayer = DenoResolverLive.pipe(Layer.provide(DenoCacheLayer));
 
 // ── Errors ──────────────────────────────────────────────────────────────────
-// Bases are @internal — exported only for declaration bundling (api-extractor).
+// Tagged error classes thrown by the Promise API and surfaced through Effect
+// channels. `*Base` variants are @internal — exported solely for declaration
+// bundling (api-extractor) and should not be instantiated by consumers.
 export { AuthenticationError, AuthenticationErrorBase } from "./errors/AuthenticationError.js";
 export { CacheError, CacheErrorBase } from "./errors/CacheError.js";
 export { FreshnessError, FreshnessErrorBase } from "./errors/FreshnessError.js";
@@ -54,6 +56,9 @@ export { RateLimitError, RateLimitErrorBase } from "./errors/RateLimitError.js";
 export { VersionNotFoundError, VersionNotFoundErrorBase } from "./errors/VersionNotFoundError.js";
 
 // ── Layers ──────────────────────────────────────────────────────────────────
+// Effect `Layer` implementations that wire up every runtime resolver's full
+// dependency graph. Use these when composing custom Effect pipelines instead
+// of relying on the Promise API.
 export { AutoBunCacheLive } from "./layers/AutoBunCacheLive.js";
 export { AutoDenoCacheLive } from "./layers/AutoDenoCacheLive.js";
 export { AutoNodeCacheLive } from "./layers/AutoNodeCacheLive.js";
@@ -80,9 +85,11 @@ export { OfflineDenoCacheLive } from "./layers/OfflineDenoCacheLive.js";
 export { OfflineNodeCacheLive } from "./layers/OfflineNodeCacheLive.js";
 export { createRuntimeCache } from "./layers/RuntimeCacheLive.js";
 // ── Schemas ──────────────────────────────────────────────────────────────────
-// Bases are @internal — exported only for declaration bundling (api-extractor).
+// Effect `Schema` codecs for runtime release data. `*Base` variants are
+// @internal — exported solely for declaration bundling (api-extractor).
 export { BunRelease, BunReleaseBase } from "./schemas/bun-release.js";
 // ── Types ───────────────────────────────────────────────────────────────────
+// TypeScript type aliases and branded primitives shared across all runtimes.
 export type { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
 export { DenoRelease, DenoReleaseBase } from "./schemas/deno-release.js";
 export type { GitHubRelease, GitHubTag } from "./schemas/github.js";
@@ -92,6 +99,9 @@ export type { NodeScheduleData, NodeScheduleEntry } from "./schemas/node-schedul
 export { NodeSchedule, NodeScheduleBase } from "./schemas/node-schedule.js";
 export type { RuntimeRelease, RuntimeReleaseInput } from "./schemas/runtime-release.js";
 // ── Services ────────────────────────────────────────────────────────────────
+// Effect `Context.Tag` service interfaces and their option/error types.
+// Inject these into your own Effect programs for fine-grained control over
+// caching, fetching, and resolution behaviour.
 export { BunReleaseCache } from "./services/BunReleaseCache.js";
 export type { BunResolverError, BunResolverOptions } from "./services/BunResolver.js";
 export { BunResolver } from "./services/BunResolver.js";
@@ -115,8 +125,34 @@ export type { RuntimeCache } from "./services/RuntimeCache.js";
 /**
  * Resolve Node.js versions matching the given options.
  *
- * Uses GITHUB_PERSONAL_ACCESS_TOKEN or GITHUB_TOKEN for authentication.
- * Falls back to build-time cache when the network is unavailable.
+ * Fetches release data from the Node.js GitHub repository and the official
+ * release schedule API, then filters and ranks versions according to
+ * `options`. Authentication is read from `GITHUB_PERSONAL_ACCESS_TOKEN` or
+ * `GITHUB_TOKEN` environment variables. Falls back to a build-time offline
+ * cache when the network is unavailable.
+ *
+ * @param options - Filtering and ranking options. See {@link NodeResolverOptions}.
+ * @returns A promise that resolves to a {@link ResolvedVersions} object
+ *   containing the matched version list, the highest matching version as
+ *   `latest`, and optional `lts` / `default` strings.
+ *
+ * @example
+ * ```ts
+ * import type { ResolvedVersions } from "runtime-resolver";
+ * import { resolveNode } from "runtime-resolver";
+ *
+ * const result: ResolvedVersions = await resolveNode({
+ * 	semverRange: ">=20.0.0",
+ * 	phases: ["active-lts"],
+ * });
+ * console.log(result.latest); // e.g. "22.11.0"
+ * console.log(result.versions); // all matching versions
+ * ```
+ *
+ * @see {@link NodeResolver} for the Effect-based API
+ * @see {@link NodeResolverOptions} for available options
+ *
+ * @public
  */
 export const resolveNode = (options?: NodeResolverOptions): Promise<ResolvedVersions> =>
 	Effect.runPromise(
@@ -129,8 +165,29 @@ export const resolveNode = (options?: NodeResolverOptions): Promise<ResolvedVers
 /**
  * Resolve Bun versions matching the given options.
  *
- * Uses GITHUB_PERSONAL_ACCESS_TOKEN or GITHUB_TOKEN for authentication.
- * Falls back to build-time cache when the network is unavailable.
+ * Fetches release data from the Bun GitHub repository, then filters and ranks
+ * versions according to `options`. Authentication is read from
+ * `GITHUB_PERSONAL_ACCESS_TOKEN` or `GITHUB_TOKEN` environment variables.
+ * Falls back to a build-time offline cache when the network is unavailable.
+ *
+ * @param options - Filtering and ranking options. See {@link BunResolverOptions}.
+ * @returns A promise that resolves to a {@link ResolvedVersions} object
+ *   containing the matched version list and the highest matching version as
+ *   `latest`.
+ *
+ * @example
+ * ```ts
+ * import type { ResolvedVersions } from "runtime-resolver";
+ * import { resolveBun } from "runtime-resolver";
+ *
+ * const result: ResolvedVersions = await resolveBun({ semverRange: "^1.0.0" });
+ * console.log(result.latest);
+ * ```
+ *
+ * @see {@link BunResolver} for the Effect-based API
+ * @see {@link BunResolverOptions} for available options
+ *
+ * @public
  */
 export const resolveBun = (options?: BunResolverOptions): Promise<ResolvedVersions> =>
 	Effect.runPromise(
@@ -143,8 +200,29 @@ export const resolveBun = (options?: BunResolverOptions): Promise<ResolvedVersio
 /**
  * Resolve Deno versions matching the given options.
  *
- * Uses GITHUB_PERSONAL_ACCESS_TOKEN or GITHUB_TOKEN for authentication.
- * Falls back to build-time cache when the network is unavailable.
+ * Fetches release data from the Deno GitHub repository, then filters and ranks
+ * versions according to `options`. Authentication is read from
+ * `GITHUB_PERSONAL_ACCESS_TOKEN` or `GITHUB_TOKEN` environment variables.
+ * Falls back to a build-time offline cache when the network is unavailable.
+ *
+ * @param options - Filtering and ranking options. See {@link DenoResolverOptions}.
+ * @returns A promise that resolves to a {@link ResolvedVersions} object
+ *   containing the matched version list and the highest matching version as
+ *   `latest`.
+ *
+ * @example
+ * ```ts
+ * import type { ResolvedVersions } from "runtime-resolver";
+ * import { resolveDeno } from "runtime-resolver";
+ *
+ * const result: ResolvedVersions = await resolveDeno({ semverRange: "^2.0.0" });
+ * console.log(result.latest);
+ * ```
+ *
+ * @see {@link DenoResolver} for the Effect-based API
+ * @see {@link DenoResolverOptions} for available options
+ *
+ * @public
  */
 export const resolveDeno = (options?: DenoResolverOptions): Promise<ResolvedVersions> =>
 	Effect.runPromise(

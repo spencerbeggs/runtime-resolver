@@ -1,7 +1,6 @@
 # runtime-resolver Documentation
 
-Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes with
-offline fallback via a build-time cache.
+Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes with offline fallback via a build-time cache.
 
 ## Installation
 
@@ -22,8 +21,7 @@ const bun = await resolveBun({ semverRange: ">=1.1" });
 const deno = await resolveDeno({ semverRange: ">=2" });
 ```
 
-Set `GITHUB_PERSONAL_ACCESS_TOKEN` or `GITHUB_TOKEN` for authenticated
-requests. Without a token, the resolver falls back to bundled offline data.
+Set `GITHUB_PERSONAL_ACCESS_TOKEN` or `GITHUB_TOKEN` for authenticated requests. Without a token, the resolver falls back to bundled offline data.
 
 ## CLI
 
@@ -31,9 +29,7 @@ requests. Without a token, the resolver falls back to bundled offline data.
 npx runtime-resolver --node ">=20" --bun ">=1.1" --deno ">=2" --pretty
 ```
 
-The CLI outputs structured JSON with a `$schema` property for tooling
-integration. It always exits 0 -- errors are encoded in the response envelope.
-Running the CLI with no runtime flags shows help text.
+The CLI outputs structured JSON with a `$schema` property for tooling integration. It always exits 0 -- errors are encoded in the response envelope. Running the CLI with no runtime flags shows help text.
 
 ## Guides
 
@@ -60,8 +56,7 @@ Three async functions that return `Promise<ResolvedVersions>`:
 
 ### Effect API
 
-Import from `runtime-resolver` for full control over dependency
-injection, error handling, and layer composition:
+Import from `runtime-resolver` for full control over dependency injection, error handling, and layer composition:
 
 - **Services:** `NodeResolver`, `BunResolver`, `DenoResolver`, `GitHubClient`, `NodeReleaseCache`, `BunReleaseCache`, `DenoReleaseCache`
 - **Domain classes:** `NodeRelease`, `BunRelease`, `DenoRelease`, `NodeSchedule`
@@ -73,11 +68,7 @@ injection, error handling, and layer composition:
 
 ### CLI
 
-The `runtime-resolver` binary accepts `--node`, `--bun`, and `--deno` flags
-with semver ranges. Use `--increments` to control version granularity for all
-runtimes, `--node-default`/`--bun-default`/`--deno-default` to pin default
-versions, and `--node-date` for reproducible phase calculations. Use `--schema`
-to inspect the JSON response format and `--pretty` for human-readable output.
+The `runtime-resolver` binary accepts `--node`, `--bun`, and `--deno` flags with semver ranges. Use `--increments` to control version granularity for all runtimes, `--node-default`/`--bun-default`/`--deno-default` to pin default versions, and `--node-date` for reproducible phase calculations. Use `--schema` to inspect the JSON response format and `--pretty` for human-readable output.
 
 ## License
 

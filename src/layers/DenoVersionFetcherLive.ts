@@ -5,6 +5,23 @@ import type { RuntimeReleaseInput } from "../schemas/runtime-release.js";
 import { DenoVersionFetcher } from "../services/DenoVersionFetcher.js";
 import { GitHubClient } from "../services/GitHubClient.js";
 
+/**
+ * Provides the {@link DenoVersionFetcher} service using the live GitHub API.
+ *
+ * Fetches Deno releases from the `denoland/deno` GitHub repository using the
+ * provided {@link GitHubClient}. Draft releases and pre-releases are excluded.
+ * Tag names are normalized by stripping any leading `v` before parsing as
+ * semver.
+ *
+ * This layer is a required dependency of {@link AutoDenoCacheLive} and
+ * {@link FreshDenoCacheLive}. It is not needed by {@link OfflineDenoCacheLive}.
+ *
+ * @see {@link DenoVersionFetcher}
+ * @see {@link GitHubClient}
+ * @see {@link AutoDenoCacheLive}
+ * @see {@link FreshDenoCacheLive}
+ * @public
+ */
 export const DenoVersionFetcherLive: Layer.Layer<DenoVersionFetcher, never, GitHubClient> = Layer.effect(
 	DenoVersionFetcher,
 	Effect.gen(function* () {

@@ -19,6 +19,24 @@ const decodeSchedule = (input: unknown): Effect.Effect<NodeScheduleData, ParseEr
 		Effect.map((data) => data as NodeScheduleData),
 	);
 
+/**
+ * Provides the {@link NodeScheduleFetcher} service using the live Node.js release schedule.
+ *
+ * Fetches the Node.js release schedule from the raw GitHub content URL for
+ * `nodejs/Release` (`schedule.json` on the `main` branch) using the HTTP client
+ * on the provided {@link GitHubClient} service. The schedule data maps major
+ * version codenames to their start, LTS, and end-of-life dates and is used by
+ * {@link NodeReleaseCache} to compute per-release lifecycle phases.
+ *
+ * This layer is a required dependency of {@link AutoNodeCacheLive} and
+ * {@link FreshNodeCacheLive}. It is not needed by {@link OfflineNodeCacheLive}.
+ *
+ * @see {@link NodeScheduleFetcher}
+ * @see {@link GitHubClient}
+ * @see {@link AutoNodeCacheLive}
+ * @see {@link FreshNodeCacheLive}
+ * @public
+ */
 export const NodeScheduleFetcherLive: Layer.Layer<NodeScheduleFetcher, never, GitHubClient> = Layer.effect(
 	NodeScheduleFetcher,
 	Effect.gen(function* () {

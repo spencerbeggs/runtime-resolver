@@ -7,6 +7,40 @@ import { DenoReleaseCache } from "../services/DenoReleaseCache.js";
 import type { DenoResolverOptions } from "../services/DenoResolver.js";
 import { DenoResolver } from "../services/DenoResolver.js";
 
+/**
+ * Provides the {@link DenoResolver} service backed by a {@link DenoReleaseCache}.
+ *
+ * This layer composes with any of the three Deno cache strategy layers to form
+ * a complete resolver stack. It implements semver range filtering and increment
+ * grouping (latest per major, latest per minor, or all patch versions) using
+ * the releases already loaded into the cache.
+ *
+ * @example
+ * ```ts
+ * import { DenoResolverLive, AutoDenoCacheLive, DenoVersionFetcherLive, GitHubClientLive, GitHubAutoAuth } from "runtime-resolver";
+ * import { DenoResolver } from "runtime-resolver";
+ * import { Effect, Layer } from "effect";
+ *
+ * const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+ * const CacheLayer = AutoDenoCacheLive.pipe(Layer.provide(DenoVersionFetcherLive.pipe(Layer.provide(GitHubLayer))));
+ * const ResolverLayer = DenoResolverLive.pipe(Layer.provide(CacheLayer));
+ *
+ * const program = Effect.gen(function* () {
+ *   const resolver = yield* DenoResolver;
+ *   const result = yield* resolver.resolve({ semverRange: "^2.0.0" });
+ *   console.log(result.latest);
+ * });
+ *
+ * Effect.runPromise(program.pipe(Effect.provide(ResolverLayer)));
+ * ```
+ *
+ * @see {@link DenoResolver}
+ * @see {@link DenoReleaseCache}
+ * @see {@link AutoDenoCacheLive}
+ * @see {@link FreshDenoCacheLive}
+ * @see {@link OfflineDenoCacheLive}
+ * @public
+ */
 export const DenoResolverLive: Layer.Layer<DenoResolver, never, DenoReleaseCache> = Layer.effect(
 	DenoResolver,
 	Effect.gen(function* () {

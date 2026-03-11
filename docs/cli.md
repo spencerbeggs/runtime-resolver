@@ -1,10 +1,6 @@
 # CLI Reference
 
-The `runtime-resolver` CLI resolves semver-compatible versions of Node.js, Bun,
-and Deno runtimes. It outputs structured JSON to stdout and always exits with
-code 0. Errors are encoded in the JSON response envelope rather than signaled
-through exit codes. Every response includes a `$schema` property pointing to the
-published JSON Schema.
+The `runtime-resolver` CLI resolves semver-compatible versions of Node.js, Bun, and Deno runtimes. It outputs structured JSON to stdout and always exits with code 0. Errors are encoded in the JSON response envelope rather than signaled through exit codes. Every response includes a `$schema` property pointing to the published JSON Schema.
 
 ## Installation
 
@@ -41,8 +37,7 @@ npx runtime-resolver --node ">=20"
 
 ### Increments
 
-The `--increments` flag controls version granularity in the output for all
-requested runtimes (Node.js, Bun, and Deno):
+The `--increments` flag controls version granularity in the output for all requested runtimes (Node.js, Bun, and Deno):
 
 - `latest` -- only the latest matching version per major line (default)
 - `minor` -- one version per minor release
@@ -50,8 +45,7 @@ requested runtimes (Node.js, Bun, and Deno):
 
 ### Authentication Flags
 
-The `--token`, `--app-id`, `--app-private-key`, and `--app-installation-id`
-flags provide explicit authentication, overriding any environment variables.
+The `--token`, `--app-id`, `--app-private-key`, and `--app-installation-id` flags provide explicit authentication, overriding any environment variables.
 
 **Token authentication:**
 
@@ -81,11 +75,7 @@ runtime-resolver --node ">=20" --app-id "123456" --app-private-key @key.pem --ap
 
 ### Schema Validation
 
-The `--schema` flag prints the JSON Schema for the response format and exits.
-It cannot be combined with any resolve flags (`--node`, `--bun`, `--deno`,
-`--increments`, `--node-phases`, `--node-default`, `--bun-default`,
-`--deno-default`, `--node-date`). If `--schema` is used alongside any of
-these flags, the CLI prints an error and exits:
+The `--schema` flag prints the JSON Schema for the response format and exits. It cannot be combined with any resolve flags (`--node`, `--bun`, `--deno`, `--increments`, `--node-phases`, `--node-default`, `--bun-default`, `--deno-default`, `--node-date`). If `--schema` is used alongside any of these flags, the CLI prints an error and exits:
 
 ```bash
 # Valid: print the schema
@@ -98,8 +88,7 @@ runtime-resolver --schema --node ">=20"
 
 ### Node.js Phases
 
-The `--node-phases` flag accepts a comma-separated list of release phases to
-filter results. Valid phases:
+The `--node-phases` flag accepts a comma-separated list of release phases to filter results. Valid phases:
 
 - `current` -- the current release line
 - `active-lts` -- actively maintained LTS releases
@@ -108,32 +97,23 @@ filter results. Valid phases:
 
 ### Default Versions
 
-The `--node-default`, `--bun-default`, and `--deno-default` flags pin a
-specific version for each runtime. The pinned version is included in the
-results even if it would otherwise be filtered out. It appears as the `default`
-field in the response.
+The `--node-default`, `--bun-default`, and `--deno-default` flags pin a specific version for each runtime. The pinned version is included in the results even if it would otherwise be filtered out. It appears as the `default` field in the response.
 
-For Node.js, when no `--node-default` is provided, the `default` field
-automatically reports the latest LTS version.
+For Node.js, when no `--node-default` is provided, the `default` field automatically reports the latest LTS version.
 
 ### Node.js Date
 
-The `--node-date` flag accepts an ISO 8601 date string (e.g. `2024-01-15`). It
-overrides the reference date used for Node.js release phase calculations,
-enabling reproducible results.
+The `--node-date` flag accepts an ISO 8601 date string (e.g. `2024-01-15`). It overrides the reference date used for Node.js release phase calculations, enabling reproducible results.
 
 ### Empty Invocation
 
-When no runtime flags (`--node`, `--bun`, `--deno`) are provided, the CLI
-prints a help message to stderr instead of producing JSON output.
+When no runtime flags (`--node`, `--bun`, `--deno`) are provided, the CLI prints a help message to stderr instead of producing JSON output.
 
 ## Response Format
 
 ### Success Response
 
-When all requested runtimes resolve successfully, `ok` is `true`. Each runtime
-result includes a `source` field indicating whether data came from a live API
-fetch (`"api"`) or the bundled build-time cache (`"cache"`):
+When all requested runtimes resolve successfully, `ok` is `true`. Each runtime result includes a `source` field indicating whether data came from a live API fetch (`"api"`) or the bundled build-time cache (`"cache"`):
 
 ```json
 {
@@ -152,13 +132,11 @@ fetch (`"api"`) or the bundled build-time cache (`"cache"`):
 }
 ```
 
-The `lts` field appears only for Node.js results. The `default` field appears
-when a `--*-default` flag is set, or automatically for Node.js (latest LTS).
+The `lts` field appears only for Node.js results. The `default` field appears when a `--*-default` flag is set, or automatically for Node.js (latest LTS).
 
 ### Partial Failure
 
-When some runtimes succeed and others fail, the top-level `ok` is `false` but
-successful results are still included:
+When some runtimes succeed and others fail, the top-level `ok` is `false` but successful results are still included:
 
 ```json
 {
@@ -186,8 +164,7 @@ successful results are still included:
 
 ### Error Types
 
-Each error object carries a `_tag` field identifying its type, a `message`
-field, and additional metadata specific to the error:
+Each error object carries a `_tag` field identifying its type, a `message` field, and additional metadata specific to the error:
 
 | Error Tag | Description | Extra Fields |
 | --- | --- | --- |
@@ -214,8 +191,7 @@ runtime-resolver --node ">=18" | jq -r '.results.node.lts'
 
 ## JSON Schema
 
-The response format is described by a published JSON Schema. Use it for
-validation in editors, CI checks, or code generation:
+The response format is described by a published JSON Schema. Use it for validation in editors, CI checks, or code generation:
 
 ```bash
 # Dump the schema to a local file
@@ -287,8 +263,7 @@ echo "Using Node.js $NODE_VERSION"
 
 ## Authentication
 
-The CLI detects GitHub credentials automatically using this priority chain
-(first match wins):
+The CLI detects GitHub credentials automatically using this priority chain (first match wins):
 
 1. **CLI flags** -- `--token` or `--app-id` + `--app-private-key`
 2. **App env vars** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
@@ -304,7 +279,4 @@ export GITHUB_TOKEN="ghp_..."
 runtime-resolver --node ">=20"
 ```
 
-When multiple credential sources are detected (for example, both app env vars
-and token env vars are set), a warning is emitted to stderr indicating which
-source was selected. No warning when CLI flags are provided -- explicit flags
-are unambiguous.
+When multiple credential sources are detected (for example, both app env vars and token env vars are set), a warning is emitted to stderr indicating which source was selected. No warning when CLI flags are provided -- explicit flags are unambiguous.

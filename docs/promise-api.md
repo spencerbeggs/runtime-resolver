@@ -1,8 +1,6 @@
 # Promise API
 
-The Promise API is the simplest way to use runtime-resolver. It exposes three
-functions -- `resolveNode`, `resolveBun`, and `resolveDeno` -- that each return
-a `Promise<ResolvedVersions>`. No knowledge of Effect is required.
+The Promise API is the simplest way to use runtime-resolver. It exposes three functions -- `resolveNode`, `resolveBun`, and `resolveDeno` -- that each return a `Promise<ResolvedVersions>`. No knowledge of Effect is required.
 
 ## Installation
 
@@ -134,8 +132,7 @@ console.log(all.versions); // ["22.15.2", "22.15.1", "22.15.0"]
 
 #### date
 
-Override the reference date used for phase calculation. Useful for reproducible
-builds or testing what versions were active at a past date.
+Override the reference date used for phase calculation. Useful for reproducible builds or testing what versions were active at a past date.
 
 ```typescript
 // What was current/active-lts on Jan 1, 2024?
@@ -221,19 +218,13 @@ interface ResolvedVersions {
 ```
 
 - **`versions`** -- All matching versions, sorted newest to oldest.
-- **`latest`** -- The single newest version. For Node.js this is the newest
-  version matching your filters. For Bun and Deno this is always the newest
-  release regardless of your `semverRange`.
-- **`lts`** -- Present only for Node.js. The newest version in the result set
-  that has LTS status.
-- **`default`** -- Present only when you pass a `defaultVersion` option and it
-  resolves to an actual release. For Node.js, when no `defaultVersion` is
-  provided, this defaults to the latest LTS version.
+- **`latest`** -- The single newest version. For Node.js this is the newest version matching your filters. For Bun and Deno this is always the newest release regardless of your `semverRange`.
+- **`lts`** -- Present only for Node.js. The newest version in the result set that has LTS status.
+- **`default`** -- Present only when you pass a `defaultVersion` option and it resolves to an actual release. For Node.js, when no `defaultVersion` is provided, this defaults to the latest LTS version.
 
 ## Authentication
 
-The Promise API automatically detects authentication from environment
-variables. The detection chain runs in this order (first match wins):
+The Promise API automatically detects authentication from environment variables. The detection chain runs in this order (first match wins):
 
 1. **GitHub App** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
    (+ optional `GITHUB_APP_INSTALLATION_ID`)
@@ -252,16 +243,13 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="ghp_..."
 export GITHUB_TOKEN="ghp_..."
 ```
 
-When multiple credential sources are present (for example, both app and token
-env vars), a warning is emitted to stderr indicating which source was selected.
+When multiple credential sources are present (for example, both app and token env vars), a warning is emitted to stderr indicating which source was selected.
 
-For explicit auth control, use the [Effect API](./effect-api.md) with specific
-layers like `GitHubTokenAuthFromToken` or `GitHubAppAuth`.
+For explicit auth control, use the [Effect API](./effect-api.md) with specific layers like `GitHubTokenAuthFromToken` or `GitHubAppAuth`.
 
 ## Error Handling
 
-The Promise API functions throw on failure. Wrap calls in try/catch to handle
-errors gracefully:
+The Promise API functions throw on failure. Wrap calls in try/catch to handle errors gracefully:
 
 ```typescript
 import { resolveNode } from "runtime-resolver";
@@ -276,10 +264,8 @@ try {
 
 Common failure scenarios:
 
-- **No matching versions** -- The semver range or phase filters exclude
-  everything.
-- **Network failure without cache** -- Only when using `Fresh*CacheLive` layers
-  via the Effect API.
+- **No matching versions** -- The semver range or phase filters exclude everything.
+- **Network failure without cache** -- Only when using `Fresh*CacheLive` layers via the Effect API.
 
 ## Types
 

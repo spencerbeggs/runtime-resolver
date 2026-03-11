@@ -7,6 +7,41 @@ import { BunReleaseCache } from "../services/BunReleaseCache.js";
 import type { BunResolverOptions } from "../services/BunResolver.js";
 import { BunResolver } from "../services/BunResolver.js";
 
+/**
+ * Provides the {@link BunResolver} service backed by a {@link BunReleaseCache}.
+ *
+ * This layer composes with any of the three Bun cache strategy layers to form
+ * a complete resolver stack. It implements semver range filtering and increment
+ * grouping (latest per major, latest per minor, or all patch versions) using
+ * the releases already loaded into the cache.
+ *
+ * @example
+ * ```ts
+ * import { BunResolverLive, AutoBunCacheLive, BunVersionFetcherLive, GitHubClientLive, GitHubAutoAuth } from "runtime-resolver";
+ * import type { ResolvedVersions } from "runtime-resolver";
+ * import { BunResolver } from "runtime-resolver";
+ * import { Effect, Layer } from "effect";
+ *
+ * const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
+ * const CacheLayer = AutoBunCacheLive.pipe(Layer.provide(BunVersionFetcherLive.pipe(Layer.provide(GitHubLayer))));
+ * const ResolverLayer = BunResolverLive.pipe(Layer.provide(CacheLayer));
+ *
+ * const program = Effect.gen(function* () {
+ *   const resolver = yield* BunResolver;
+ *   const result = yield* resolver.resolve({ semverRange: "^1.0.0" });
+ *   console.log(result.latest);
+ * });
+ *
+ * Effect.runPromise(program.pipe(Effect.provide(ResolverLayer)));
+ * ```
+ *
+ * @see {@link BunResolver}
+ * @see {@link BunReleaseCache}
+ * @see {@link AutoBunCacheLive}
+ * @see {@link FreshBunCacheLive}
+ * @see {@link OfflineBunCacheLive}
+ * @public
+ */
 export const BunResolverLive: Layer.Layer<BunResolver, never, BunReleaseCache> = Layer.effect(
 	BunResolver,
 	Effect.gen(function* () {

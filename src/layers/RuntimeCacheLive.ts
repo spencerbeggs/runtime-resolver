@@ -5,8 +5,33 @@ import type { RuntimeRelease } from "../schemas/runtime-release.js";
 import type { RuntimeCache } from "../services/RuntimeCache.js";
 
 /**
- * Creates a `RuntimeCache<R>` backed by semver-effect's VersionCache.
- * Must be called within an Effect that has SemVerVersionCache provided.
+ * Factory that creates a {@link RuntimeCache} implementation backed by
+ * `semver-effect`'s `VersionCache`.
+ *
+ * The returned `Effect` must be executed within an Effect context that provides
+ * a `SemVerVersionCache` service (i.e., it requires `SemVerVersionCache` in its
+ * environment). The cache maintains an internal lookup map from version string
+ * to the full release object so that resolved semver versions can be
+ * round-tripped back to their typed release records.
+ *
+ * This factory is used internally by {@link BunReleaseCacheLive},
+ * {@link DenoReleaseCacheLive}, and {@link NodeReleaseCacheLive} to build their
+ * respective cache service implementations. Prefer those higher-level layers
+ * over calling this factory directly.
+ *
+ * Note: `load` is not concurrency-safe. Callers must not invoke it concurrently.
+ * In practice this constraint is upheld because `load` is only called from layer
+ * setup and `NodeReleaseCacheLive.loadFromInputs`, both of which are serialized
+ * by the Effect runtime.
+ *
+ * @typeParam R - The runtime release type stored in the cache. Must extend
+ *   {@link RuntimeRelease}.
+ *
+ * @see {@link RuntimeCache}
+ * @see {@link BunReleaseCacheLive}
+ * @see {@link DenoReleaseCacheLive}
+ * @see {@link NodeReleaseCacheLive}
+ * @public
  */
 export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 	RuntimeCache<R>,

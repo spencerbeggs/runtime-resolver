@@ -50,5 +50,27 @@ const freshSetup = Effect.gen(function* () {
 const SemVerLayer = SemVerVersionCacheLive.pipe(Layer.provide(SemVerParserLive));
 const BaseCacheLayer = DenoReleaseCacheLive.pipe(Layer.provide(SemVerLayer));
 
+/**
+ * Provides the {@link DenoReleaseCache} service using the "Fresh" cache strategy.
+ *
+ * Requires live release data from the GitHub API via {@link DenoVersionFetcher}.
+ * If the fetch fails for any reason — authentication errors, network errors,
+ * parse errors, or rate-limit errors — the layer fails with a `FreshnessError`
+ * rather than falling back to stale data.
+ *
+ * Use this strategy in contexts where working with outdated version data would
+ * be incorrect or misleading, such as CI pipelines or tooling that must reflect
+ * the true current state of Deno releases.
+ *
+ * The three Deno cache strategy layers are:
+ * - {@link AutoDenoCacheLive} — tries API first, falls back to bundled defaults on any error
+ * - `FreshDenoCacheLive` — requires live API data, fails with `FreshnessError` if unavailable
+ * - {@link OfflineDenoCacheLive} — uses only bundled defaults, no network I/O
+ *
+ * @see {@link DenoReleaseCache}
+ * @see {@link AutoDenoCacheLive}
+ * @see {@link OfflineDenoCacheLive}
+ * @public
+ */
 export const FreshDenoCacheLive: Layer.Layer<DenoReleaseCache, FreshnessError, DenoVersionFetcher> =
 	BaseCacheLayer.pipe(Layer.tap((ctx) => freshSetup.pipe(Effect.provide(ctx))));

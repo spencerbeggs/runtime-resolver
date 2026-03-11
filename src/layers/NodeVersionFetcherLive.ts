@@ -19,6 +19,24 @@ const decodeDistIndex = (input: unknown) =>
 		),
 	);
 
+/**
+ * Provides the {@link NodeVersionFetcher} service using the live Node.js dist index.
+ *
+ * Fetches the full Node.js version list from `https://nodejs.org/dist/index.json`
+ * using the HTTP client on the provided {@link GitHubClient} service. Version
+ * strings are normalized by stripping the leading `v` before parsing as semver.
+ * Entries with non-string `npm` fields (present in very old releases prior to
+ * v0.6.3) are substituted with the sentinel version `"0.0.0"`.
+ *
+ * This layer is a required dependency of {@link AutoNodeCacheLive} and
+ * {@link FreshNodeCacheLive}. It is not needed by {@link OfflineNodeCacheLive}.
+ *
+ * @see {@link NodeVersionFetcher}
+ * @see {@link GitHubClient}
+ * @see {@link AutoNodeCacheLive}
+ * @see {@link FreshNodeCacheLive}
+ * @public
+ */
 export const NodeVersionFetcherLive: Layer.Layer<NodeVersionFetcher, never, GitHubClient> = Layer.effect(
 	NodeVersionFetcher,
 	Effect.gen(function* () {

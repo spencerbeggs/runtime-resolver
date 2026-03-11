@@ -1,8 +1,6 @@
 # Effect API
 
-All services, layers, error types, and schemas are exported from the
-`runtime-resolver` package root. This gives you full control over composition,
-error handling, and dependency injection using Effect's standard patterns.
+All services, layers, error types, and schemas are exported from the `runtime-resolver` package root. This gives you full control over composition, error handling, and dependency injection using Effect's standard patterns.
 
 ```typescript
 import {
@@ -14,8 +12,7 @@ import {
 
 ## Services
 
-Each service is a `Context.GenericTag`. Yield a tag inside `Effect.gen` to
-access its methods.
+Each service is a `Context.GenericTag`. Yield a tag inside `Effect.gen` to access its methods.
 
 ### NodeResolver
 
@@ -38,8 +35,7 @@ interface NodeResolver {
 `NodePhase` is `"current" | "active-lts" | "maintenance-lts" | "end-of-life"`.
 `Increments` is `"latest" | "minor" | "patch"`.
 
-When no `defaultVersion` is provided, the `default` field in the result is
-automatically set to the latest LTS version.
+When no `defaultVersion` is provided, the `default` field in the result is automatically set to the latest LTS version.
 
 ### BunResolver
 
@@ -85,9 +81,7 @@ Each runtime has a typed cache service backed by `semver-effect`:
 - **`DenoReleaseCache`** -- `RuntimeCache<DenoRelease>` with the same
   interface.
 
-All cache services expose semver-aware operations: `resolve(range)` finds the
-best match, `filter(range)` returns all matches, and `latestByMajor()` /
-`latestByMinor()` group releases by version segment.
+All cache services expose semver-aware operations: `resolve(range)` finds the best match, `filter(range)` returns all matches, and `latestByMajor()` / `latestByMinor()` group releases by version segment.
 
 ### Fetcher Services
 
@@ -121,8 +115,7 @@ interface GitHubClient {
 
 ### OctokitInstance
 
-Low-level tag providing an Octokit-compatible client. You rarely interact with
-this directly -- authentication layers produce it.
+Low-level tag providing an Octokit-compatible client. You rarely interact with this directly -- authentication layers produce it.
 
 ## Layers
 
@@ -137,13 +130,11 @@ BunResolverLive  ── BunReleaseCache  ── BunVersionFetcherLive  ── Gi
 DenoResolverLive ── DenoReleaseCache ── DenoVersionFetcherLive ── GitHubClientLive ── OctokitInstance
 ```
 
-Each resolver depends on its runtime-specific cache. Caches depend on fetchers.
-Fetchers depend on `GitHubClient`. `GitHubClientLive` requires `OctokitInstance`.
+Each resolver depends on its runtime-specific cache. Caches depend on fetchers. Fetchers depend on `GitHubClient`. `GitHubClientLive` requires `OctokitInstance`.
 
 ### Cache freshness layers
 
-Freshness is a **Layer concern**, not a resolver option. Each runtime has three
-cache layer variants:
+Freshness is a **Layer concern**, not a resolver option. Each runtime has three cache layer variants:
 
 | Layer | Behavior |
 | --- | --- |
@@ -159,14 +150,11 @@ Bun and Deno have equivalent layers: `AutoBunCacheLive`, `FreshBunCacheLive`,
 
 All authentication layers produce `OctokitInstance`.
 
-**`GitHubTokenAuth`** -- reads environment variables in order:
-`GITHUB_PERSONAL_ACCESS_TOKEN`, then `GITHUB_TOKEN`. Falls back to
-unauthenticated requests when neither is set.
+**`GitHubTokenAuth`** -- reads environment variables in order: `GITHUB_PERSONAL_ACCESS_TOKEN`, then `GITHUB_TOKEN`. Falls back to unauthenticated requests when neither is set.
 
 **`GitHubTokenAuthFromToken(token: string)`** -- uses an explicit token string.
 
-**`GitHubAppAuth(config: GitHubAppAuthConfig)`** -- authenticates as a GitHub
-App installation. Requires the `@octokit/auth-app` peer dependency.
+**`GitHubAppAuth(config: GitHubAppAuthConfig)`** -- authenticates as a GitHub App installation. Requires the `@octokit/auth-app` peer dependency.
 
 ```typescript
 interface GitHubAppAuthConfig {
@@ -176,10 +164,7 @@ interface GitHubAppAuthConfig {
 }
 ```
 
-**`GitHubAutoAuth`** -- runs the full detection chain: GitHub App env vars →
-token env vars → unauthenticated. This is the default layer used by the
-pre-built `NodeLayer`, `BunLayer`, and `DenoLayer`. Emits a warning to stderr
-when multiple credential sources are detected.
+**`GitHubAutoAuth`** -- runs the full detection chain: GitHub App env vars → token env vars → unauthenticated. This is the default layer used by the pre-built `NodeLayer`, `BunLayer`, and `DenoLayer`. Emits a warning to stderr when multiple credential sources are detected.
 
 ### Composing a full layer stack
 
@@ -238,8 +223,7 @@ const result = await Effect.runPromise(program.pipe(Effect.provide(NodeLayer)))
 
 ### NodeRelease
 
-Represents a Node.js release with phase-aware metadata. Wraps a `SemVer`
-version and an `Ref<NodeSchedule>` for effectful phase lookups:
+Represents a Node.js release with phase-aware metadata. Wraps a `SemVer` version and an `Ref<NodeSchedule>` for effectful phase lookups:
 
 - `version` -- the `SemVer` instance
 - `date` -- release date
@@ -252,9 +236,7 @@ Lightweight release classes wrapping `SemVer` and a release date.
 
 ### NodeSchedule
 
-Tracks the lifecycle schedule for a Node.js major version line (start, LTS,
-maintenance, end-of-life dates). Used by `NodeRelease.phase()` to determine
-the current phase of a release.
+Tracks the lifecycle schedule for a Node.js major version line (start, LTS, maintenance, end-of-life dates). Used by `NodeRelease.phase()` to determine the current phase of a release.
 
 ## ResolvedVersions
 
@@ -283,10 +265,7 @@ All errors extend `Data.TaggedError`. Discriminate with `Effect.catchTag`.
 | `FreshnessError` | `"FreshnessError"` | `strategy`, `message` |
 | `AuthenticationError` | `"AuthenticationError"` | `method` (`"token"` or `"app"`), `message` |
 
-Resolver error unions are simplified -- each resolver can only fail with
-`VersionNotFoundError`. Network, parse, and rate limit errors are handled
-internally by the cache layers (Auto catches them and falls back; Fresh
-converts them to `FreshnessError`).
+Resolver error unions are simplified -- each resolver can only fail with `VersionNotFoundError`. Network, parse, and rate limit errors are handled internally by the cache layers (Auto catches them and falls back; Fresh converts them to `FreshnessError`).
 
 ### Handling errors with catchTag
 
@@ -306,8 +285,7 @@ const program = Effect.gen(function* () {
 
 ## Custom layer example
 
-Swap `GitHubTokenAuth` for `GitHubAppAuth` to authenticate as a GitHub App
-installation. This is useful in CI environments or server-side applications.
+Swap `GitHubTokenAuth` for `GitHubAppAuth` to authenticate as a GitHub App installation. This is useful in CI environments or server-side applications.
 
 ```typescript
 import {
@@ -352,8 +330,4 @@ const program = Effect.gen(function* () {
 const result = await Effect.runPromise(program.pipe(Effect.provide(FullLayer)))
 ```
 
-Because `GitHubAppAuth` can fail during credential validation or installation
-token exchange, the layer type is `Layer<OctokitInstance, AuthenticationError>`.
-Effect surfaces this as a defect if the
-layer fails to build. Handle it at the edge with `Effect.catchAllDefect` if you
-need graceful recovery.
+Because `GitHubAppAuth` can fail during credential validation or installation token exchange, the layer type is `Layer<OctokitInstance, AuthenticationError>`. Effect surfaces this as a defect if the layer fails to build. Handle it at the edge with `Effect.catchAllDefect` if you need graceful recovery.
