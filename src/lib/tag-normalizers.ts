@@ -1,4 +1,26 @@
-import * as semver from "semver";
+import { Effect } from "effect";
+import { SemVer } from "semver-effect";
+
+/**
+ * Strips a leading "v" or "V" prefix from a version string.
+ */
+function stripVPrefix(input: string): string {
+	return input.startsWith("v") || input.startsWith("V") ? input.slice(1) : input;
+}
+
+/**
+ * Tries to parse a string as a valid semver version.
+ * Returns the normalized version string or null if invalid.
+ */
+function tryParseSemVer(input: string): string | null {
+	const stripped = stripVPrefix(input);
+	return Effect.runSync(
+		SemVer.fromString(stripped).pipe(
+			Effect.map((v) => v.toString()),
+			Effect.orElseSucceed(() => null),
+		),
+	);
+}
 
 /**
  * Normalizes a Bun tag name to a valid semantic version.
@@ -12,8 +34,7 @@ import * as semver from "semver";
  */
 export function normalizeBunTag(tagName: string): string | null {
 	const version = tagName.startsWith("bun-") ? tagName.slice(4) : tagName;
-	const parsed = semver.valid(version);
-	return parsed ?? null;
+	return tryParseSemVer(version);
 }
 
 /**
@@ -23,6 +44,5 @@ export function normalizeBunTag(tagName: string): string | null {
  * Strips the "v" prefix and validates the result is valid semver.
  */
 export function normalizeDenoTag(tagName: string): string | null {
-	const parsed = semver.valid(tagName);
-	return parsed ?? null;
+	return tryParseSemVer(tagName);
 }
