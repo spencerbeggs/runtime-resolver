@@ -1,5 +1,18 @@
-import * as semver from "semver";
+import { Effect, Option } from "effect";
+import { Range, SemVer } from "semver-effect";
 import type { Increments } from "../schemas/common.js";
+
+/**
+ * Tries to parse a version string, returning Option.
+ */
+function parseSemVer(input: string): Option.Option<SemVer.SemVer> {
+	return Effect.runSync(
+		SemVer.fromString(input).pipe(
+			Effect.map(Option.some),
+			Effect.orElseSucceed(() => Option.none()),
+		),
+	);
+}
 
 /**
  * Filters versions based on increment granularity.
@@ -14,42 +27,50 @@ export function filterByIncrements(versions: string[], increment: Increments): s
 	}
 
 	if (increment === "minor") {
-		const minorGroups = new Map<string, string[]>();
+		const minorGroups = new Map<string, { version: string; parsed: SemVer.SemVer }[]>();
 		for (const version of versions) {
-			const parsed = semver.parse(version);
-			if (!parsed) continue;
+			const opt = parseSemVer(version);
+			if (Option.isNone(opt)) continue;
+			const parsed = opt.value;
 
 			const minorKey = `${parsed.major}.${parsed.minor}`;
 			const group = minorGroups.get(minorKey);
 			if (group) {
-				group.push(version);
+				group.push({ version, parsed });
 			} else {
-				minorGroups.set(minorKey, [version]);
+				minorGroups.set(minorKey, [{ version, parsed }]);
 			}
 		}
 
 		const filtered: string[] = [];
-		for (const minorVersions of minorGroups.values()) {
-			filtered.push(semver.rsort(minorVersions)[0]);
+		for (const group of minorGroups.values()) {
+			const sorted = group.map((g) => g.parsed);
+			const best = SemVer.rsort(sorted)[0];
+			filtered.push(best.toString());
 		}
 		return filtered;
 	}
 
 	// increment === "latest"
-	const majorGroups = new Map<number, string[]>();
+	const majorGroups = new Map<number, { version: string; parsed: SemVer.SemVer }[]>();
 	for (const version of versions) {
-		const major = semver.major(version);
-		const group = majorGroups.get(major);
+		const opt = parseSemVer(version);
+		if (Option.isNone(opt)) continue;
+		const parsed = opt.value;
+
+		const group = majorGroups.get(parsed.major);
 		if (group) {
-			group.push(version);
+			group.push({ version, parsed });
 		} else {
-			majorGroups.set(major, [version]);
+			majorGroups.set(parsed.major, [{ version, parsed }]);
 		}
 	}
 
 	const filtered: string[] = [];
-	for (const majorVersions of majorGroups.values()) {
-		filtered.push(semver.rsort(majorVersions)[0]);
+	for (const group of majorGroups.values()) {
+		const sorted = group.map((g) => g.parsed);
+		const best = SemVer.rsort(sorted)[0];
+		filtered.push(best.toString());
 	}
 	return filtered;
 }
@@ -59,13 +80,31 @@ export function filterByIncrements(versions: string[], increment: Increments): s
  * If the input is already a specific version, returns it as-is.
  */
 export function resolveVersionFromList(versionOrRange: string, versions: string[]): string | undefined {
-	if (semver.valid(versionOrRange)) {
+	// Check if it's an exact version
+	const exactOpt = parseSemVer(versionOrRange);
+	if (Option.isSome(exactOpt)) {
 		return versions.includes(versionOrRange) ? versionOrRange : undefined;
 	}
 
-	const matching = versions.filter((v) => semver.satisfies(v, versionOrRange));
+	// Try to parse as range
+	const rangeResult = Effect.runSync(
+		Range.fromString(versionOrRange).pipe(
+			Effect.map(Option.some),
+			Effect.orElseSucceed(() => Option.none()),
+		),
+	);
+	if (Option.isNone(rangeResult)) return undefined;
+	const range = rangeResult.value;
 
-	if (matching.length === 0) return undefined;
+	const parsed: SemVer.SemVer[] = [];
+	for (const v of versions) {
+		const opt = parseSemVer(v);
+		if (Option.isSome(opt) && Range.satisfies(opt.value, range)) {
+			parsed.push(opt.value);
+		}
+	}
 
-	return semver.rsort([...matching])[0];
+	if (parsed.length === 0) return undefined;
+
+	return SemVer.rsort(parsed)[0].toString();
 }
