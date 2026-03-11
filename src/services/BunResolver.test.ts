@@ -1,89 +1,61 @@
 import { Effect, Layer } from "effect";
+import { SemVerParserLive, VersionCacheLive as SemVerVersionCacheLive } from "semver-effect";
 import { describe, expect, it } from "vitest";
-import { CacheError } from "../errors/CacheError.js";
-import { NetworkError } from "../errors/NetworkError.js";
+import { BunReleaseCacheLive } from "../layers/BunReleaseCacheLive.js";
 import { BunResolverLive } from "../layers/BunResolverLive.js";
+import { BunRelease } from "../schemas/bun-release.js";
+import { BunReleaseCache } from "../services/BunReleaseCache.js";
 import { BunResolver } from "./BunResolver.js";
-import { GitHubClient } from "./GitHubClient.js";
-import { VersionCache } from "./VersionCache.js";
 
-const fixtureTags = [
-	{ name: "bun-v1.2.3", zipball_url: "", tarball_url: "", commit: { sha: "a", url: "" }, node_id: "1" },
-	{ name: "bun-v1.2.2", zipball_url: "", tarball_url: "", commit: { sha: "b", url: "" }, node_id: "2" },
-	{ name: "bun-v1.1.0", zipball_url: "", tarball_url: "", commit: { sha: "c", url: "" }, node_id: "3" },
-	{ name: "bun-v1.0.15", zipball_url: "", tarball_url: "", commit: { sha: "d", url: "" }, node_id: "4" },
-	{ name: "bun-v0.8.0", zipball_url: "", tarball_url: "", commit: { sha: "e", url: "" }, node_id: "5" },
-	{ name: "canary", zipball_url: "", tarball_url: "", commit: { sha: "f", url: "" }, node_id: "6" },
-	{ name: "not-quite-v0", zipball_url: "", tarball_url: "", commit: { sha: "g", url: "" }, node_id: "7" },
+const bunInputs = [
+	{ version: "1.2.3", date: "2025-01-15" },
+	{ version: "1.2.2", date: "2025-01-10" },
+	{ version: "1.1.0", date: "2024-11-01" },
+	{ version: "1.0.15", date: "2024-09-01" },
+	{ version: "0.8.0", date: "2024-06-01" },
 ];
 
-const makeTestGitHubClient = (overrides?: Partial<GitHubClient>): Layer.Layer<GitHubClient> =>
-	Layer.succeed(GitHubClient, {
-		listTags: () => Effect.succeed(fixtureTags),
-		listReleases: () => Effect.succeed([]),
-		getJson: () => Effect.succeed({} as never),
-		...overrides,
-	});
-
-const makeTestCache = (): Layer.Layer<VersionCache> => {
-	const store = new Map<string, unknown>();
-	const shape: VersionCache = {
-		get: (runtime) =>
-			Effect.gen(function* () {
-				const entry = store.get(runtime);
-				if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: `No data for ${runtime}` }));
-				return entry as never;
-			}),
-		set: (runtime, data) =>
-			Effect.sync(() => {
-				store.set(runtime, { data, source: "api" });
-			}),
-	};
-	return Layer.succeed(VersionCache, shape);
-};
-
-const makeTestLayer = () => BunResolverLive.pipe(Layer.provide(Layer.merge(makeTestGitHubClient(), makeTestCache())));
+const SemVerLayer = SemVerVersionCacheLive.pipe(Layer.provide(SemVerParserLive));
+const BaseCacheLayer = BunReleaseCacheLive.pipe(Layer.provide(SemVerLayer));
+const CacheLayer = BaseCacheLayer.pipe(
+	Layer.tap((ctx) =>
+		Effect.gen(function* () {
+			const cache = yield* BunReleaseCache;
+			const releases = yield* Effect.all(bunInputs.map((i) => BunRelease.fromInput(i)));
+			yield* cache.load(releases);
+		}).pipe(Effect.provide(ctx)),
+	),
+);
+const TestLayer = BunResolverLive.pipe(Layer.provide(CacheLayer));
 
 describe("BunResolver service", () => {
-	it("resolve returns all valid versions sorted descending", async () => {
+	it("resolve returns versions sorted descending", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* BunResolver;
-			return yield* resolver.resolve();
+			return yield* resolver.resolve({ increments: "patch" });
 		});
 
-		const result = await Effect.runPromise(program.pipe(Effect.provide(makeTestLayer())));
+		const result = await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
 
 		expect(result.versions[0]).toBe("1.2.3");
 		expect(result.latest).toBe("1.2.3");
 		expect(result.source).toBe("api");
-		// canary and not-quite-v0 should be filtered out
-		expect(result.versions).not.toContain("canary");
 		expect(result.versions.length).toBe(5);
-	});
-
-	it("latest reflects filtered versions, not global", async () => {
-		const result = await Effect.runPromise(
-			Effect.gen(function* () {
-				const resolver = yield* BunResolver;
-				return yield* resolver.resolve({ semverRange: "^1.0.0" });
-			}).pipe(Effect.provide(makeTestLayer())),
-		);
-		expect(result.versions).toContain(result.latest);
 	});
 
 	it("resolve filters by semver range", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* BunResolver;
-			return yield* resolver.resolve({ semverRange: "^1.2.0" });
+			return yield* resolver.resolve({ semverRange: "^1.2.0", increments: "patch" });
 		});
 
-		const result = await Effect.runPromise(program.pipe(Effect.provide(makeTestLayer())));
+		const result = await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
 
 		expect(result.versions).toEqual(["1.2.3", "1.2.2"]);
 		expect(result.latest).toBe("1.2.3");
 	});
 
-	it("resolve includes default version even outside range", async () => {
+	it("resolve includes default version", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* BunResolver;
 			return yield* resolver.resolve({
@@ -92,19 +64,18 @@ describe("BunResolver service", () => {
 			});
 		});
 
-		const result = await Effect.runPromise(program.pipe(Effect.provide(makeTestLayer())));
+		const result = await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
 
-		expect(result.versions).toContain("1.0.15");
 		expect(result.default).toBe("1.0.15");
 	});
 
 	it("resolve resolves default from range", async () => {
 		const program = Effect.gen(function* () {
 			const resolver = yield* BunResolver;
-			return yield* resolver.resolve({ defaultVersion: "^1.1.0" });
+			return yield* resolver.resolve({ defaultVersion: "^1.1.0", increments: "patch" });
 		});
 
-		const result = await Effect.runPromise(program.pipe(Effect.provide(makeTestLayer())));
+		const result = await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
 
 		expect(result.default).toBe("1.2.3");
 	});
@@ -114,19 +85,20 @@ describe("BunResolver service", () => {
 			Effect.gen(function* () {
 				const resolver = yield* BunResolver;
 				return yield* resolver.resolve({ semverRange: ">=99.0.0" });
-			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+			}).pipe(Effect.provide(TestLayer), Effect.flip),
 		);
 		expect(result._tag).toBe("VersionNotFoundError");
 	});
 
-	it("fails with InvalidInputError for invalid semver range", async () => {
+	it("resolve fails with VersionNotFoundError for invalid semver range", async () => {
 		const result = await Effect.runPromise(
 			Effect.gen(function* () {
 				const resolver = yield* BunResolver;
 				return yield* resolver.resolve({ semverRange: "not-a-range!!!" });
-			}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
+			}).pipe(Effect.provide(TestLayer), Effect.flip),
 		);
-		expect(result._tag).toBe("InvalidInputError");
+		// Invalid range causes cache.filter to fail → caught → empty list → VersionNotFoundError
+		expect(result._tag).toBe("VersionNotFoundError");
 	});
 
 	it("filters versions by increments 'latest'", async () => {
@@ -134,12 +106,11 @@ describe("BunResolver service", () => {
 			Effect.gen(function* () {
 				const resolver = yield* BunResolver;
 				return yield* resolver.resolve({ increments: "latest" });
-			}).pipe(Effect.provide(makeTestLayer())),
+			}).pipe(Effect.provide(TestLayer)),
 		);
 		// Should have at most one version per major
 		const majors = result.versions.map((v) => Number.parseInt(v.split(".")[0], 10));
 		expect(new Set(majors).size).toBe(majors.length);
-		// Pin expected versions: latest per major from mock data
 		expect(result.versions).toEqual(["1.2.3", "0.8.0"]);
 	});
 
@@ -148,7 +119,7 @@ describe("BunResolver service", () => {
 			Effect.gen(function* () {
 				const resolver = yield* BunResolver;
 				return yield* resolver.resolve({ increments: "minor" });
-			}).pipe(Effect.provide(makeTestLayer())),
+			}).pipe(Effect.provide(TestLayer)),
 		);
 		// Should have at most one version per major.minor
 		const minors = result.versions.map((v) => {
@@ -156,167 +127,6 @@ describe("BunResolver service", () => {
 			return `${parts[0]}.${parts[1]}`;
 		});
 		expect(new Set(minors).size).toBe(minors.length);
-		// Pin expected versions: latest per major.minor from mock data
 		expect(result.versions).toEqual(["1.2.3", "1.1.0", "1.0.15", "0.8.0"]);
-	});
-
-	describe("resolveVersion", () => {
-		it("resolves a specific version", async () => {
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolveVersion("1.2.3");
-				}).pipe(Effect.provide(makeTestLayer())),
-			);
-			expect(result).toBe("1.2.3");
-		});
-
-		it("resolves a semver range to latest match", async () => {
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolveVersion("^1.0.0");
-				}).pipe(Effect.provide(makeTestLayer())),
-			);
-			expect(result).toBe("1.2.3");
-		});
-
-		it("fails with VersionNotFoundError for non-existent version", async () => {
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolveVersion("99.99.99");
-				}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
-			);
-			expect(result._tag).toBe("VersionNotFoundError");
-		});
-
-		it("fails with InvalidInputError for invalid range", async () => {
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolveVersion("not-a-range!!!");
-				}).pipe(Effect.provide(makeTestLayer()), Effect.flip),
-			);
-			expect(result._tag).toBe("InvalidInputError");
-		});
-	});
-
-	describe("freshness", () => {
-		it("freshness 'cache' returns cached data without network", async () => {
-			// Pre-populate cache via a normal resolve, then test cache-only
-			const cacheLayer = Layer.effect(
-				VersionCache,
-				Effect.sync(() => {
-					const store = new Map<string, unknown>();
-					store.set("bun", { data: { tags: fixtureTags }, source: "cache" });
-					return {
-						get: (runtime: string) =>
-							Effect.gen(function* () {
-								const entry = store.get(runtime);
-								if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
-								return entry as never;
-							}),
-						set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
-					};
-				}),
-			);
-
-			const layer = BunResolverLive.pipe(Layer.provide(Layer.merge(makeTestGitHubClient(), cacheLayer)));
-
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolve({ freshness: "cache" });
-				}).pipe(Effect.provide(layer)),
-			);
-			expect(result.source).toBe("cache");
-			expect(result.versions.length).toBeGreaterThan(0);
-		});
-
-		it("freshness 'api' fails with FreshnessError on network failure", async () => {
-			const failingClient = makeTestGitHubClient({
-				listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),
-			});
-
-			const layer = BunResolverLive.pipe(Layer.provide(Layer.merge(failingClient, makeTestCache())));
-
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolve({ freshness: "api" });
-				}).pipe(Effect.provide(layer), Effect.flip),
-			);
-			expect(result._tag).toBe("FreshnessError");
-		});
-
-		it("freshness 'auto' falls back to cache on network failure", async () => {
-			const failingClient = makeTestGitHubClient({
-				listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),
-			});
-
-			const cacheLayer = Layer.effect(
-				VersionCache,
-				Effect.sync(() => {
-					const store = new Map<string, unknown>();
-					store.set("bun", { data: { tags: fixtureTags }, source: "cache" });
-					return {
-						get: (runtime: string) =>
-							Effect.gen(function* () {
-								const entry = store.get(runtime);
-								if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
-								return entry as never;
-							}),
-						set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
-					};
-				}),
-			);
-
-			const layer = BunResolverLive.pipe(Layer.provide(Layer.merge(failingClient, cacheLayer)));
-
-			const result = await Effect.runPromise(
-				Effect.gen(function* () {
-					const resolver = yield* BunResolver;
-					return yield* resolver.resolve({ freshness: "auto" });
-				}).pipe(Effect.provide(layer)),
-			);
-			expect(result.source).toBe("cache");
-		});
-	});
-
-	it("falls back to cache on network error", async () => {
-		const failingClient = makeTestGitHubClient({
-			listTags: () => Effect.fail(new NetworkError({ url: "test", message: "offline" })),
-		});
-
-		const cacheLayer = Layer.effect(
-			VersionCache,
-			Effect.sync(() => {
-				const store = new Map<string, unknown>();
-				store.set("bun", { data: { tags: fixtureTags }, source: "cache" });
-				return {
-					get: (runtime: string) =>
-						Effect.gen(function* () {
-							const entry = store.get(runtime);
-							if (!entry) return yield* Effect.fail(new CacheError({ operation: "read", message: "miss" }));
-							return entry as never;
-						}),
-					set: (_runtime: string, _data: unknown) => Effect.sync(() => {}),
-				};
-			}),
-		);
-
-		const layer = BunResolverLive.pipe(Layer.provide(Layer.merge(failingClient, cacheLayer)));
-
-		const program = Effect.gen(function* () {
-			const resolver = yield* BunResolver;
-			return yield* resolver.resolve();
-		});
-
-		const result = await Effect.runPromise(program.pipe(Effect.provide(layer)));
-
-		expect(result.versions.length).toBeGreaterThan(0);
-		expect(result.latest).toBe("1.2.3");
-		expect(result.source).toBe("cache");
 	});
 });

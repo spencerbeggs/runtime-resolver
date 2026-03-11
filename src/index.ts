@@ -8,12 +8,18 @@
  * @packageDocumentation
  */
 import { Effect, Layer } from "effect";
+import { AutoBunCacheLive } from "./layers/AutoBunCacheLive.js";
+import { AutoDenoCacheLive } from "./layers/AutoDenoCacheLive.js";
+import { AutoNodeCacheLive } from "./layers/AutoNodeCacheLive.js";
 import { BunResolverLive } from "./layers/BunResolverLive.js";
+import { BunVersionFetcherLive } from "./layers/BunVersionFetcherLive.js";
 import { DenoResolverLive } from "./layers/DenoResolverLive.js";
+import { DenoVersionFetcherLive } from "./layers/DenoVersionFetcherLive.js";
 import { GitHubAutoAuth } from "./layers/GitHubAutoAuth.js";
 import { GitHubClientLive } from "./layers/GitHubClientLive.js";
 import { NodeResolverLive } from "./layers/NodeResolverLive.js";
-import { VersionCacheLive } from "./layers/VersionCacheLive.js";
+import { NodeScheduleFetcherLive } from "./layers/NodeScheduleFetcherLive.js";
+import { NodeVersionFetcherLive } from "./layers/NodeVersionFetcherLive.js";
 import type { ResolvedVersions } from "./schemas/common.js";
 import type { BunResolverOptions } from "./services/BunResolver.js";
 import { BunResolver } from "./services/BunResolver.js";
@@ -23,10 +29,18 @@ import type { NodeResolverOptions } from "./services/NodeResolver.js";
 import { NodeResolver } from "./services/NodeResolver.js";
 
 const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
-const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive);
-const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer));
-const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer));
-const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer));
+const NodeFetchersLayer = Layer.merge(
+	NodeVersionFetcherLive.pipe(Layer.provide(GitHubLayer)),
+	NodeScheduleFetcherLive.pipe(Layer.provide(GitHubLayer)),
+);
+const NodeCacheLayer = AutoNodeCacheLive.pipe(Layer.provide(NodeFetchersLayer));
+const NodeLayer = NodeResolverLive.pipe(Layer.provide(NodeCacheLayer));
+
+const BunCacheLayer = AutoBunCacheLive.pipe(Layer.provide(BunVersionFetcherLive.pipe(Layer.provide(GitHubLayer))));
+const BunLayer = BunResolverLive.pipe(Layer.provide(BunCacheLayer));
+
+const DenoCacheLayer = AutoDenoCacheLive.pipe(Layer.provide(DenoVersionFetcherLive.pipe(Layer.provide(GitHubLayer))));
+const DenoLayer = DenoResolverLive.pipe(Layer.provide(DenoCacheLayer));
 
 // ── Errors ──────────────────────────────────────────────────────────────────
 // Bases are @internal — exported only for declaration bundling (api-extractor).

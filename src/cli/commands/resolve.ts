@@ -3,15 +3,21 @@ import { readFileSync } from "node:fs";
 import { Options } from "@effect/cli";
 import { Console, Effect, Layer, Option } from "effect";
 import type { AuthenticationError } from "../../errors/AuthenticationError.js";
+import { AutoBunCacheLive } from "../../layers/AutoBunCacheLive.js";
+import { AutoDenoCacheLive } from "../../layers/AutoDenoCacheLive.js";
+import { AutoNodeCacheLive } from "../../layers/AutoNodeCacheLive.js";
 import { BunResolverLive } from "../../layers/BunResolverLive.js";
+import { BunVersionFetcherLive } from "../../layers/BunVersionFetcherLive.js";
 import { DenoResolverLive } from "../../layers/DenoResolverLive.js";
+import { DenoVersionFetcherLive } from "../../layers/DenoVersionFetcherLive.js";
 import { GitHubAppAuth } from "../../layers/GitHubAppAuth.js";
 import { GitHubAutoAuth } from "../../layers/GitHubAutoAuth.js";
 import { GitHubClientLive } from "../../layers/GitHubClientLive.js";
 import { GitHubTokenAuthFromToken } from "../../layers/GitHubTokenAuth.js";
 import { NodeResolverLive } from "../../layers/NodeResolverLive.js";
-import { VersionCacheLive } from "../../layers/VersionCacheLive.js";
-import type { Freshness, Increments, NodePhase } from "../../schemas/common.js";
+import { NodeScheduleFetcherLive } from "../../layers/NodeScheduleFetcherLive.js";
+import { NodeVersionFetcherLive } from "../../layers/NodeVersionFetcherLive.js";
+import type { Increments, NodePhase } from "../../schemas/common.js";
 import { BunResolver } from "../../services/BunResolver.js";
 import { DenoResolver } from "../../services/DenoResolver.js";
 import { NodeResolver } from "../../services/NodeResolver.js";
@@ -19,10 +25,29 @@ import type { OctokitInstance } from "../../services/OctokitInstance.js";
 import type { CliResponse, CliRuntimeResult } from "../schemas/response.js";
 
 const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubAutoAuth));
-const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive);
-const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer));
-const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer));
-const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer));
+
+const makeNodeLayer = (authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>) => {
+	const ghLayer = authOverride ? GitHubClientLive.pipe(Layer.provide(authOverride)) : GitHubLayer;
+	const fetchersLayer = Layer.merge(
+		NodeVersionFetcherLive.pipe(Layer.provide(ghLayer)),
+		NodeScheduleFetcherLive.pipe(Layer.provide(ghLayer)),
+	);
+	return NodeResolverLive.pipe(Layer.provide(AutoNodeCacheLive.pipe(Layer.provide(fetchersLayer))));
+};
+
+const makeBunLayer = (authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>) => {
+	const ghLayer = authOverride ? GitHubClientLive.pipe(Layer.provide(authOverride)) : GitHubLayer;
+	return BunResolverLive.pipe(
+		Layer.provide(AutoBunCacheLive.pipe(Layer.provide(BunVersionFetcherLive.pipe(Layer.provide(ghLayer))))),
+	);
+};
+
+const makeDenoLayer = (authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>) => {
+	const ghLayer = authOverride ? GitHubClientLive.pipe(Layer.provide(authOverride)) : GitHubLayer;
+	return DenoResolverLive.pipe(
+		Layer.provide(AutoDenoCacheLive.pipe(Layer.provide(DenoVersionFetcherLive.pipe(Layer.provide(ghLayer))))),
+	);
+};
 
 const SCHEMA_URL = "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json";
 
@@ -36,7 +61,6 @@ export const incrementsOption = Options.text("increments").pipe(Options.optional
 export const nodeDefaultOption = Options.text("node-default").pipe(Options.optional);
 export const bunDefaultOption = Options.text("bun-default").pipe(Options.optional);
 export const denoDefaultOption = Options.text("deno-default").pipe(Options.optional);
-export const freshnessOption = Options.text("freshness").pipe(Options.optional);
 export const nodeDateOption = Options.text("node-date").pipe(Options.optional);
 export const prettyOption = Options.boolean("pretty").pipe(Options.withDefault(false));
 export const schemaOption = Options.boolean("schema").pipe(Options.withDefault(false));
@@ -49,7 +73,6 @@ export const appInstallationIdOption = Options.text("app-installation-id").pipe(
 
 const VALID_PHASES = ["current", "active-lts", "maintenance-lts", "end-of-life"] as const;
 const VALID_INCREMENTS = ["latest", "minor", "patch"] as const;
-const VALID_FRESHNESS = ["auto", "api", "cache"] as const;
 
 const validatePhases = (raw: string): NodePhase[] => {
 	const phases = raw.split(",").map((s) => s.trim());
@@ -66,13 +89,6 @@ const validateIncrements = (raw: string): Increments => {
 		throw new Error(`Invalid increments value: "${raw}". Valid values: ${VALID_INCREMENTS.join(", ")}`);
 	}
 	return raw as Increments;
-};
-
-const validateFreshness = (raw: string): Freshness => {
-	if (!(VALID_FRESHNESS as readonly string[]).includes(raw)) {
-		throw new Error(`Invalid freshness value: "${raw}". Valid values: ${VALID_FRESHNESS.join(", ")}`);
-	}
-	return raw as Freshness;
 };
 
 // --- Error serialization ---
@@ -124,7 +140,6 @@ const resolveNode = (
 	increments?: Increments,
 	defaultVersion?: string,
 	date?: Date,
-	freshness?: Freshness,
 	authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
@@ -135,17 +150,10 @@ const resolveNode = (
 			...(increments ? { increments } : {}),
 			...(defaultVersion ? { defaultVersion } : {}),
 			...(date ? { date } : {}),
-			...(freshness ? { freshness } : {}),
 		});
 		return toSuccess("node", result);
 	}).pipe(
-		Effect.provide(
-			authOverride
-				? NodeResolverLive.pipe(
-						Layer.provide(Layer.merge(GitHubClientLive.pipe(Layer.provide(authOverride)), VersionCacheLive)),
-					)
-				: NodeLayer,
-		),
+		Effect.provide(makeNodeLayer(authOverride)),
 		Effect.catchAll((error) => Effect.succeed(toError("node", error))),
 	);
 
@@ -153,7 +161,6 @@ const resolveBun = (
 	semverRange: string,
 	increments?: Increments,
 	defaultVersion?: string,
-	freshness?: Freshness,
 	authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
@@ -162,17 +169,10 @@ const resolveBun = (
 			semverRange,
 			...(increments ? { increments } : {}),
 			...(defaultVersion ? { defaultVersion } : {}),
-			...(freshness ? { freshness } : {}),
 		});
 		return toSuccess("bun", result);
 	}).pipe(
-		Effect.provide(
-			authOverride
-				? BunResolverLive.pipe(
-						Layer.provide(Layer.merge(GitHubClientLive.pipe(Layer.provide(authOverride)), VersionCacheLive)),
-					)
-				: BunLayer,
-		),
+		Effect.provide(makeBunLayer(authOverride)),
 		Effect.catchAll((error) => Effect.succeed(toError("bun", error))),
 	);
 
@@ -180,7 +180,6 @@ const resolveDeno = (
 	semverRange: string,
 	increments?: Increments,
 	defaultVersion?: string,
-	freshness?: Freshness,
 	authOverride?: Layer.Layer<OctokitInstance, AuthenticationError>,
 ): Effect.Effect<RuntimeEntry> =>
 	Effect.gen(function* () {
@@ -189,17 +188,10 @@ const resolveDeno = (
 			semverRange,
 			...(increments ? { increments } : {}),
 			...(defaultVersion ? { defaultVersion } : {}),
-			...(freshness ? { freshness } : {}),
 		});
 		return toSuccess("deno", result);
 	}).pipe(
-		Effect.provide(
-			authOverride
-				? DenoResolverLive.pipe(
-						Layer.provide(Layer.merge(GitHubClientLive.pipe(Layer.provide(authOverride)), VersionCacheLive)),
-					)
-				: DenoLayer,
-		),
+		Effect.provide(makeDenoLayer(authOverride)),
 		Effect.catchAll((error) => Effect.succeed(toError("deno", error))),
 	);
 
@@ -218,7 +210,6 @@ export const resolveHandler = (args: {
 	readonly deno: Option.Option<string>;
 	readonly nodePhases: Option.Option<string>;
 	readonly increments: Option.Option<string>;
-	readonly freshness: Option.Option<string>;
 	readonly nodeDefault: Option.Option<string>;
 	readonly bunDefault: Option.Option<string>;
 	readonly denoDefault: Option.Option<string>;
@@ -239,7 +230,6 @@ export const resolveHandler = (args: {
 				args.deno,
 				args.nodePhases,
 				args.increments,
-				args.freshness,
 				args.nodeDefault,
 				args.bunDefault,
 				args.denoDefault,
@@ -343,17 +333,6 @@ export const resolveHandler = (args: {
 			}
 		}
 
-		// Validate and extract freshness
-		let validatedFreshness: Freshness | undefined;
-		if (Option.isSome(args.freshness)) {
-			try {
-				validatedFreshness = validateFreshness(args.freshness.value);
-			} catch (e) {
-				yield* Console.error((e as Error).message);
-				return;
-			}
-		}
-
 		// Parse node date
 		let nodeDate: Date | undefined;
 		if (Option.isSome(args.nodeDate)) {
@@ -376,22 +355,17 @@ export const resolveHandler = (args: {
 					validatedIncrements,
 					nodeDefaultVersion,
 					nodeDate,
-					validatedFreshness,
 					authLayerOverride,
 				),
 			);
 		}
 		if (hasBun) {
 			const bunDefaultVersion = Option.isSome(args.bunDefault) ? args.bunDefault.value : undefined;
-			tasks.push(
-				resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion, validatedFreshness, authLayerOverride),
-			);
+			tasks.push(resolveBun(args.bun.value, validatedIncrements, bunDefaultVersion, authLayerOverride));
 		}
 		if (hasDeno) {
 			const denoDefaultVersion = Option.isSome(args.denoDefault) ? args.denoDefault.value : undefined;
-			tasks.push(
-				resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion, validatedFreshness, authLayerOverride),
-			);
+			tasks.push(resolveDeno(args.deno.value, validatedIncrements, denoDefaultVersion, authLayerOverride));
 		}
 
 		const entries = yield* Effect.all(tasks, { concurrency: "unbounded" });
