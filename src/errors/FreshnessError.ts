@@ -1,5 +1,4 @@
 import { Data } from "effect";
-import type { Freshness } from "../schemas/common.js";
 
 /**
  * @internal
@@ -8,6 +7,6 @@ import type { Freshness } from "../schemas/common.js";
 export const FreshnessErrorBase = Data.TaggedError("FreshnessError");
 
 export class FreshnessError extends FreshnessErrorBase<{
-	readonly strategy: Freshness;
+	readonly strategy: "auto" | "api" | "cache";
 	readonly message: string;
 }> {}

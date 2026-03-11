@@ -6,9 +6,6 @@ export type Runtime = typeof Runtime.Type;
 export const Source = Schema.Literal("api", "cache");
 export type Source = typeof Source.Type;
 
-export const Freshness = Schema.Literal("auto", "api", "cache");
-export type Freshness = typeof Freshness.Type;
-
 export const ResolvedVersions = Schema.Struct({
 	source: Source,
 	versions: Schema.Array(Schema.String),

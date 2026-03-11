@@ -54,31 +54,60 @@ export { RateLimitError, RateLimitErrorBase } from "./errors/RateLimitError.js";
 export { VersionNotFoundError, VersionNotFoundErrorBase } from "./errors/VersionNotFoundError.js";
 
 // ── Layers ──────────────────────────────────────────────────────────────────
+export { AutoBunCacheLive } from "./layers/AutoBunCacheLive.js";
+export { AutoDenoCacheLive } from "./layers/AutoDenoCacheLive.js";
+export { AutoNodeCacheLive } from "./layers/AutoNodeCacheLive.js";
+export { BunReleaseCacheLive } from "./layers/BunReleaseCacheLive.js";
 export { BunResolverLive } from "./layers/BunResolverLive.js";
+export { BunVersionFetcherLive } from "./layers/BunVersionFetcherLive.js";
+export { DenoReleaseCacheLive } from "./layers/DenoReleaseCacheLive.js";
 export { DenoResolverLive } from "./layers/DenoResolverLive.js";
+export { DenoVersionFetcherLive } from "./layers/DenoVersionFetcherLive.js";
+export { FreshBunCacheLive } from "./layers/FreshBunCacheLive.js";
+export { FreshDenoCacheLive } from "./layers/FreshDenoCacheLive.js";
+export { FreshNodeCacheLive } from "./layers/FreshNodeCacheLive.js";
 export type { GitHubAppAuthConfig } from "./layers/GitHubAppAuth.js";
 export { GitHubAppAuth } from "./layers/GitHubAppAuth.js";
 export { GitHubAutoAuth } from "./layers/GitHubAutoAuth.js";
 export { GitHubClientLive } from "./layers/GitHubClientLive.js";
 export { GitHubTokenAuth, GitHubTokenAuthFromToken } from "./layers/GitHubTokenAuth.js";
+export { NodeReleaseCacheLive } from "./layers/NodeReleaseCacheLive.js";
 export { NodeResolverLive } from "./layers/NodeResolverLive.js";
-export { VersionCacheLive } from "./layers/VersionCacheLive.js";
-export type { CachedNodeData, CachedTagData } from "./schemas/cache.js";
+export { NodeScheduleFetcherLive } from "./layers/NodeScheduleFetcherLive.js";
+export { NodeVersionFetcherLive } from "./layers/NodeVersionFetcherLive.js";
+export { OfflineBunCacheLive } from "./layers/OfflineBunCacheLive.js";
+export { OfflineDenoCacheLive } from "./layers/OfflineDenoCacheLive.js";
+export { OfflineNodeCacheLive } from "./layers/OfflineNodeCacheLive.js";
+export { createRuntimeCache } from "./layers/RuntimeCacheLive.js";
+// ── Schemas ──────────────────────────────────────────────────────────────────
+export { BunRelease } from "./schemas/bun-release.js";
 // ── Types ───────────────────────────────────────────────────────────────────
-export type { Freshness, Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
+export type { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
+export { DenoRelease } from "./schemas/deno-release.js";
 export type { GitHubRelease, GitHubTag } from "./schemas/github.js";
+export type { NodeReleaseInput } from "./schemas/node-release.js";
+export { NodeRelease } from "./schemas/node-release.js";
+export type { NodeScheduleData, NodeScheduleEntry } from "./schemas/node-schedule.js";
+export { NodeSchedule } from "./schemas/node-schedule.js";
+export type { RuntimeRelease, RuntimeReleaseInput } from "./schemas/runtime-release.js";
 // ── Services ────────────────────────────────────────────────────────────────
+export { BunReleaseCache } from "./services/BunReleaseCache.js";
 export type { BunResolverError, BunResolverOptions } from "./services/BunResolver.js";
 export { BunResolver } from "./services/BunResolver.js";
+export { BunVersionFetcher } from "./services/BunVersionFetcher.js";
+export { DenoReleaseCache } from "./services/DenoReleaseCache.js";
 export type { DenoResolverError, DenoResolverOptions } from "./services/DenoResolver.js";
 export { DenoResolver } from "./services/DenoResolver.js";
+export { DenoVersionFetcher } from "./services/DenoVersionFetcher.js";
 export type { ListOptions } from "./services/GitHubClient.js";
 export { GitHubClient } from "./services/GitHubClient.js";
+export { NodeReleaseCache } from "./services/NodeReleaseCache.js";
 export type { NodeResolverError, NodeResolverOptions } from "./services/NodeResolver.js";
 export { NodeResolver } from "./services/NodeResolver.js";
+export { NodeScheduleFetcher } from "./services/NodeScheduleFetcher.js";
+export { NodeVersionFetcher } from "./services/NodeVersionFetcher.js";
 export { OctokitInstance } from "./services/OctokitInstance.js";
-export type { CachedData } from "./services/VersionCache.js";
-export { VersionCache } from "./services/VersionCache.js";
+export type { RuntimeCache } from "./services/RuntimeCache.js";
 
 // ── Promise API ─────────────────────────────────────────────────────────────
 
