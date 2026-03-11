@@ -1,4 +1,5 @@
-import * as semver from "semver";
+import { Effect, Option } from "effect";
+import { SemVer } from "semver-effect";
 import type { NodePhase } from "../schemas/common.js";
 import type { NodeReleaseSchedule } from "../schemas/node.js";
 
@@ -20,7 +21,15 @@ export function getVersionPhase(
 	schedule: NodeReleaseSchedule,
 	now: Date = new Date(),
 ): NodePhase | null {
-	const major = semver.major(version);
+	const parsed = Effect.runSync(
+		SemVer.fromString(version).pipe(
+			Effect.map(Option.some),
+			Effect.orElseSucceed(() => Option.none()),
+		),
+	);
+	if (Option.isNone(parsed)) return null;
+
+	const major = parsed.value.major;
 	const majorKey = `v${major}`;
 	const versionSchedule = schedule[majorKey];
 
@@ -68,5 +77,20 @@ export function findLatestLts(
 
 	if (ltsVersions.length === 0) return undefined;
 
-	return semver.rsort([...ltsVersions])[0];
+	const parsed: SemVer.SemVer[] = [];
+	for (const v of ltsVersions) {
+		const result = Effect.runSync(
+			SemVer.fromString(v).pipe(
+				Effect.map(Option.some),
+				Effect.orElseSucceed(() => Option.none()),
+			),
+		);
+		if (Option.isSome(result)) {
+			parsed.push(result.value);
+		}
+	}
+
+	if (parsed.length === 0) return undefined;
+
+	return SemVer.rsort(parsed)[0].toString();
 }
