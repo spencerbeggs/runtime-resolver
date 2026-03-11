@@ -3,7 +3,11 @@ import type { InvalidVersionError } from "semver-effect";
 import { SemVer } from "semver-effect";
 import type { RuntimeReleaseInput } from "./runtime-release.js";
 
-const DenoReleaseBase = Data.TaggedClass("DenoRelease");
+/**
+ * @internal
+ * Exported for declaration bundling — see AuthenticationError.ts for details.
+ */
+export const DenoReleaseBase = Data.TaggedClass("DenoRelease");
 
 /**
  * A Deno release with parsed SemVer version and DateTime date.

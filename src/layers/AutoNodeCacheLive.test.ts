@@ -1,5 +1,7 @@
 import { Effect, Layer } from "effect";
 import { describe, expect, it } from "vitest";
+import { NetworkError } from "../errors/NetworkError.js";
+import { ParseError } from "../errors/ParseError.js";
 import type { NodeScheduleData } from "../schemas/node-schedule.js";
 import { NodeReleaseCache } from "../services/NodeReleaseCache.js";
 import { NodeScheduleFetcher } from "../services/NodeScheduleFetcher.js";
@@ -41,5 +43,37 @@ describe("AutoNodeCacheLive", () => {
 			expect(releases.length).toBe(2);
 		});
 		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
+	});
+
+	it("falls back to defaults on NetworkError", async () => {
+		const FailingVersionFetcher = Layer.succeed(NodeVersionFetcher, {
+			fetch: () => Effect.fail(new NetworkError({ url: "https://example.com", message: "down" })),
+		});
+		const FailingScheduleFetcher = Layer.succeed(NodeScheduleFetcher, {
+			fetch: () => Effect.fail(new NetworkError({ url: "https://example.com", message: "down" })),
+		});
+		const layer = AutoNodeCacheLive.pipe(Layer.provide(Layer.merge(FailingVersionFetcher, FailingScheduleFetcher)));
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			const releases = yield* cache.releases();
+			expect(releases.length).toBeGreaterThan(0);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(layer)));
+	});
+
+	it("falls back to defaults on ParseError", async () => {
+		const FailingVersionFetcher = Layer.succeed(NodeVersionFetcher, {
+			fetch: () => Effect.fail(new ParseError({ message: "bad data", source: "test" })),
+		});
+		const FailingScheduleFetcher = Layer.succeed(NodeScheduleFetcher, {
+			fetch: () => Effect.fail(new ParseError({ message: "bad data", source: "test" })),
+		});
+		const layer = AutoNodeCacheLive.pipe(Layer.provide(Layer.merge(FailingVersionFetcher, FailingScheduleFetcher)));
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			const releases = yield* cache.releases();
+			expect(releases.length).toBeGreaterThan(0);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(layer)));
 	});
 });

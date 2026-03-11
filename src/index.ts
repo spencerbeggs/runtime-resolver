@@ -80,15 +80,16 @@ export { OfflineDenoCacheLive } from "./layers/OfflineDenoCacheLive.js";
 export { OfflineNodeCacheLive } from "./layers/OfflineNodeCacheLive.js";
 export { createRuntimeCache } from "./layers/RuntimeCacheLive.js";
 // ── Schemas ──────────────────────────────────────────────────────────────────
-export { BunRelease } from "./schemas/bun-release.js";
+// Bases are @internal — exported only for declaration bundling (api-extractor).
+export { BunRelease, BunReleaseBase } from "./schemas/bun-release.js";
 // ── Types ───────────────────────────────────────────────────────────────────
 export type { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
-export { DenoRelease } from "./schemas/deno-release.js";
+export { DenoRelease, DenoReleaseBase } from "./schemas/deno-release.js";
 export type { GitHubRelease, GitHubTag } from "./schemas/github.js";
 export type { NodeReleaseInput } from "./schemas/node-release.js";
 export { NodeRelease } from "./schemas/node-release.js";
 export type { NodeScheduleData, NodeScheduleEntry } from "./schemas/node-schedule.js";
-export { NodeSchedule } from "./schemas/node-schedule.js";
+export { NodeSchedule, NodeScheduleBase } from "./schemas/node-schedule.js";
 export type { RuntimeRelease, RuntimeReleaseInput } from "./schemas/runtime-release.js";
 // ── Services ────────────────────────────────────────────────────────────────
 export { BunReleaseCache } from "./services/BunReleaseCache.js";

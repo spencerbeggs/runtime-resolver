@@ -18,6 +18,9 @@ export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 		const lookupMap = new Map<string, R>();
 
 		return {
+			// NOTE: `load` is not concurrency-safe; callers must not invoke it
+			// concurrently. In practice this is only called from layer setup and
+			// NodeReleaseCacheLive.loadFromInputs, which are serialized by Effect.
 			load: (releases: ReadonlyArray<R>) =>
 				Effect.gen(function* () {
 					lookupMap.clear();

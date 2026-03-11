@@ -57,6 +57,61 @@ describe("NodeReleaseCacheLive", () => {
 		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
 	});
 
+	it("resolves a range to best match", async () => {
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			yield* cache.updateSchedule(scheduleData);
+			yield* cache.loadFromInputs(nodeInputs);
+			const result = yield* cache.resolve("^22.0.0");
+			expect(result.version.major).toBe(22);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
+	});
+
+	it("filters by range", async () => {
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			yield* cache.updateSchedule(scheduleData);
+			yield* cache.loadFromInputs(nodeInputs);
+			const filtered = yield* cache.filter("^22.0.0");
+			expect(filtered.length).toBe(2);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
+	});
+
+	it("returns latest", async () => {
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			yield* cache.updateSchedule(scheduleData);
+			yield* cache.loadFromInputs(nodeInputs);
+			const latest = yield* cache.latest();
+			expect(latest.version.major).toBe(24);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
+	});
+
+	it("returns latestByMajor", async () => {
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			yield* cache.updateSchedule(scheduleData);
+			yield* cache.loadFromInputs(nodeInputs);
+			const byMajor = yield* cache.latestByMajor();
+			expect(byMajor.length).toBe(2);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
+	});
+
+	it("returns latestByMinor", async () => {
+		const program = Effect.gen(function* () {
+			const cache = yield* NodeReleaseCache;
+			yield* cache.updateSchedule(scheduleData);
+			yield* cache.loadFromInputs(nodeInputs);
+			const byMinor = yield* cache.latestByMinor();
+			expect(byMinor.length).toBe(3);
+		});
+		await Effect.runPromise(program.pipe(Effect.provide(TestLayer)));
+	});
+
 	it("returns current releases", async () => {
 		const program = Effect.gen(function* () {
 			const cache = yield* NodeReleaseCache;

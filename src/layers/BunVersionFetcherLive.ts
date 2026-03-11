@@ -9,16 +9,14 @@ import { GitHubClient } from "../services/GitHubClient.js";
  * Strip bun- prefix and v/V prefix, parse to SemVer.
  * Returns the parsed SemVer directly to avoid double parsing.
  */
-function normalizeBunTag(tagName: string): Option.Option<SemVer.SemVer> {
+const normalizeBunTag = (tagName: string): Effect.Effect<Option.Option<SemVer.SemVer>> => {
 	const version = tagName.startsWith("bun-") ? tagName.slice(4) : tagName;
 	const stripped = version.startsWith("v") || version.startsWith("V") ? version.slice(1) : version;
-	return Effect.runSync(
-		SemVer.fromString(stripped).pipe(
-			Effect.map(Option.some),
-			Effect.orElseSucceed(() => Option.none()),
-		),
+	return SemVer.fromString(stripped).pipe(
+		Effect.map(Option.some),
+		Effect.catchAll(() => Effect.succeed(Option.none())),
 	);
-}
+};
 
 export const BunVersionFetcherLive: Layer.Layer<BunVersionFetcher, never, GitHubClient> = Layer.effect(
 	BunVersionFetcher,
@@ -35,7 +33,7 @@ export const BunVersionFetcherLive: Layer.Layer<BunVersionFetcher, never, GitHub
 
 					for (const release of releases) {
 						if (release.draft || release.prerelease) continue;
-						const opt = normalizeBunTag(release.tag_name);
+						const opt = yield* normalizeBunTag(release.tag_name);
 						if (Option.isNone(opt)) continue;
 						versions.push(opt.value);
 						inputs.push({

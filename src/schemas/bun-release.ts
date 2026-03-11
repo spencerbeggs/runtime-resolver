@@ -3,7 +3,11 @@ import type { InvalidVersionError } from "semver-effect";
 import { SemVer } from "semver-effect";
 import type { RuntimeReleaseInput } from "./runtime-release.js";
 
-const BunReleaseBase = Data.TaggedClass("BunRelease");
+/**
+ * @internal
+ * Exported for declaration bundling — see AuthenticationError.ts for details.
+ */
+export const BunReleaseBase = Data.TaggedClass("BunRelease");
 
 /**
  * A Bun release with parsed SemVer version and DateTime date.

@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-defaults:
@@ -39,32 +40,30 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and test
+      - name: Build, typecheck, and test
         if: steps.changes.outputs.changed == 'true'
         run: |
           pnpm run lint:fix
+          pnpm run typecheck
           pnpm run build
           pnpm run test
 
-      - name: Create changeset
+      - name: Create PR with updated defaults
         if: steps.changes.outputs.changed == 'true'
         run: |
-          mkdir -p .changeset
-          cat > .changeset/update-defaults.md <<- 'ENDOFFILE'
-          	---
-          	"@spencerbeggs/runtime-resolver": patch
-          	---
-
-          	chore: update runtime defaults
-          	ENDOFFILE
-
-      - name: Commit and push
-        if: steps.changes.outputs.changed == 'true'
-        run: |
+          BRANCH="chore/update-defaults-$(date +%Y%m%d)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/ .changeset/
+          git checkout -b "$BRANCH"
+          git add src/data/
           git commit -m "chore: update runtime defaults
 
           Signed-off-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          git push
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: update runtime defaults" \
+            --body "Automated daily update of bundled runtime version data." \
+            --base main \
+            --head "$BRANCH"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

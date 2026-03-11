@@ -21,11 +21,9 @@ export const DenoVersionFetcherLive: Layer.Layer<DenoVersionFetcher, never, GitH
 					for (const release of releases) {
 						if (release.draft || release.prerelease) continue;
 						const stripped = release.tag_name.startsWith("v") ? release.tag_name.slice(1) : release.tag_name;
-						const opt = Effect.runSync(
-							SemVer.fromString(stripped).pipe(
-								Effect.map(Option.some),
-								Effect.orElseSucceed(() => Option.none()),
-							),
+						const opt = yield* SemVer.fromString(stripped).pipe(
+							Effect.map(Option.some),
+							Effect.catchAll(() => Effect.succeed(Option.none())),
 						);
 						if (Option.isSome(opt)) {
 							versions.push(opt.value);

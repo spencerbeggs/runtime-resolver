@@ -28,7 +28,11 @@ export type NodeScheduleData = Record<
 	}
 >;
 
-const NodeScheduleBase = Data.TaggedClass("NodeSchedule");
+/**
+ * @internal
+ * Exported for declaration bundling — see AuthenticationError.ts for details.
+ */
+export const NodeScheduleBase = Data.TaggedClass("NodeSchedule");
 
 /**
  * Immutable schedule holding all Node.js release schedule entries.

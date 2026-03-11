@@ -36,17 +36,17 @@ export const NodeVersionFetcherLive: Layer.Layer<NodeVersionFetcher, never, GitH
 
 					for (const entry of allVersions) {
 						const clean = entry.version.replace(/^v/, "");
-						const parsed = Effect.runSync(
-							SemVer.fromString(clean).pipe(
-								Effect.map(Option.some),
-								Effect.orElseSucceed(() => Option.none()),
-							),
+						const parsed = yield* SemVer.fromString(clean).pipe(
+							Effect.map(Option.some),
+							Effect.catchAll(() => Effect.succeed(Option.none())),
 						);
 						if (Option.isSome(parsed)) {
 							versions.push(parsed.value);
 							inputs.push({
 								version: clean,
-								npm: entry.npm ?? "0.0.0",
+								// Older entries (pre-v0.6.3) carry npm:false. Use "0.0.0" as a sentinel
+								// since npm version is only informational and never used in comparisons.
+								npm: typeof entry.npm === "string" ? entry.npm : "0.0.0",
 								date: entry.date,
 							});
 						}
