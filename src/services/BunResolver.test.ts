@@ -1,5 +1,4 @@
 import { Effect, Layer } from "effect";
-import * as semver from "semver";
 import { describe, expect, it } from "vitest";
 import { CacheError } from "../errors/CacheError.js";
 import { NetworkError } from "../errors/NetworkError.js";
@@ -138,7 +137,7 @@ describe("BunResolver service", () => {
 			}).pipe(Effect.provide(makeTestLayer())),
 		);
 		// Should have at most one version per major
-		const majors = result.versions.map((v) => semver.major(v));
+		const majors = result.versions.map((v) => Number.parseInt(v.split(".")[0], 10));
 		expect(new Set(majors).size).toBe(majors.length);
 		// Pin expected versions: latest per major from mock data
 		expect(result.versions).toEqual(["1.2.3", "0.8.0"]);
@@ -152,7 +151,10 @@ describe("BunResolver service", () => {
 			}).pipe(Effect.provide(makeTestLayer())),
 		);
 		// Should have at most one version per major.minor
-		const minors = result.versions.map((v) => `${semver.major(v)}.${semver.minor(v)}`);
+		const minors = result.versions.map((v) => {
+			const parts = v.split(".");
+			return `${parts[0]}.${parts[1]}`;
+		});
 		expect(new Set(minors).size).toBe(minors.length);
 		// Pin expected versions: latest per major.minor from mock data
 		expect(result.versions).toEqual(["1.2.3", "1.1.0", "1.0.15", "0.8.0"]);
