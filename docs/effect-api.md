@@ -1,7 +1,7 @@
 # Effect API
 
-Import from `runtime-resolver/effect` to access all services, layers, error
-types, and schemas. This entry point gives you full control over composition,
+All services, layers, error types, and schemas are exported from the
+`runtime-resolver` package root. This gives you full control over composition,
 error handling, and dependency injection using Effect's standard patterns.
 
 ```typescript
@@ -9,7 +9,7 @@ import {
   NodeResolver, NodeResolverLive,
   AutoNodeCacheLive, FreshNodeCacheLive, OfflineNodeCacheLive,
   GitHubClientLive, GitHubAutoAuth, GitHubTokenAuth,
-} from "runtime-resolver/effect"
+} from "runtime-resolver"
 ```
 
 ## Services
@@ -192,7 +192,7 @@ import {
   NodeScheduleFetcherLive,
   GitHubClientLive,
   GitHubTokenAuth,
-} from "runtime-resolver/effect"
+} from "runtime-resolver"
 import { Effect, Layer } from "effect"
 
 const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth))
@@ -221,7 +221,7 @@ requests:
 ```typescript
 import {
   NodeResolver, NodeResolverLive, OfflineNodeCacheLive,
-} from "runtime-resolver/effect"
+} from "runtime-resolver"
 import { Effect } from "effect"
 
 const NodeLayer = NodeResolverLive.pipe(Layer.provide(OfflineNodeCacheLive))
@@ -292,7 +292,7 @@ converts them to `FreshnessError`).
 
 ```typescript
 import { Effect } from "effect"
-import { NodeResolver } from "runtime-resolver/effect"
+import { NodeResolver } from "runtime-resolver"
 
 const program = Effect.gen(function* () {
   const resolver = yield* NodeResolver
@@ -315,7 +315,7 @@ import {
   DenoResolver, DenoResolverLive, AutoDenoCacheLive,
   BunVersionFetcherLive, DenoVersionFetcherLive,
   GitHubAppAuth, GitHubClientLive,
-} from "runtime-resolver/effect"
+} from "runtime-resolver"
 import { Effect, Layer } from "effect"
 
 const AppAuthLayer = GitHubAppAuth({

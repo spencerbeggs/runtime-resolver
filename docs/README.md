@@ -60,7 +60,7 @@ Three async functions that return `Promise<ResolvedVersions>`:
 
 ### Effect API
 
-Import from `runtime-resolver/effect` for full control over dependency
+Import from `runtime-resolver` for full control over dependency
 injection, error handling, and layer composition:
 
 - **Services:** `NodeResolver`, `BunResolver`, `DenoResolver`, `GitHubClient`, `NodeReleaseCache`, `BunReleaseCache`, `DenoReleaseCache`

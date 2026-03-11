@@ -106,7 +106,7 @@ The Effect API exposes every error class so you can use `Effect.catchTag` for
 precise discrimination:
 
 ```typescript
-import { NodeResolver } from "runtime-resolver/effect";
+import { NodeResolver } from "runtime-resolver";
 import { Effect } from "effect";
 
 const program = Effect.gen(function* () {

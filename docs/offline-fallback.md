@@ -39,7 +39,7 @@ The pre-built Promise API functions and CLI use the `Auto` variants by default.
 ```typescript
 import {
   NodeResolver, NodeResolverLive, OfflineNodeCacheLive,
-} from "runtime-resolver/effect"
+} from "runtime-resolver"
 import { Effect } from "effect"
 
 // Explicit offline mode -- never hit the network

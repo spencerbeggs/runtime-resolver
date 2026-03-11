@@ -56,7 +56,7 @@ If you are composing layers with the Effect API, you can provide a token
 directly instead of relying on environment variables:
 
 ```typescript
-import { GitHubTokenAuthFromToken } from "runtime-resolver/effect";
+import { GitHubTokenAuthFromToken } from "runtime-resolver";
 
 const layer = GitHubTokenAuthFromToken("ghp_xxxx");
 ```
@@ -99,7 +99,7 @@ runtime-resolver --node ">=20" --app-id "123456" --app-private-key @key.pem --ap
 ### Effect API: Explicit App Auth
 
 ```typescript
-import { GitHubAppAuth } from "runtime-resolver/effect";
+import { GitHubAppAuth } from "runtime-resolver";
 
 const layer = GitHubAppAuth({
   appId: "12345",
@@ -118,7 +118,7 @@ The `GitHubAutoAuth` layer runs the full detection chain and is the default
 used by the pre-built `NodeLayer`, `BunLayer`, and `DenoLayer`:
 
 ```typescript
-import { GitHubAutoAuth } from "runtime-resolver/effect";
+import { GitHubAutoAuth } from "runtime-resolver";
 ```
 
 ## AuthenticationError
