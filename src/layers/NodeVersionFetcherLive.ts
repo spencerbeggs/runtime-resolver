@@ -1,6 +1,6 @@
 import { Effect, Layer, Option, Schema } from "effect";
-import { SemVer } from "semver-effect";
 import { ParseError } from "../errors/ParseError.js";
+import { tryParseSemVer } from "../lib/semver.js";
 import { NodeDistIndex } from "../schemas/node.js";
 import type { NodeReleaseInput } from "../schemas/node-release.js";
 import { GitHubClient } from "../services/GitHubClient.js";
@@ -31,26 +31,32 @@ export const NodeVersionFetcherLive: Layer.Layer<NodeVersionFetcher, never, GitH
 						decode: decodeDistIndex,
 					});
 
-					const versions: SemVer.SemVer[] = [];
-					const inputs: NodeReleaseInput[] = [];
+					const parsed = yield* Effect.forEach(
+						allVersions,
+						(entry) => {
+							const clean = entry.version.replace(/^v/, "");
+							return tryParseSemVer(clean).pipe(
+								Effect.map((opt) =>
+									Option.isSome(opt)
+										? Option.some({
+												version: opt.value,
+												input: {
+													version: clean,
+													// Older entries (pre-v0.6.3) carry npm:false. Use "0.0.0" as a sentinel
+													// since npm version is only informational and never used in comparisons.
+													npm: typeof entry.npm === "string" ? entry.npm : "0.0.0",
+													date: entry.date,
+												} satisfies NodeReleaseInput,
+											})
+										: Option.none(),
+								),
+							);
+						},
+						{ concurrency: "unbounded" },
+					);
 
-					for (const entry of allVersions) {
-						const clean = entry.version.replace(/^v/, "");
-						const parsed = yield* SemVer.fromString(clean).pipe(
-							Effect.map(Option.some),
-							Effect.catchAll(() => Effect.succeed(Option.none())),
-						);
-						if (Option.isSome(parsed)) {
-							versions.push(parsed.value);
-							inputs.push({
-								version: clean,
-								// Older entries (pre-v0.6.3) carry npm:false. Use "0.0.0" as a sentinel
-								// since npm version is only informational and never used in comparisons.
-								npm: typeof entry.npm === "string" ? entry.npm : "0.0.0",
-								date: entry.date,
-							});
-						}
-					}
+					const versions = parsed.flatMap(Option.toArray).map(({ version }) => version);
+					const inputs = parsed.flatMap(Option.toArray).map(({ input }) => input);
 
 					return { versions, inputs };
 				}),

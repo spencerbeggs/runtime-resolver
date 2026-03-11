@@ -11,21 +11,14 @@ const setup = Effect.gen(function* () {
 	const versionFetcher = yield* NodeVersionFetcher;
 	const scheduleFetcher = yield* NodeScheduleFetcher;
 
+	const nodeDefaults = { inputs: nodeDefaultInputs, scheduleData: nodeDefaultScheduleData };
 	const { inputs, scheduleData } = yield* Effect.gen(function* () {
 		const [fetchResult, schedule] = yield* Effect.all([versionFetcher.fetch(), scheduleFetcher.fetch()]);
 		return { inputs: fetchResult.inputs, scheduleData: schedule };
 	}).pipe(
 		Effect.catchTags({
-			NetworkError: () =>
-				Effect.succeed({
-					inputs: nodeDefaultInputs,
-					scheduleData: nodeDefaultScheduleData,
-				}),
-			ParseError: () =>
-				Effect.succeed({
-					inputs: nodeDefaultInputs,
-					scheduleData: nodeDefaultScheduleData,
-				}),
+			NetworkError: () => Effect.succeed(nodeDefaults),
+			ParseError: () => Effect.succeed(nodeDefaults),
 		}),
 	);
 
