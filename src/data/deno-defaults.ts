@@ -1003,3 +1003,7 @@ export const denoDefaultTags: ReadonlyArray<GitHubTag> = [
 		node_id: "MDM6UmVmMTMzNDQyMzg0OnJlZnMvdGFncy92MS40Mi40",
 	},
 ] as const;
+
+import type { RuntimeReleaseInput } from "../schemas/runtime-release.js";
+
+export const denoDefaultInputs: ReadonlyArray<RuntimeReleaseInput> = [];

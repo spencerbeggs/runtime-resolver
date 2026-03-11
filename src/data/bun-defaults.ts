@@ -1003,3 +1003,7 @@ export const bunDefaultTags: ReadonlyArray<GitHubTag> = [
 		node_id: "MDM6UmVmMzU3NzI4OTY5OnJlZnMvdGFncy9idW4tdjEuMC4yNQ==",
 	},
 ] as const;
+
+import type { RuntimeReleaseInput } from "../schemas/runtime-release.js";
+
+export const bunDefaultInputs: ReadonlyArray<RuntimeReleaseInput> = [];
