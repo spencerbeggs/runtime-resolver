@@ -3,6 +3,16 @@ import type { GitHubTag } from "../schemas/github.js";
 
 export const denoDefaultTags: ReadonlyArray<GitHubTag> = [
 	{
+		name: "v2.7.5",
+		zipball_url: "https://api.github.com/repos/denoland/deno/zipball/refs/tags/v2.7.5",
+		tarball_url: "https://api.github.com/repos/denoland/deno/tarball/refs/tags/v2.7.5",
+		commit: {
+			sha: "0238181e8a95be0885da93bbc99997988d07bff0",
+			url: "https://api.github.com/repos/denoland/deno/commits/0238181e8a95be0885da93bbc99997988d07bff0",
+		},
+		node_id: "MDM6UmVmMTMzNDQyMzg0OnJlZnMvdGFncy92Mi43LjU=",
+	},
+	{
 		name: "v2.7.4",
 		zipball_url: "https://api.github.com/repos/denoland/deno/zipball/refs/tags/v2.7.4",
 		tarball_url: "https://api.github.com/repos/denoland/deno/tarball/refs/tags/v2.7.4",
@@ -991,15 +1001,5 @@ export const denoDefaultTags: ReadonlyArray<GitHubTag> = [
 			url: "https://api.github.com/repos/denoland/deno/commits/7cb23c5e3ee0b6c416f4c0e34c7c63fdf5024138",
 		},
 		node_id: "MDM6UmVmMTMzNDQyMzg0OnJlZnMvdGFncy92MS40Mi40",
-	},
-	{
-		name: "v1.42.3",
-		zipball_url: "https://api.github.com/repos/denoland/deno/zipball/refs/tags/v1.42.3",
-		tarball_url: "https://api.github.com/repos/denoland/deno/tarball/refs/tags/v1.42.3",
-		commit: {
-			sha: "a64a257024c9933d90494613ac6b302cc69df6fa",
-			url: "https://api.github.com/repos/denoland/deno/commits/a64a257024c9933d90494613ac6b302cc69df6fa",
-		},
-		node_id: "MDM6UmVmMTMzNDQyMzg0OnJlZnMvdGFncy92MS40Mi4z",
 	},
 ] as const;
