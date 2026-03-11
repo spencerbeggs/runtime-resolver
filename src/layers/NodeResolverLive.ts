@@ -1,5 +1,5 @@
-import { Effect, Layer, Schema } from "effect";
-import * as semver from "semver";
+import { Effect, Layer, Option, Schema } from "effect";
+import { Range, SemVer } from "semver-effect";
 import { FreshnessError } from "../errors/FreshnessError.js";
 import { InvalidInputError } from "../errors/InvalidInputError.js";
 import { ParseError } from "../errors/ParseError.js";
@@ -13,6 +13,15 @@ import { GitHubClient } from "../services/GitHubClient.js";
 import type { NodeResolverOptions } from "../services/NodeResolver.js";
 import { NodeResolver } from "../services/NodeResolver.js";
 import { VersionCache } from "../services/VersionCache.js";
+
+function tryParseSemVer(input: string): Option.Option<SemVer.SemVer> {
+	return Effect.runSync(
+		SemVer.fromString(input).pipe(
+			Effect.map(Option.some),
+			Effect.orElseSucceed(() => Option.none()),
+		),
+	);
+}
 
 const NODE_DIST_URL = "https://nodejs.org/dist/index.json";
 const NODE_SCHEDULE_URL = "https://raw.githubusercontent.com/nodejs/Release/refs/heads/main/schedule.json";
@@ -97,15 +106,16 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 			resolve: (options?: NodeResolverOptions) =>
 				Effect.gen(function* () {
 					const semverRange = options?.semverRange ?? "*";
-					if (!semver.validRange(semverRange)) {
-						return yield* Effect.fail(
-							new InvalidInputError({
-								field: "semverRange",
-								value: semverRange,
-								message: `Invalid semver range: "${semverRange}"`,
-							}),
-						);
-					}
+					const range = yield* Range.fromString(semverRange).pipe(
+						Effect.mapError(
+							() =>
+								new InvalidInputError({
+									field: "semverRange",
+									value: semverRange,
+									message: `Invalid semver range: "${semverRange}"`,
+								}),
+						),
+					);
 
 					const { allVersions, schedule, source } = yield* fetchWithCacheFallback(options?.freshness);
 
@@ -116,22 +126,33 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 					const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
 
 					const matchingVersions = cleanVersions.filter((version) => {
-						if (!semver.satisfies(version, semverRange)) return false;
+						const opt = tryParseSemVer(version);
+						if (Option.isNone(opt)) return false;
+						if (!Range.satisfies(opt.value, range)) return false;
 						const phase = getVersionPhase(version, schedule, now);
 						if (!phase || !phases.includes(phase)) return false;
 						return true;
 					});
 
 					const filteredVersions = filterByIncrements(matchingVersions, increments);
-					const sortedVersions = semver.rsort([...filteredVersions]);
+
+					const parsedForSort = filteredVersions
+						.map((v) => tryParseSemVer(v))
+						.filter(Option.isSome)
+						.map((o) => o.value);
+					let sortedVersions = SemVer.rsort(parsedForSort).map((v) => v.toString());
 
 					let resolvedDefault: string | undefined;
 					if (options?.defaultVersion) {
 						resolvedDefault = resolveVersionFromList(options.defaultVersion, cleanVersions);
 
 						if (resolvedDefault && !sortedVersions.includes(resolvedDefault)) {
-							sortedVersions.push(resolvedDefault);
-							sortedVersions.sort((a, b) => semver.rcompare(a, b));
+							const withDefault = [...sortedVersions, resolvedDefault];
+							const reParsed = withDefault
+								.map((v) => tryParseSemVer(v))
+								.filter(Option.isSome)
+								.map((o) => o.value);
+							sortedVersions = SemVer.rsort(reParsed).map((v) => v.toString());
 						}
 					}
 
@@ -160,7 +181,8 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 
 			resolveVersion: (versionOrRange: string) =>
 				Effect.gen(function* () {
-					if (semver.valid(versionOrRange)) {
+					const exactOpt = tryParseSemVer(versionOrRange);
+					if (Option.isSome(exactOpt)) {
 						const { allVersions } = yield* fetchWithCacheFallback();
 						const cleanVersions = allVersions.map((v) => v.version.replace(/^v/, ""));
 						if (cleanVersions.includes(versionOrRange)) {
@@ -175,7 +197,13 @@ export const NodeResolverLive: Layer.Layer<NodeResolver, never, GitHubClient | V
 						);
 					}
 
-					if (!semver.validRange(versionOrRange)) {
+					const rangeOpt = Effect.runSync(
+						Range.fromString(versionOrRange).pipe(
+							Effect.map(Option.some),
+							Effect.orElseSucceed(() => Option.none()),
+						),
+					);
+					if (Option.isNone(rangeOpt)) {
 						return yield* Effect.fail(
 							new InvalidInputError({
 								field: "versionOrRange",
