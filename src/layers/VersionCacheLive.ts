@@ -1,7 +1,4 @@
 import { Effect, Layer } from "effect";
-import { bunDefaultTags } from "../data/bun-defaults.js";
-import { denoDefaultTags } from "../data/deno-defaults.js";
-import { nodeDefaultSchedule, nodeDefaultVersions } from "../data/node-defaults.js";
 import { CacheError } from "../errors/CacheError.js";
 import type { CachedNodeData, CachedTagData } from "../schemas/cache.js";
 import type { Runtime, Source } from "../schemas/common.js";
@@ -9,9 +6,9 @@ import type { CachedData } from "../services/VersionCache.js";
 import { VersionCache } from "../services/VersionCache.js";
 
 const fallbackData: Record<Runtime, CachedData> = {
-	node: { versions: [...nodeDefaultVersions], schedule: { ...nodeDefaultSchedule } } satisfies CachedNodeData,
-	bun: { tags: [...bunDefaultTags] } satisfies CachedTagData,
-	deno: { tags: [...denoDefaultTags] } satisfies CachedTagData,
+	node: { versions: [], schedule: {} } satisfies CachedNodeData,
+	bun: { tags: [] } satisfies CachedTagData,
+	deno: { tags: [] } satisfies CachedTagData,
 };
 
 export const VersionCacheLive: Layer.Layer<VersionCache> = Layer.sync(VersionCache, () => {
