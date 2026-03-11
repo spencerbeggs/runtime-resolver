@@ -7,22 +7,21 @@ error handling, and dependency injection using Effect's standard patterns.
 ```typescript
 import {
   NodeResolver, NodeResolverLive,
+  AutoNodeCacheLive, FreshNodeCacheLive, OfflineNodeCacheLive,
   GitHubClientLive, GitHubAutoAuth, GitHubTokenAuth,
-  VersionCacheLive,
 } from "runtime-resolver/effect"
 ```
 
 ## Services
 
-Each service is a `Context.Tag` (class-based pattern). Yield a tag inside
-`Effect.gen` to access its methods.
+Each service is a `Context.GenericTag`. Yield a tag inside `Effect.gen` to
+access its methods.
 
 ### NodeResolver
 
 ```typescript
-interface NodeResolverShape {
-  resolve(options?: NodeResolverOptions): Effect<ResolvedVersions, NodeResolverError>
-  resolveVersion(versionOrRange: string): Effect<string, NodeResolverError>
+interface NodeResolver {
+  resolve(options?: NodeResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
 }
 ```
 
@@ -34,12 +33,10 @@ interface NodeResolverShape {
 | `defaultVersion` | `string` | -- |
 | `phases` | `NodePhase[]` | `["current", "active-lts"]` |
 | `increments` | `Increments` | `"latest"` |
-| `freshness` | `Freshness` | `"auto"` |
 | `date` | `Date` | `new Date()` |
 
 `NodePhase` is `"current" | "active-lts" | "maintenance-lts" | "end-of-life"`.
 `Increments` is `"latest" | "minor" | "patch"`.
-`Freshness` is `"auto" | "api" | "cache"`.
 
 When no `defaultVersion` is provided, the `default` field in the result is
 automatically set to the latest LTS version.
@@ -47,9 +44,8 @@ automatically set to the latest LTS version.
 ### BunResolver
 
 ```typescript
-interface BunResolverShape {
-  resolve(options?: BunResolverOptions): Effect<ResolvedVersions, BunResolverError>
-  resolveVersion(versionOrRange: string): Effect<string, BunResolverError>
+interface BunResolver {
+  resolve(options?: BunResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
 }
 ```
 
@@ -60,14 +56,12 @@ interface BunResolverShape {
 | `semverRange` | `string` | `"*"` |
 | `defaultVersion` | `string` | -- |
 | `increments` | `Increments` | `"latest"` |
-| `freshness` | `Freshness` | `"auto"` |
 
 ### DenoResolver
 
 ```typescript
-interface DenoResolverShape {
-  resolve(options?: DenoResolverOptions): Effect<ResolvedVersions, DenoResolverError>
-  resolveVersion(versionOrRange: string): Effect<string, DenoResolverError>
+interface DenoResolver {
+  resolve(options?: DenoResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
 }
 ```
 
@@ -78,12 +72,36 @@ interface DenoResolverShape {
 | `semverRange` | `string` | `"*"` |
 | `defaultVersion` | `string` | -- |
 | `increments` | `Increments` | `"latest"` |
-| `freshness` | `Freshness` | `"auto"` |
+
+### Cache Services
+
+Each runtime has a typed cache service backed by `semver-effect`:
+
+- **`NodeReleaseCache`** -- Extends `RuntimeCache<NodeRelease>` with
+  `updateSchedule`, `loadFromInputs`, `ltsReleases`, and `currentReleases`
+  methods for Node.js-specific phase filtering.
+- **`BunReleaseCache`** -- `RuntimeCache<BunRelease>` with `load`, `resolve`,
+  `releases`, `filter`, `latest`, `latestByMajor`, and `latestByMinor`.
+- **`DenoReleaseCache`** -- `RuntimeCache<DenoRelease>` with the same
+  interface.
+
+All cache services expose semver-aware operations: `resolve(range)` finds the
+best match, `filter(range)` returns all matches, and `latestByMajor()` /
+`latestByMinor()` group releases by version segment.
+
+### Fetcher Services
+
+Fetchers retrieve version data from upstream sources:
+
+- **`NodeVersionFetcher`** -- Fetches from `nodejs.org/dist/index.json`
+- **`NodeScheduleFetcher`** -- Fetches the Node.js release schedule from GitHub
+- **`BunVersionFetcher`** -- Fetches Bun releases from GitHub (`oven-sh/bun`)
+- **`DenoVersionFetcher`** -- Fetches Deno releases from GitHub (`denoland/deno`)
 
 ### GitHubClient
 
 ```typescript
-interface GitHubClientShape {
+interface GitHubClient {
   listTags(
     owner: string, repo: string, options?: ListOptions,
   ): Effect<ReadonlyArray<GitHubTag>, NetworkError | RateLimitError | ParseError | AuthenticationError>
@@ -101,18 +119,6 @@ interface GitHubClientShape {
 
 `ListOptions` accepts `perPage` (default `100`) and `pages` (default `1`).
 
-### VersionCache
-
-```typescript
-interface VersionCacheShape {
-  get(runtime: Runtime): Effect<{ data: CachedData; source: Source }, CacheError>
-  set(runtime: Runtime, data: CachedData): Effect<void, CacheError>
-}
-```
-
-`Runtime` is `"node" | "bun" | "deno"`.
-`Source` is `"api" | "cache"`.
-
 ### OctokitInstance
 
 Low-level tag providing an Octokit-compatible client. You rarely interact with
@@ -123,16 +129,31 @@ this directly -- authentication layers produce it.
 ### Dependency graph
 
 ```text
-NodeResolverLive ──┐
-BunResolverLive  ──┼── GitHubClientLive ── OctokitInstance
-DenoResolverLive ──┤
-                   └── VersionCacheLive
+NodeResolverLive ── NodeReleaseCache ──┐
+                                       ├── NodeVersionFetcherLive ── GitHubClientLive ── OctokitInstance
+                                       └── NodeScheduleFetcherLive ─┘
+
+BunResolverLive  ── BunReleaseCache  ── BunVersionFetcherLive  ── GitHubClientLive ── OctokitInstance
+DenoResolverLive ── DenoReleaseCache ── DenoVersionFetcherLive ── GitHubClientLive ── OctokitInstance
 ```
 
-Each resolver layer requires `GitHubClient | VersionCache`.
-`GitHubClientLive` requires `OctokitInstance`.
-`VersionCacheLive` is self-contained (in-memory cache with bundled fallback
-data).
+Each resolver depends on its runtime-specific cache. Caches depend on fetchers.
+Fetchers depend on `GitHubClient`. `GitHubClientLive` requires `OctokitInstance`.
+
+### Cache freshness layers
+
+Freshness is a **Layer concern**, not a resolver option. Each runtime has three
+cache layer variants:
+
+| Layer | Behavior |
+| --- | --- |
+| `AutoNodeCacheLive` | Try API first, fall back to bundled defaults on network/parse errors |
+| `FreshNodeCacheLive` | Require API data; fail with `FreshnessError` if unavailable |
+| `OfflineNodeCacheLive` | Use bundled defaults only; never contact the network |
+
+Bun and Deno have equivalent layers: `AutoBunCacheLive`, `FreshBunCacheLive`,
+`OfflineBunCacheLive`, `AutoDenoCacheLive`, `FreshDenoCacheLive`,
+`OfflineDenoCacheLive`.
 
 ### Authentication layers
 
@@ -166,16 +187,21 @@ when multiple credential sources are detected.
 import {
   NodeResolver,
   NodeResolverLive,
+  AutoNodeCacheLive,
+  NodeVersionFetcherLive,
+  NodeScheduleFetcherLive,
   GitHubClientLive,
   GitHubTokenAuth,
-  VersionCacheLive,
 } from "runtime-resolver/effect"
 import { Effect, Layer } from "effect"
 
-// GitHubAutoAuth is now the default, but GitHubTokenAuth is still available for explicit use
 const GitHubLayer = GitHubClientLive.pipe(Layer.provide(GitHubTokenAuth))
-const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive)
-const NodeLayer = NodeResolverLive.pipe(Layer.provide(SharedLayer))
+const FetchersLayer = Layer.merge(
+  NodeVersionFetcherLive.pipe(Layer.provide(GitHubLayer)),
+  NodeScheduleFetcherLive.pipe(Layer.provide(GitHubLayer)),
+)
+const CacheLayer = AutoNodeCacheLive.pipe(Layer.provide(FetchersLayer))
+const NodeLayer = NodeResolverLive.pipe(Layer.provide(CacheLayer))
 
 const program = Effect.gen(function* () {
   const resolver = yield* NodeResolver
@@ -183,10 +209,52 @@ const program = Effect.gen(function* () {
 })
 
 const result = await Effect.runPromise(program.pipe(Effect.provide(NodeLayer)))
-console.log(result.source)   // "api" or "cache"
 console.log(result.latest)   // e.g. "22.14.0"
 console.log(result.versions) // all matching versions, descending
 ```
+
+### Using offline mode
+
+Swap `AutoNodeCacheLive` for `OfflineNodeCacheLive` to skip all network
+requests:
+
+```typescript
+import {
+  NodeResolver, NodeResolverLive, OfflineNodeCacheLive,
+} from "runtime-resolver/effect"
+import { Effect } from "effect"
+
+const NodeLayer = NodeResolverLive.pipe(Layer.provide(OfflineNodeCacheLive))
+
+const program = Effect.gen(function* () {
+  const resolver = yield* NodeResolver
+  return yield* resolver.resolve({ semverRange: ">=20" })
+})
+
+const result = await Effect.runPromise(program.pipe(Effect.provide(NodeLayer)))
+```
+
+## Domain Classes
+
+### NodeRelease
+
+Represents a Node.js release with phase-aware metadata. Wraps a `SemVer`
+version and an `Ref<NodeSchedule>` for effectful phase lookups:
+
+- `version` -- the `SemVer` instance
+- `date` -- release date
+- `lts` -- LTS codename or `false`
+- `phase(date?)` -- returns `Effect<NodePhase>` based on the release schedule
+
+### BunRelease / DenoRelease
+
+Lightweight release classes wrapping `SemVer` and a release date.
+
+### NodeSchedule
+
+Tracks the lifecycle schedule for a Node.js major version line (start, LTS,
+maintenance, end-of-life dates). Used by `NodeRelease.phase()` to determine
+the current phase of a release.
 
 ## ResolvedVersions
 
@@ -202,10 +270,6 @@ interface ResolvedVersions {
 }
 ```
 
-The `source` field indicates whether version data was fetched live from the
-GitHub API or nodejs.org (`"api"`) or loaded from the bundled build-time cache
-(`"cache"`).
-
 ## Error types
 
 All errors extend `Data.TaggedError`. Discriminate with `Effect.catchTag`.
@@ -216,27 +280,19 @@ All errors extend `Data.TaggedError`. Discriminate with `Effect.catchTag`.
 | `RateLimitError` | `"RateLimitError"` | `retryAfter?`, `limit`, `remaining`, `message` |
 | `ParseError` | `"ParseError"` | `source`, `message` |
 | `VersionNotFoundError` | `"VersionNotFoundError"` | `runtime`, `constraint`, `message` |
-| `InvalidInputError` | `"InvalidInputError"` | `field`, `value`, `message` |
-| `CacheError` | `"CacheError"` | `operation` (`"read"` or `"write"`), `message` |
 | `FreshnessError` | `"FreshnessError"` | `strategy`, `message` |
 | `AuthenticationError` | `"AuthenticationError"` | `method` (`"token"` or `"app"`), `message` |
 
-All three resolver error unions include `InvalidInputError` and `FreshnessError`:
-
-- **`NodeResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
-- **`BunResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
-- **`DenoResolverError`** = `NetworkError | ParseError | RateLimitError | VersionNotFoundError | InvalidInputError | CacheError | FreshnessError | AuthenticationError`
+Resolver error unions are simplified -- each resolver can only fail with
+`VersionNotFoundError`. Network, parse, and rate limit errors are handled
+internally by the cache layers (Auto catches them and falls back; Fresh
+converts them to `FreshnessError`).
 
 ### Handling errors with catchTag
 
 ```typescript
 import { Effect } from "effect"
-import {
-  NodeResolver,
-  VersionNotFoundError,
-  RateLimitError,
-  FreshnessError,
-} from "runtime-resolver/effect"
+import { NodeResolver } from "runtime-resolver/effect"
 
 const program = Effect.gen(function* () {
   const resolver = yield* NodeResolver
@@ -245,23 +301,6 @@ const program = Effect.gen(function* () {
   Effect.catchTag("VersionNotFoundError", (err) =>
     Effect.succeed({ versions: [], latest: "none", constraint: err.constraint }),
   ),
-  Effect.catchTag("RateLimitError", (err) =>
-    Effect.fail(new Error(`Rate limited. Retry after ${err.retryAfter}s`)),
-  ),
-  Effect.catchTag("InvalidInputError", (err) =>
-    Effect.fail(new Error(`Invalid ${err.field}: ${err.value}`)),
-  ),
-)
-```
-
-You can also match multiple error tags at once with `Effect.catchTags`:
-
-```typescript
-const safe = program.pipe(
-  Effect.catchTags({
-    NetworkError: (e) => Effect.succeed({ fallback: true, url: e.url }),
-    ParseError: (e) => Effect.die(`Corrupt data from ${e.source}`),
-  })
 )
 ```
 
@@ -272,27 +311,30 @@ installation. This is useful in CI environments or server-side applications.
 
 ```typescript
 import {
-  BunResolver,
-  BunResolverLive,
-  DenoResolver,
-  DenoResolverLive,
-  GitHubAppAuth,
-  GitHubClientLive,
-  VersionCacheLive,
+  BunResolver, BunResolverLive, AutoBunCacheLive,
+  DenoResolver, DenoResolverLive, AutoDenoCacheLive,
+  BunVersionFetcherLive, DenoVersionFetcherLive,
+  GitHubAppAuth, GitHubClientLive,
 } from "runtime-resolver/effect"
 import { Effect, Layer } from "effect"
 
 const AppAuthLayer = GitHubAppAuth({
   appId: process.env.GH_APP_ID!,
   privateKey: process.env.GH_APP_PRIVATE_KEY!,
-  // installationId is auto-discovered when omitted
 })
 
 const GitHubLayer = GitHubClientLive.pipe(Layer.provide(AppAuthLayer))
-const SharedLayer = Layer.merge(GitHubLayer, VersionCacheLive)
 
-const BunLayer = BunResolverLive.pipe(Layer.provide(SharedLayer))
-const DenoLayer = DenoResolverLive.pipe(Layer.provide(SharedLayer))
+const BunLayer = BunResolverLive.pipe(
+  Layer.provide(AutoBunCacheLive.pipe(
+    Layer.provide(BunVersionFetcherLive.pipe(Layer.provide(GitHubLayer)))
+  ))
+)
+const DenoLayer = DenoResolverLive.pipe(
+  Layer.provide(AutoDenoCacheLive.pipe(
+    Layer.provide(DenoVersionFetcherLive.pipe(Layer.provide(GitHubLayer)))
+  ))
+)
 const FullLayer = Layer.merge(BunLayer, DenoLayer)
 
 const program = Effect.gen(function* () {

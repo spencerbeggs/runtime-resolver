@@ -13,75 +13,44 @@ additional configuration.
    GitHub and nodejs.org.
 2. The data is written to TypeScript files in `src/data/`:
    - `node-defaults.ts` -- Node.js dist index and release schedule
-   - `bun-defaults.ts` -- Bun GitHub release tags
-   - `deno-defaults.ts` -- Deno GitHub release tags
+   - `bun-defaults.ts` -- Bun GitHub releases
+   - `deno-defaults.ts` -- Deno GitHub releases
 3. These files are bundled into the published package.
-4. At runtime, `VersionCacheLive` provides cached or fallback data to resolvers.
-5. When the network is unavailable and no memory cache exists, the layer
-   transparently falls back to the bundled defaults.
+4. At runtime, cache layers load this data as a fallback when live fetches fail.
 
-## Detecting Fallback with the `source` Field
+## Cache Layer Variants
 
-Every `ResolvedVersions` result includes a `source` field that indicates where
-the data came from:
+Freshness is controlled by choosing a cache layer variant. Each runtime has
+three options:
 
-- `"api"` -- Data was fetched live from GitHub or nodejs.org.
-- `"cache"` -- Data was loaded from the bundled build-time cache.
+| Layer | Behavior |
+| --- | --- |
+| `AutoNodeCacheLive` | Try API first, fall back to bundled defaults on network/parse errors |
+| `FreshNodeCacheLive` | Require API data; fail with `FreshnessError` if unavailable |
+| `OfflineNodeCacheLive` | Use bundled defaults only; never contact the network |
 
-Use this field to detect when the resolver is operating in offline mode:
+Bun and Deno have equivalent layers (`AutoBunCacheLive`, `FreshBunCacheLive`,
+`OfflineBunCacheLive`, etc.).
 
-```typescript
-import { resolveNode } from "runtime-resolver";
+The pre-built Promise API functions and CLI use the `Auto` variants by default.
 
-const result = await resolveNode({ semverRange: ">=20" });
-if (result.source === "cache") {
-  console.warn("Using bundled offline data — versions may not be current");
-}
-```
-
-In the CLI, the `source` field appears in each runtime result:
-
-```bash
-runtime-resolver --node ">=20" | jq -r '.results.node.source'
-# "api" when fetched live, "cache" when using bundled data
-```
-
-## Cache Behavior
-
-The in-memory cache has three tiers:
-
-1. **Network fetch** -- always tried first by the resolver layers; results are
-   stored in memory via `VersionCache.set`.
-2. **Memory cache** -- subsequent calls in the same process reuse previously
-   fetched data without another network round-trip.
-3. **Bundled defaults** -- used when the network is unavailable and no memory
-   cache exists for the requested runtime.
-
-The fallback is transparent. Callers receive the same data structures regardless
-of whether the values came from a live fetch or the bundled defaults. The
-`source` field is the only way to distinguish the two.
-
-## Freshness
-
-Bundled data is as fresh as the latest published package version. The
-`freshness` option (or `--freshness` CLI flag) gives you explicit control over
-how version data is sourced:
-
-- **`freshness: "auto"`** (default) -- Try the API first, fall back to the
-  bundled cache on network failure. This is the standard behavior.
-- **`freshness: "cache"`** -- Use the bundled cache only, skipping all network
-  requests. Useful for explicit offline mode or air-gapped environments where
-  you want deterministic results with no external calls.
-- **`freshness: "api"`** -- Require fresh data from the API. Fails with a
-  `FreshnessError` if the network is unavailable. Useful in CI pipelines where
-  you need guaranteed fresh data and would rather fail than use stale versions.
+### Effect API example
 
 ```typescript
+import {
+  NodeResolver, NodeResolverLive, OfflineNodeCacheLive,
+} from "runtime-resolver/effect"
+import { Effect } from "effect"
+
 // Explicit offline mode -- never hit the network
-const result = await resolveNode({ freshness: "cache" });
+const NodeLayer = NodeResolverLive.pipe(Layer.provide(OfflineNodeCacheLive))
 
-// CI mode -- fail fast if the API is unreachable
-const fresh = await resolveNode({ freshness: "api" });
+const program = Effect.gen(function* () {
+  const resolver = yield* NodeResolver
+  return yield* resolver.resolve({ semverRange: ">=20" })
+})
+
+const result = await Effect.runPromise(program.pipe(Effect.provide(NodeLayer)))
 ```
 
 For authenticated requests that increase your rate limit, set a GitHub token:
@@ -103,10 +72,11 @@ To update the bundled data during development:
 pnpm run generate:defaults
 ```
 
+The defaults are also updated automatically via a daily GitHub Actions workflow
+(`.github/workflows/update-defaults.yml`).
+
 The script only writes files when content has actually changed, so repeated runs
-do not produce unnecessary diffs. Turbo caches the task based on the script
-source, schema files, and GitHub client code. The `types:check` task depends on
-`generate:defaults`, so a full build always has up-to-date data.
+do not produce unnecessary diffs.
 
 ## JSON Schema Generation
 

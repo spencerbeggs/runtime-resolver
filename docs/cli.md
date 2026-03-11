@@ -31,7 +31,6 @@ npx runtime-resolver --node ">=20"
 | `--bun-default <version>` | Pin a default version for Bun | `--bun-default "1.1.0"` |
 | `--deno-default <version>` | Pin a default version for Deno | `--deno-default "2.0.0"` |
 | `--node-date <date>` | ISO date for reproducible Node.js phase calculations | `--node-date "2024-01-15"` |
-| `--freshness <strategy>` | Data freshness strategy: `auto`, `api`, or `cache` | `--freshness cache` |
 | `--pretty` | Pretty-print the JSON output | |
 | `--token <token>` | GitHub personal access token for authentication | `--token "ghp_..."` |
 | `--app-id <id>` | GitHub App ID for app authentication | `--app-id "123456"` |
@@ -48,24 +47,6 @@ requested runtimes (Node.js, Bun, and Deno):
 - `latest` -- only the latest matching version per major line (default)
 - `minor` -- one version per minor release
 - `patch` -- every patch version
-
-### Freshness
-
-The `--freshness` flag controls how version data is fetched:
-
-- `auto` -- Try the API first, fall back to the bundled cache on network
-  failure. This is the default.
-- `api` -- Require fresh data from the API. Fails with a `FreshnessError` if
-  the network is unavailable.
-- `cache` -- Use the bundled cache only, skipping all network requests.
-
-```bash
-# Require live data in CI
-runtime-resolver --node ">=20" --freshness api
-
-# Offline mode -- never contact the network
-runtime-resolver --node ">=20" --freshness cache
-```
 
 ### Authentication Flags
 
@@ -102,9 +83,9 @@ runtime-resolver --node ">=20" --app-id "123456" --app-private-key @key.pem --ap
 
 The `--schema` flag prints the JSON Schema for the response format and exits.
 It cannot be combined with any resolve flags (`--node`, `--bun`, `--deno`,
-`--freshness`, `--increments`, `--node-phases`, `--node-default`,
-`--bun-default`, `--deno-default`, `--node-date`). If `--schema` is used
-alongside any of these flags, the CLI prints an error and exits:
+`--increments`, `--node-phases`, `--node-default`, `--bun-default`,
+`--deno-default`, `--node-date`). If `--schema` is used alongside any of
+these flags, the CLI prints an error and exits:
 
 ```bash
 # Valid: print the schema
@@ -193,10 +174,10 @@ successful results are still included:
     "bun": {
       "ok": false,
       "error": {
-        "_tag": "RateLimitError",
-        "message": "Rate limited",
-        "limit": 60,
-        "remaining": 0
+        "_tag": "VersionNotFoundError",
+        "message": "No versions match constraint",
+        "runtime": "bun",
+        "constraint": ">=99"
       }
     }
   }
@@ -210,12 +191,7 @@ field, and additional metadata specific to the error:
 
 | Error Tag | Description | Extra Fields |
 | --- | --- | --- |
-| `NetworkError` | HTTP request failed | `url`, `status` |
-| `RateLimitError` | GitHub API rate limit exceeded | `limit`, `remaining`, `retryAfter` |
-| `ParseError` | Upstream data could not be parsed | `source` |
 | `VersionNotFoundError` | No versions match the given range | `runtime`, `constraint` |
-| `InvalidInputError` | Invalid semver range or option value | `field`, `value` |
-| `FreshnessError` | Freshness strategy cannot be satisfied | `strategy` |
 | `AuthenticationError` | Authentication failed | `method` |
 
 ## Usage with jq
@@ -234,9 +210,6 @@ runtime-resolver --node ">=20" | jq '.ok'
 
 # Get the LTS version for Node.js
 runtime-resolver --node ">=18" | jq -r '.results.node.lts'
-
-# Check data source (api vs cache)
-runtime-resolver --node ">=20" | jq -r '.results.node.source'
 ```
 
 ## JSON Schema
