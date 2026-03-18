@@ -55,6 +55,9 @@ jobs:
             @savvy-web/pnpm-plugin-silk
           dependencies: |
             @savvy-web/*
+            semver-effect
+            @octokit/auth-app
+            octokit
           run: |
             pnpm savvy-commit init
             pnpm savvy-lint init

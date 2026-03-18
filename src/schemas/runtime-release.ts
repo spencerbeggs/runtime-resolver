@@ -18,7 +18,7 @@ import type { SemVer } from "semver-effect";
  */
 export interface RuntimeRelease {
 	readonly _tag: string;
-	readonly version: SemVer.SemVer;
+	readonly version: SemVer;
 	readonly date: DateTime.DateTime;
 }
 
@@ -28,7 +28,7 @@ export interface RuntimeRelease {
  *
  * Both Bun and Deno source their offline snapshots from JSON/TS data files
  * whose entries conform to this shape. The `version` and `date` fields are
- * plain strings that are subsequently parsed by `SemVer.fromString` and
+ * plain strings that are subsequently parsed by `SemVer.parse` and
  * `DateTime.unsafeMake` respectively.
  *
  * @see {@link BunRelease.fromInput}

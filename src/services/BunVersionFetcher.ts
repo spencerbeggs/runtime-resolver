@@ -8,49 +8,12 @@ import type { RateLimitError } from "../errors/RateLimitError.js";
 import type { RuntimeReleaseInput } from "../schemas/runtime-release.js";
 
 /**
- * Service interface for fetching Bun release data from the GitHub API.
+ * Service for fetching Bun release data from the GitHub API.
  *
  * Retrieves both the parsed semver version list and the raw release input
  * records needed to populate a {@link BunReleaseCache}. The live
  * implementation queries the `oven-sh/bun` GitHub repository via
  * {@link GitHubClient}.
- *
- * @see {@link BunVersionFetcherLive}
- * @see {@link BunReleaseCache}
- * @see {@link AuthenticationError}
- * @see {@link NetworkError}
- * @see {@link ParseError}
- * @see {@link RateLimitError}
- *
- * @public
- */
-export interface BunVersionFetcher {
-	/**
-	 * Fetches all available Bun releases from the GitHub API and returns both
-	 * the parsed semver version objects and the raw release input records.
-	 *
-	 * Fails with:
-	 * - {@link AuthenticationError} — missing or invalid GitHub credentials.
-	 * - {@link NetworkError} — the upstream request could not be completed.
-	 * - {@link ParseError} — the response payload could not be decoded.
-	 * - {@link RateLimitError} — the GitHub API rate limit was exceeded.
-	 */
-	readonly fetch: () => Effect.Effect<
-		{
-			readonly versions: ReadonlyArray<SemVer.SemVer>;
-			readonly inputs: ReadonlyArray<RuntimeReleaseInput>;
-		},
-		AuthenticationError | NetworkError | ParseError | RateLimitError
-	>;
-}
-
-/**
- * Service tag and companion object for {@link BunVersionFetcher}.
- *
- * Acts as both the TypeScript service interface and the Effect dependency tag
- * used for dependency injection (companion object pattern). Yield this tag
- * inside `Effect.gen` to access the fetcher implementation provided by
- * {@link BunVersionFetcherLive}.
  *
  * @example
  * ```typescript
@@ -70,7 +33,33 @@ export interface BunVersionFetcher {
  * ```
  *
  * @see {@link BunVersionFetcherLive}
+ * @see {@link BunReleaseCache}
+ * @see {@link AuthenticationError}
+ * @see {@link NetworkError}
+ * @see {@link ParseError}
+ * @see {@link RateLimitError}
  *
  * @public
  */
-export const BunVersionFetcher = Context.GenericTag<BunVersionFetcher>("BunVersionFetcher");
+export class BunVersionFetcher extends Context.Tag("runtime-resolver/BunVersionFetcher")<
+	BunVersionFetcher,
+	{
+		/**
+		 * Fetches all available Bun releases from the GitHub API and returns both
+		 * the parsed semver version objects and the raw release input records.
+		 *
+		 * Fails with:
+		 * - {@link AuthenticationError} — missing or invalid GitHub credentials.
+		 * - {@link NetworkError} — the upstream request could not be completed.
+		 * - {@link ParseError} — the response payload could not be decoded.
+		 * - {@link RateLimitError} — the GitHub API rate limit was exceeded.
+		 */
+		readonly fetch: () => Effect.Effect<
+			{
+				readonly versions: ReadonlyArray<SemVer>;
+				readonly inputs: ReadonlyArray<RuntimeReleaseInput>;
+			},
+			AuthenticationError | NetworkError | ParseError | RateLimitError
+		>;
+	}
+>() {}

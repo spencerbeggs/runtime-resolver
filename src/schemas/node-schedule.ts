@@ -47,23 +47,6 @@ export type NodeScheduleData = Record<
 >;
 
 /**
- * @internal
- *
- * Exported for declaration bundling (api-extractor). When `export *`
- * re-exports a class whose `extends` expression is an inline call like
- * `Data.TaggedClass(...)`, TypeScript emits an un-nameable `_base` symbol in
- * the declaration file. Splitting the base into a named export gives the
- * bundler a stable reference.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link NodeSchedule} to a stable declaration.
- * Without it the bundled `.d.ts` would contain an anonymous `_base` symbol
- * that cannot be referenced by downstream consumers.
- */
-export const NodeScheduleBase = Data.TaggedClass("NodeSchedule");
-
-/**
  * Immutable snapshot of the Node.js release schedule.
  *
  * Holds a `ReadonlyArray<NodeScheduleEntry>` parsed from the raw
@@ -108,7 +91,7 @@ export const NodeScheduleBase = Data.TaggedClass("NodeSchedule");
  *
  * @public
  */
-export class NodeSchedule extends NodeScheduleBase<{
+export class NodeSchedule extends Data.TaggedClass("NodeSchedule")<{
 	readonly entries: ReadonlyArray<NodeScheduleEntry>;
 }> {
 	/**

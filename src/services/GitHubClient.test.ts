@@ -32,7 +32,7 @@ const mockReleases = [
 	},
 ];
 
-const makeTestClient = (overrides?: Partial<GitHubClient>): Layer.Layer<GitHubClient> =>
+const makeTestClient = (overrides?: Partial<typeof GitHubClient.Service>): Layer.Layer<GitHubClient> =>
 	Layer.succeed(GitHubClient, {
 		listTags: () => Effect.succeed(mockTags),
 		listReleases: () => Effect.succeed(mockReleases),

@@ -30,6 +30,7 @@
 		"email": "spencer@beggs.codes",
 		"url": "https://spencerbeg.gs"
 	},
+	"sideEffects": false,
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts"
@@ -62,13 +63,13 @@
 		"types:check": "tsgo --noEmit"
 	},
 	"dependencies": {
-		"@effect/cli": "^0.73.2",
-		"@effect/platform": "^0.94.5",
-		"@effect/platform-node": "^0.104.1",
+		"@effect/cli": "catalog:silk",
+		"@effect/platform": "catalog:silk",
+		"@effect/platform-node": "catalog:silk",
 		"@octokit/auth-app": "^8.2.0",
-		"effect": "^3.19.19",
+		"effect": "catalog:silk",
 		"octokit": "^5.0.5",
-		"semver-effect": "^0.1.0"
+		"semver-effect": "^0.2.0"
 	},
 	"devDependencies": {
 		"@savvy-web/changesets": "^0.5.3",

@@ -1,18 +1,6 @@
 import { Data } from "effect";
 
 /**
- * @internal
- * Exported for declaration bundling — see AuthenticationError.ts for details.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link CacheError} to a stable declaration.
- * Without it the bundled `.d.ts` would contain an anonymous `_base` symbol
- * that cannot be referenced by downstream consumers.
- */
-export const CacheErrorBase = Data.TaggedError("CacheError");
-
-/**
  * Raised when a cache read or write operation fails.
  *
  * This error surfaces when the local on-disk version cache cannot be accessed
@@ -37,7 +25,7 @@ export const CacheErrorBase = Data.TaggedError("CacheError");
  *
  * @public
  */
-export class CacheError extends CacheErrorBase<{
+export class CacheError extends Data.TaggedError("CacheError")<{
 	readonly operation: "read" | "write";
 	readonly message: string;
 }> {}

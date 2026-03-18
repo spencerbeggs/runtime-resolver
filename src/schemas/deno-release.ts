@@ -4,31 +4,14 @@ import { SemVer } from "semver-effect";
 import type { RuntimeReleaseInput } from "./runtime-release.js";
 
 /**
- * @internal
- *
- * Exported for declaration bundling (api-extractor). When `export *`
- * re-exports a class whose `extends` expression is an inline call like
- * `Data.TaggedClass(...)`, TypeScript emits an un-nameable `_base` symbol in
- * the declaration file. Splitting the base into a named export gives the
- * bundler a stable reference.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link DenoRelease} to a stable declaration.
- * Without it the bundled `.d.ts` would contain an anonymous `_base` symbol
- * that cannot be referenced by downstream consumers.
- */
-export const DenoReleaseBase = Data.TaggedClass("DenoRelease");
-
-/**
- * A Deno release entry with a parsed {@link SemVer.SemVer} version and an
+ * A Deno release entry with a parsed {@link SemVer} version and an
  * Effect {@link DateTime.DateTime} publication date.
  *
  * `DenoRelease` extends `Data.TaggedClass` so instances support structural
  * equality comparison and can be used safely inside Effect data structures.
  * Construct instances via the {@link DenoRelease.fromInput} factory rather than
  * calling `new DenoRelease(...)` directly, as the factory validates the version
- * string through `SemVer.fromString`.
+ * string through `SemVer.parse`.
  *
  * @see {@link DenoReleaseCache}
  * @see {@link DenoResolver}
@@ -53,14 +36,14 @@ export const DenoReleaseBase = Data.TaggedClass("DenoRelease");
  *
  * @public
  */
-export class DenoRelease extends DenoReleaseBase<{
-	readonly version: SemVer.SemVer;
+export class DenoRelease extends Data.TaggedClass("DenoRelease")<{
+	readonly version: SemVer;
 	readonly date: DateTime.DateTime;
 }> {
 	/**
 	 * Create a {@link DenoRelease} from lean string inputs.
 	 *
-	 * Parses `input.version` via `SemVer.fromString` and constructs the
+	 * Parses `input.version` via `SemVer.parse` and constructs the
 	 * publication date with `DateTime.unsafeMake`. Falls back to the current
 	 * timestamp when `input.date` is an empty string (rare in production data).
 	 *
@@ -70,7 +53,7 @@ export class DenoRelease extends DenoReleaseBase<{
 	 */
 	static fromInput(input: RuntimeReleaseInput): Effect.Effect<DenoRelease, InvalidVersionError> {
 		return Effect.gen(function* () {
-			const version = yield* SemVer.fromString(input.version);
+			const version = yield* SemVer.parse(input.version);
 			// Fall back to current time if published_at is null (rare).
 			const date = input.date ? DateTime.unsafeMake(input.date) : DateTime.unsafeMake(new Date());
 			return new DenoRelease({ version, date });

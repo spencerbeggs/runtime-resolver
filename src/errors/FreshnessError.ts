@@ -1,18 +1,6 @@
 import { Data } from "effect";
 
 /**
- * @internal
- * Exported for declaration bundling — see AuthenticationError.ts for details.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link FreshnessError} to a stable declaration.
- * Without it the bundled `.d.ts` would contain an anonymous `_base` symbol
- * that cannot be referenced by downstream consumers.
- */
-export const FreshnessErrorBase = Data.TaggedError("FreshnessError");
-
-/**
  * Raised when a cache freshness check cannot be completed.
  *
  * Each runtime cache layer ({@link FreshBunCacheLive}, {@link FreshDenoCacheLive},
@@ -43,7 +31,7 @@ export const FreshnessErrorBase = Data.TaggedError("FreshnessError");
  *
  * @public
  */
-export class FreshnessError extends FreshnessErrorBase<{
+export class FreshnessError extends Data.TaggedError("FreshnessError")<{
 	readonly strategy: "auto" | "api" | "cache";
 	readonly message: string;
 }> {}

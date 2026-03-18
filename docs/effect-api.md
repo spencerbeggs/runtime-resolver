@@ -12,14 +12,17 @@ import {
 
 ## Services
 
-Each service is a `Context.GenericTag`. Yield a tag inside `Effect.gen` to access its methods.
+Each service is a class-based `Context.Tag`. Yield a tag inside `Effect.gen` to access its methods.
 
 ### NodeResolver
 
 ```typescript
-interface NodeResolver {
-  resolve(options?: NodeResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
-}
+class NodeResolver extends Context.Tag("runtime-resolver/NodeResolver")<
+  NodeResolver,
+  {
+    resolve(options?: NodeResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
+  }
+>() {}
 ```
 
 `NodeResolverOptions` accepts:
@@ -40,9 +43,12 @@ When no `defaultVersion` is provided, the `default` field in the result is autom
 ### BunResolver
 
 ```typescript
-interface BunResolver {
-  resolve(options?: BunResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
-}
+class BunResolver extends Context.Tag("runtime-resolver/BunResolver")<
+  BunResolver,
+  {
+    resolve(options?: BunResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
+  }
+>() {}
 ```
 
 `BunResolverOptions` accepts:
@@ -56,9 +62,12 @@ interface BunResolver {
 ### DenoResolver
 
 ```typescript
-interface DenoResolver {
-  resolve(options?: DenoResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
-}
+class DenoResolver extends Context.Tag("runtime-resolver/DenoResolver")<
+  DenoResolver,
+  {
+    resolve(options?: DenoResolverOptions): Effect<ResolvedVersions, VersionNotFoundError>
+  }
+>() {}
 ```
 
 `DenoResolverOptions` accepts:
@@ -95,20 +104,23 @@ Fetchers retrieve version data from upstream sources:
 ### GitHubClient
 
 ```typescript
-interface GitHubClient {
-  listTags(
-    owner: string, repo: string, options?: ListOptions,
-  ): Effect<ReadonlyArray<GitHubTag>, NetworkError | RateLimitError | ParseError | AuthenticationError>
+class GitHubClient extends Context.Tag("runtime-resolver/GitHubClient")<
+  GitHubClient,
+  {
+    listTags(
+      owner: string, repo: string, options?: ListOptions,
+    ): Effect<ReadonlyArray<GitHubTag>, NetworkError | RateLimitError | ParseError | AuthenticationError>
 
-  listReleases(
-    owner: string, repo: string, options?: ListOptions,
-  ): Effect<ReadonlyArray<GitHubRelease>, NetworkError | RateLimitError | ParseError | AuthenticationError>
+    listReleases(
+      owner: string, repo: string, options?: ListOptions,
+    ): Effect<ReadonlyArray<GitHubRelease>, NetworkError | RateLimitError | ParseError | AuthenticationError>
 
-  getJson<A>(
-    url: string,
-    schema: { decode: (input: unknown) => Effect<A, ParseError> },
-  ): Effect<A, NetworkError | ParseError>
-}
+    getJson<A>(
+      url: string,
+      schema: { decode: (input: unknown) => Effect<A, ParseError> },
+    ): Effect<A, NetworkError | ParseError>
+  }
+>() {}
 ```
 
 `ListOptions` accepts `perPage` (default `100`) and `pages` (default `1`).
