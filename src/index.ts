@@ -44,16 +44,15 @@ const DenoLayer = DenoResolverLive.pipe(Layer.provide(DenoCacheLayer));
 
 // ── Errors ──────────────────────────────────────────────────────────────────
 // Tagged error classes thrown by the Promise API and surfaced through Effect
-// channels. `*Base` variants are @internal — exported solely for declaration
-// bundling (api-extractor) and should not be instantiated by consumers.
-export { AuthenticationError, AuthenticationErrorBase } from "./errors/AuthenticationError.js";
-export { CacheError, CacheErrorBase } from "./errors/CacheError.js";
-export { FreshnessError, FreshnessErrorBase } from "./errors/FreshnessError.js";
-export { InvalidInputError, InvalidInputErrorBase } from "./errors/InvalidInputError.js";
-export { NetworkError, NetworkErrorBase } from "./errors/NetworkError.js";
-export { ParseError, ParseErrorBase } from "./errors/ParseError.js";
-export { RateLimitError, RateLimitErrorBase } from "./errors/RateLimitError.js";
-export { VersionNotFoundError, VersionNotFoundErrorBase } from "./errors/VersionNotFoundError.js";
+// channels.
+export { AuthenticationError } from "./errors/AuthenticationError.js";
+export { CacheError } from "./errors/CacheError.js";
+export { FreshnessError } from "./errors/FreshnessError.js";
+export { InvalidInputError } from "./errors/InvalidInputError.js";
+export { NetworkError } from "./errors/NetworkError.js";
+export { ParseError } from "./errors/ParseError.js";
+export { RateLimitError } from "./errors/RateLimitError.js";
+export { VersionNotFoundError } from "./errors/VersionNotFoundError.js";
 
 // ── Layers ──────────────────────────────────────────────────────────────────
 // Effect `Layer` implementations that wire up every runtime resolver's full
@@ -85,18 +84,17 @@ export { OfflineDenoCacheLive } from "./layers/OfflineDenoCacheLive.js";
 export { OfflineNodeCacheLive } from "./layers/OfflineNodeCacheLive.js";
 export { createRuntimeCache } from "./layers/RuntimeCacheLive.js";
 // ── Schemas ──────────────────────────────────────────────────────────────────
-// Effect `Schema` codecs for runtime release data. `*Base` variants are
-// @internal — exported solely for declaration bundling (api-extractor).
-export { BunRelease, BunReleaseBase } from "./schemas/bun-release.js";
+// Effect `Schema` codecs for runtime release data.
+export { BunRelease } from "./schemas/bun-release.js";
 // ── Types ───────────────────────────────────────────────────────────────────
 // TypeScript type aliases and branded primitives shared across all runtimes.
 export type { Increments, NodePhase, ResolvedVersions, Runtime, Source } from "./schemas/common.js";
-export { DenoRelease, DenoReleaseBase } from "./schemas/deno-release.js";
+export { DenoRelease } from "./schemas/deno-release.js";
 export type { GitHubRelease, GitHubTag } from "./schemas/github.js";
 export type { NodeReleaseInput } from "./schemas/node-release.js";
 export { NodeRelease } from "./schemas/node-release.js";
 export type { NodeScheduleData, NodeScheduleEntry } from "./schemas/node-schedule.js";
-export { NodeSchedule, NodeScheduleBase } from "./schemas/node-schedule.js";
+export { NodeSchedule } from "./schemas/node-schedule.js";
 export type { RuntimeRelease, RuntimeReleaseInput } from "./schemas/runtime-release.js";
 // ── Services ────────────────────────────────────────────────────────────────
 // Effect `Context.Tag` service interfaces and their option/error types.

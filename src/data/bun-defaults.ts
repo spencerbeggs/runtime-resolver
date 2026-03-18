@@ -3,6 +3,10 @@ import type { RuntimeReleaseInput } from "../schemas/runtime-release.js";
 
 export const bunDefaultInputs: ReadonlyArray<RuntimeReleaseInput> = [
 	{
+		version: "1.3.11",
+		date: "2026-03-18T04:31:40Z",
+	},
+	{
 		version: "1.3.10",
 		date: "2026-02-26T07:08:20Z",
 	},
@@ -397,9 +401,5 @@ export const bunDefaultInputs: ReadonlyArray<RuntimeReleaseInput> = [
 	{
 		version: "1.0.19",
 		date: "2023-12-22T08:35:06Z",
-	},
-	{
-		version: "1.0.18",
-		date: "2023-12-14T08:05:14Z",
 	},
 ] as const;

@@ -24,7 +24,7 @@ const makeRelease = (tag_name: string) => ({
 	published_at: "2025-01-01T00:00:00Z",
 });
 
-const buildLayer = (octokit: OctokitInstance) => {
+const buildLayer = (octokit: typeof OctokitInstance.Service) => {
 	const mockLayer = Layer.succeed(OctokitInstance, octokit);
 	return GitHubClientLive.pipe(Layer.provide(mockLayer));
 };

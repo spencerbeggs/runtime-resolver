@@ -59,39 +59,8 @@ export interface BunResolverOptions {
 export type BunResolverError = VersionNotFoundError;
 
 /**
- * Service interface for resolving Bun runtime versions against the cached
+ * Service for resolving Bun runtime versions against the cached
  * release index.
- *
- * @see {@link BunResolverLive}
- * @see {@link resolveBun}
- * @see {@link BunResolverOptions}
- * @see {@link ResolvedVersions}
- *
- * @public
- */
-export interface BunResolver {
-	/**
-	 * Resolves Bun versions according to `options` and returns a
-	 * {@link ResolvedVersions} object containing the matching version list,
-	 * the latest version string, and the data source indicator.
-	 *
-	 * Fails with {@link BunResolverError} when no version can be resolved and
-	 * no `defaultVersion` was provided.
-	 *
-	 * @param options - Optional resolution constraints.
-	 *
-	 * @see {@link BunResolverOptions}
-	 */
-	readonly resolve: (options?: BunResolverOptions) => Effect.Effect<ResolvedVersions, BunResolverError>;
-}
-
-/**
- * Service tag and companion object for {@link BunResolver}.
- *
- * Acts as both the TypeScript service interface and the Effect dependency tag
- * used for dependency injection (companion object pattern). Yield this tag
- * inside `Effect.gen` to obtain the resolver implementation provided by
- * {@link BunResolverLive}.
  *
  * For a one-shot Promise-based API see {@link resolveBun}.
  *
@@ -113,7 +82,26 @@ export interface BunResolver {
  *
  * @see {@link BunResolverLive}
  * @see {@link resolveBun}
+ * @see {@link BunResolverOptions}
+ * @see {@link ResolvedVersions}
  *
  * @public
  */
-export const BunResolver = Context.GenericTag<BunResolver>("BunResolver");
+export class BunResolver extends Context.Tag("runtime-resolver/BunResolver")<
+	BunResolver,
+	{
+		/**
+		 * Resolves Bun versions according to `options` and returns a
+		 * {@link ResolvedVersions} object containing the matching version list,
+		 * the latest version string, and the data source indicator.
+		 *
+		 * Fails with {@link BunResolverError} when no version can be resolved and
+		 * no `defaultVersion` was provided.
+		 *
+		 * @param options - Optional resolution constraints.
+		 *
+		 * @see {@link BunResolverOptions}
+		 */
+		readonly resolve: (options?: BunResolverOptions) => Effect.Effect<ResolvedVersions, BunResolverError>;
+	}
+>() {}

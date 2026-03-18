@@ -1,18 +1,6 @@
 import { Data } from "effect";
 
 /**
- * @internal
- * Exported for declaration bundling — see AuthenticationError.ts for details.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link InvalidInputError} to a stable
- * declaration. Without it the bundled `.d.ts` would contain an anonymous
- * `_base` symbol that cannot be referenced by downstream consumers.
- */
-export const InvalidInputErrorBase = Data.TaggedError("InvalidInputError");
-
-/**
  * Raised when a caller-supplied value fails validation.
  *
  * This error is produced at the boundary where user-provided inputs (such as
@@ -38,7 +26,7 @@ export const InvalidInputErrorBase = Data.TaggedError("InvalidInputError");
  *
  * @public
  */
-export class InvalidInputError extends InvalidInputErrorBase<{
+export class InvalidInputError extends Data.TaggedError("InvalidInputError")<{
 	readonly field: string;
 	readonly value: string;
 	readonly message: string;

@@ -12,57 +12,6 @@ import { Context } from "effect";
  * three authentication layers: {@link GitHubTokenAuth}, {@link GitHubAppAuth},
  * or {@link GitHubAutoAuth}.
  *
- * @see {@link GitHubClientLive}
- * @see {@link GitHubTokenAuth}
- * @see {@link GitHubAppAuth}
- * @see {@link GitHubAutoAuth}
- *
- * @public
- */
-export interface OctokitInstance {
-	readonly rest: {
-		readonly repos: {
-			/**
-			 * Lists git tags for a repository, corresponding to
-			 * `GET /repos/{owner}/{repo}/tags`.
-			 *
-			 * @param params - Owner, repo, and optional pagination parameters.
-			 */
-			readonly listTags: (params: {
-				owner: string;
-				repo: string;
-				per_page?: number;
-				page?: number;
-			}) => Promise<{ data: Array<unknown> }>;
-
-			/**
-			 * Lists GitHub Releases for a repository, corresponding to
-			 * `GET /repos/{owner}/{repo}/releases`.
-			 *
-			 * @param params - Owner, repo, and optional pagination parameters.
-			 */
-			readonly listReleases: (params: {
-				owner: string;
-				repo: string;
-				per_page?: number;
-				page?: number;
-			}) => Promise<{ data: Array<unknown> }>;
-		};
-	};
-}
-
-/**
- * Service tag and companion object for {@link OctokitInstance}.
- *
- * Acts as both the TypeScript service interface and the Effect dependency tag
- * used for dependency injection (companion object pattern). This tag is
- * consumed internally by {@link GitHubClientLive} and is satisfied by
- * whichever authentication layer is provided — {@link GitHubTokenAuth},
- * {@link GitHubAppAuth}, or {@link GitHubAutoAuth}.
- *
- * Most application code should depend on {@link GitHubClient} rather than
- * this tag directly.
- *
  * @example
  * ```typescript
  * import { OctokitInstance, GitHubClientLive, GitHubAutoAuth } from "runtime-resolver";
@@ -88,4 +37,37 @@ export interface OctokitInstance {
  *
  * @public
  */
-export const OctokitInstance = Context.GenericTag<OctokitInstance>("OctokitInstance");
+export class OctokitInstance extends Context.Tag("runtime-resolver/OctokitInstance")<
+	OctokitInstance,
+	{
+		readonly rest: {
+			readonly repos: {
+				/**
+				 * Lists git tags for a repository, corresponding to
+				 * `GET /repos/{owner}/{repo}/tags`.
+				 *
+				 * @param params - Owner, repo, and optional pagination parameters.
+				 */
+				readonly listTags: (params: {
+					owner: string;
+					repo: string;
+					per_page?: number;
+					page?: number;
+				}) => Promise<{ data: Array<unknown> }>;
+
+				/**
+				 * Lists GitHub Releases for a repository, corresponding to
+				 * `GET /repos/{owner}/{repo}/releases`.
+				 *
+				 * @param params - Owner, repo, and optional pagination parameters.
+				 */
+				readonly listReleases: (params: {
+					owner: string;
+					repo: string;
+					per_page?: number;
+					page?: number;
+				}) => Promise<{ data: Array<unknown> }>;
+			};
+		};
+	}
+>() {}

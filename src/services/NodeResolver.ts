@@ -80,44 +80,12 @@ export interface NodeResolverOptions {
 export type NodeResolverError = VersionNotFoundError;
 
 /**
- * Service interface for resolving Node.js runtime versions against the cached
+ * Service for resolving Node.js runtime versions against the cached
  * release index.
  *
  * Unlike {@link BunResolver} and {@link DenoResolver}, this service is
  * lifecycle-aware: results can be filtered by {@link NodePhase} and evaluated
  * against a specific reference date.
- *
- * @see {@link NodeResolverLive}
- * @see {@link resolveNode}
- * @see {@link NodeResolverOptions}
- * @see {@link ResolvedVersions}
- *
- * @public
- */
-export interface NodeResolver {
-	/**
-	 * Resolves Node.js versions according to `options` and returns a
-	 * {@link ResolvedVersions} object containing the matching version list,
-	 * the latest version string, optional LTS version string, and the data
-	 * source indicator.
-	 *
-	 * Fails with {@link NodeResolverError} when no version can be resolved and
-	 * no `defaultVersion` was provided.
-	 *
-	 * @param options - Optional resolution constraints.
-	 *
-	 * @see {@link NodeResolverOptions}
-	 */
-	readonly resolve: (options?: NodeResolverOptions) => Effect.Effect<ResolvedVersions, NodeResolverError>;
-}
-
-/**
- * Service tag and companion object for {@link NodeResolver}.
- *
- * Acts as both the TypeScript service interface and the Effect dependency tag
- * used for dependency injection (companion object pattern). Yield this tag
- * inside `Effect.gen` to obtain the resolver implementation provided by
- * {@link NodeResolverLive}.
  *
  * For a one-shot Promise-based API see {@link resolveNode}.
  *
@@ -143,7 +111,27 @@ export interface NodeResolver {
  *
  * @see {@link NodeResolverLive}
  * @see {@link resolveNode}
+ * @see {@link NodeResolverOptions}
+ * @see {@link ResolvedVersions}
  *
  * @public
  */
-export const NodeResolver = Context.GenericTag<NodeResolver>("NodeResolver");
+export class NodeResolver extends Context.Tag("runtime-resolver/NodeResolver")<
+	NodeResolver,
+	{
+		/**
+		 * Resolves Node.js versions according to `options` and returns a
+		 * {@link ResolvedVersions} object containing the matching version list,
+		 * the latest version string, optional LTS version string, and the data
+		 * source indicator.
+		 *
+		 * Fails with {@link NodeResolverError} when no version can be resolved and
+		 * no `defaultVersion` was provided.
+		 *
+		 * @param options - Optional resolution constraints.
+		 *
+		 * @see {@link NodeResolverOptions}
+		 */
+		readonly resolve: (options?: NodeResolverOptions) => Effect.Effect<ResolvedVersions, NodeResolverError>;
+	}
+>() {}

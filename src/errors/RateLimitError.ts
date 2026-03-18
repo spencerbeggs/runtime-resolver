@@ -1,18 +1,6 @@
 import { Data } from "effect";
 
 /**
- * @internal
- * Exported for declaration bundling — see AuthenticationError.ts for details.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link RateLimitError} to a stable declaration.
- * Without it the bundled `.d.ts` would contain an anonymous `_base` symbol
- * that cannot be referenced by downstream consumers.
- */
-export const RateLimitErrorBase = Data.TaggedError("RateLimitError");
-
-/**
  * Raised when a GitHub API rate limit is exceeded.
  *
  * The `limit` and `remaining` fields reflect the values returned in the
@@ -44,7 +32,7 @@ export const RateLimitErrorBase = Data.TaggedError("RateLimitError");
  *
  * @public
  */
-export class RateLimitError extends RateLimitErrorBase<{
+export class RateLimitError extends Data.TaggedError("RateLimitError")<{
 	readonly retryAfter?: number;
 	readonly limit: number;
 	readonly remaining: number;

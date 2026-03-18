@@ -2,18 +2,6 @@ import { Data } from "effect";
 import type { Runtime } from "../schemas/common.js";
 
 /**
- * @internal
- * Exported for declaration bundling — see AuthenticationError.ts for details.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link VersionNotFoundError} to a stable
- * declaration. Without it the bundled `.d.ts` would contain an anonymous
- * `_base` symbol that cannot be referenced by downstream consumers.
- */
-export const VersionNotFoundErrorBase = Data.TaggedError("VersionNotFoundError");
-
-/**
  * Raised when no published version satisfies the requested constraint.
  *
  * This error is produced by {@link NodeResolver}, {@link BunResolver}, and
@@ -43,7 +31,7 @@ export const VersionNotFoundErrorBase = Data.TaggedError("VersionNotFoundError")
  *
  * @public
  */
-export class VersionNotFoundError extends VersionNotFoundErrorBase<{
+export class VersionNotFoundError extends Data.TaggedError("VersionNotFoundError")<{
 	readonly runtime: Runtime;
 	readonly constraint: string;
 	readonly message: string;

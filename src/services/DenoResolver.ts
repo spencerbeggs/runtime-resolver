@@ -59,39 +59,8 @@ export interface DenoResolverOptions {
 export type DenoResolverError = VersionNotFoundError;
 
 /**
- * Service interface for resolving Deno runtime versions against the cached
+ * Service for resolving Deno runtime versions against the cached
  * release index.
- *
- * @see {@link DenoResolverLive}
- * @see {@link resolveDeno}
- * @see {@link DenoResolverOptions}
- * @see {@link ResolvedVersions}
- *
- * @public
- */
-export interface DenoResolver {
-	/**
-	 * Resolves Deno versions according to `options` and returns a
-	 * {@link ResolvedVersions} object containing the matching version list,
-	 * the latest version string, and the data source indicator.
-	 *
-	 * Fails with {@link DenoResolverError} when no version can be resolved and
-	 * no `defaultVersion` was provided.
-	 *
-	 * @param options - Optional resolution constraints.
-	 *
-	 * @see {@link DenoResolverOptions}
-	 */
-	readonly resolve: (options?: DenoResolverOptions) => Effect.Effect<ResolvedVersions, DenoResolverError>;
-}
-
-/**
- * Service tag and companion object for {@link DenoResolver}.
- *
- * Acts as both the TypeScript service interface and the Effect dependency tag
- * used for dependency injection (companion object pattern). Yield this tag
- * inside `Effect.gen` to obtain the resolver implementation provided by
- * {@link DenoResolverLive}.
  *
  * For a one-shot Promise-based API see {@link resolveDeno}.
  *
@@ -113,7 +82,26 @@ export interface DenoResolver {
  *
  * @see {@link DenoResolverLive}
  * @see {@link resolveDeno}
+ * @see {@link DenoResolverOptions}
+ * @see {@link ResolvedVersions}
  *
  * @public
  */
-export const DenoResolver = Context.GenericTag<DenoResolver>("DenoResolver");
+export class DenoResolver extends Context.Tag("runtime-resolver/DenoResolver")<
+	DenoResolver,
+	{
+		/**
+		 * Resolves Deno versions according to `options` and returns a
+		 * {@link ResolvedVersions} object containing the matching version list,
+		 * the latest version string, and the data source indicator.
+		 *
+		 * Fails with {@link DenoResolverError} when no version can be resolved and
+		 * no `defaultVersion` was provided.
+		 *
+		 * @param options - Optional resolution constraints.
+		 *
+		 * @see {@link DenoResolverOptions}
+		 */
+		readonly resolve: (options?: DenoResolverOptions) => Effect.Effect<ResolvedVersions, DenoResolverError>;
+	}
+>() {}

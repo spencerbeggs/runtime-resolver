@@ -9,7 +9,7 @@ import type { NodeSchedule } from "./node-schedule.js";
  * bundled default data files and the Node.js dist API response.
  *
  * The `version` and `npm` fields are raw version strings validated by
- * `SemVer.fromString`; `date` is a date string accepted by
+ * `SemVer.parse`; `date` is a date string accepted by
  * `DateTime.unsafeMake`.
  *
  * @see {@link NodeRelease.fromInput}
@@ -83,8 +83,8 @@ export class NodeRelease {
 	readonly _tag = "NodeRelease" as const;
 
 	constructor(
-		readonly version: SemVer.SemVer,
-		readonly npm: SemVer.SemVer,
+		readonly version: SemVer,
+		readonly npm: SemVer,
 		readonly date: DateTime.DateTime,
 		readonly scheduleRef: Ref.Ref<NodeSchedule>,
 	) {}
@@ -124,7 +124,7 @@ export class NodeRelease {
 	/**
 	 * Create a {@link NodeRelease} from lean string inputs.
 	 *
-	 * Parses `input.version` and `input.npm` via `SemVer.fromString` and
+	 * Parses `input.version` and `input.npm` via `SemVer.parse` and
 	 * constructs the publication date with `DateTime.unsafeMake`.
 	 *
 	 * @param input - A {@link NodeReleaseInput} object with raw string fields.
@@ -137,8 +137,8 @@ export class NodeRelease {
 		scheduleRef: Ref.Ref<NodeSchedule>,
 	): Effect.Effect<NodeRelease, InvalidVersionError> {
 		return Effect.gen(function* () {
-			const version = yield* SemVer.fromString(input.version);
-			const npm = yield* SemVer.fromString(input.npm);
+			const version = yield* SemVer.parse(input.version);
+			const npm = yield* SemVer.parse(input.npm);
 			const date = DateTime.unsafeMake(input.date);
 			return new NodeRelease(version, npm, date, scheduleRef);
 		});

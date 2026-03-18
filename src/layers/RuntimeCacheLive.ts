@@ -49,7 +49,7 @@ export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 			load: (releases: ReadonlyArray<R>) =>
 				Effect.gen(function* () {
 					lookupMap.clear();
-					const versions: SemVer.SemVer[] = [];
+					const versions: SemVer[] = [];
 					for (const r of releases) {
 						const key = r.version.toString();
 						lookupMap.set(key, r);
@@ -60,7 +60,7 @@ export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 
 			resolve: (range: string) =>
 				Effect.gen(function* () {
-					const parsed = yield* Range.fromString(range);
+					const parsed = yield* Range.parse(range);
 					const resolved = yield* innerCache.resolve(parsed);
 					const release = lookupMap.get(resolved.toString());
 					if (!release) {
@@ -72,17 +72,17 @@ export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 			releases: () =>
 				Effect.gen(function* () {
 					const versions = yield* innerCache.versions.pipe(
-						Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer.SemVer>)),
+						Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer>)),
 					);
 					return versions.map((v) => lookupMap.get(v.toString())).filter((r): r is R => r !== undefined);
 				}),
 
 			filter: (range: string) =>
 				Effect.gen(function* () {
-					const parsed = yield* Range.fromString(range);
+					const parsed = yield* Range.parse(range);
 					const filtered = yield* innerCache
 						.filter(parsed)
-						.pipe(Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer.SemVer>)));
+						.pipe(Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer>)));
 					return filtered.map((v) => lookupMap.get(v.toString())).filter((r): r is R => r !== undefined);
 				}),
 
@@ -100,7 +100,7 @@ export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 				Effect.gen(function* () {
 					const versions = yield* innerCache
 						.latestByMajor()
-						.pipe(Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer.SemVer>)));
+						.pipe(Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer>)));
 					return versions.map((v) => lookupMap.get(v.toString())).filter((r): r is R => r !== undefined);
 				}),
 
@@ -108,7 +108,7 @@ export const createRuntimeCache = <R extends RuntimeRelease>(): Effect.Effect<
 				Effect.gen(function* () {
 					const versions = yield* innerCache
 						.latestByMinor()
-						.pipe(Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer.SemVer>)));
+						.pipe(Effect.catchTag("EmptyCacheError", () => Effect.succeed([] as ReadonlyArray<SemVer>)));
 					return versions.map((v) => lookupMap.get(v.toString())).filter((r): r is R => r !== undefined);
 				}),
 		};

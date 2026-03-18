@@ -1,18 +1,6 @@
 import { Data } from "effect";
 
 /**
- * @internal
- * Exported for declaration bundling — see AuthenticationError.ts for details.
- *
- * @privateRemarks
- * This base constant must remain a named export so that api-extractor can
- * resolve the extends clause of {@link NetworkError} to a stable declaration.
- * Without it the bundled `.d.ts` would contain an anonymous `_base` symbol
- * that cannot be referenced by downstream consumers.
- */
-export const NetworkErrorBase = Data.TaggedError("NetworkError");
-
-/**
  * Raised when an HTTP request to an upstream API fails.
  *
  * This error is produced when a fetch to a runtime release API (e.g. the
@@ -39,7 +27,7 @@ export const NetworkErrorBase = Data.TaggedError("NetworkError");
  *
  * @public
  */
-export class NetworkError extends NetworkErrorBase<{
+export class NetworkError extends Data.TaggedError("NetworkError")<{
 	readonly url: string;
 	readonly status?: number;
 	readonly message: string;

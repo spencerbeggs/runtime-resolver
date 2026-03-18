@@ -8,7 +8,7 @@ import { GitHubClient } from "../services/GitHubClient.js";
 /**
  * Strip bun- prefix and v/V prefix, parse to SemVer.
  */
-const normalizeBunTag = (tagName: string): Effect.Effect<Option.Option<import("semver-effect").SemVer.SemVer>> => {
+const normalizeBunTag = (tagName: string): Effect.Effect<Option.Option<import("semver-effect").SemVer>> => {
 	const version = tagName.startsWith("bun-") ? tagName.slice(4) : tagName;
 	const stripped = version.startsWith("v") || version.startsWith("V") ? version.slice(1) : version;
 	return tryParseSemVer(stripped);
