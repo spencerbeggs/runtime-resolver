@@ -1,5 +1,11 @@
 # runtime-resolver
 
+## 0.3.1
+
+### Other
+
+* [`01eda34`](https://github.com/spencerbeggs/runtime-resolver/commit/01eda344598d85ff8533da21ebbc0b41bcb19282) Aligns with new test harness
+
 ## 0.3.0
 
 ### Features
