@@ -3,6 +3,14 @@ import type { RuntimeReleaseInput } from "../schemas/runtime-release.js";
 
 export const denoDefaultInputs: ReadonlyArray<RuntimeReleaseInput> = [
 	{
+		version: "2.7.7",
+		date: "2026-03-19T13:52:21Z",
+	},
+	{
+		version: "2.7.6",
+		date: "2026-03-18T12:09:26Z",
+	},
+	{
 		version: "2.7.5",
 		date: "2026-03-11T12:40:10Z",
 	},
@@ -393,13 +401,5 @@ export const denoDefaultInputs: ReadonlyArray<RuntimeReleaseInput> = [
 	{
 		version: "1.43.1",
 		date: "2024-05-01T21:45:40Z",
-	},
-	{
-		version: "1.43.0",
-		date: "2024-05-01T08:19:33Z",
-	},
-	{
-		version: "1.42.4",
-		date: "2024-04-16T01:46:33Z",
 	},
 ] as const;
