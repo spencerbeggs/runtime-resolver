@@ -68,7 +68,7 @@ export const GitHubClientLive: Layer.Layer<GitHubClient, never, OctokitInstance>
 			listTags: (owner, repo, options?: ListOptions) =>
 				Effect.gen(function* () {
 					const perPage = options?.perPage ?? 100;
-					const maxPages = options?.pages ?? 1;
+					const maxPages = options?.pages ?? Number.POSITIVE_INFINITY;
 					const allTags: Array<(typeof GitHubTagList.Type)[number]> = [];
 
 					for (let page = 1; page <= maxPages; page++) {
@@ -104,7 +104,7 @@ export const GitHubClientLive: Layer.Layer<GitHubClient, never, OctokitInstance>
 			listReleases: (owner, repo, options?: ListOptions) =>
 				Effect.gen(function* () {
 					const perPage = options?.perPage ?? 100;
-					const maxPages = options?.pages ?? 1;
+					const maxPages = options?.pages ?? Number.POSITIVE_INFINITY;
 					const allReleases: Array<(typeof GitHubReleaseList.Type)[number]> = [];
 
 					for (let page = 1; page <= maxPages; page++) {
