@@ -4,6 +4,11 @@ import type { NodeScheduleData } from "../schemas/node-schedule.js";
 
 export const nodeDefaultInputs: ReadonlyArray<NodeReleaseInput> = [
 	{
+		version: "25.9.0",
+		npm: "11.12.1",
+		date: "2026-03-31",
+	},
+	{
 		version: "25.8.2",
 		npm: "11.11.1",
 		date: "2026-03-24",
@@ -67,6 +72,11 @@ export const nodeDefaultInputs: ReadonlyArray<NodeReleaseInput> = [
 		version: "25.0.0",
 		npm: "11.6.2",
 		date: "2025-10-15",
+	},
+	{
+		version: "24.15.0",
+		npm: "11.12.1",
+		date: "2026-04-15",
 	},
 	{
 		version: "24.14.1",
