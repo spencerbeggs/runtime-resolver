@@ -24,6 +24,8 @@ Resolve semver-compatible versions of Node.js, Bun and Deno runtimes. Fetches av
 npm install runtime-resolver
 ```
 
+The Effect packages (`effect`, `@effect/cli`, `@effect/platform`, `@effect/platform-node`) are declared as peer dependencies. npm 7+ and pnpm auto-install them by default. If you already use Effect in your project, your existing versions will be reused.
+
 ## Quick Start
 
 ```typescript
@@ -38,7 +40,7 @@ const bun = await resolveBun({ semverRange: ">=1.1", increments: "minor" });
 const deno = await resolveDeno({ semverRange: ">=2", increments: "minor" });
 ```
 
-Set a `GITHUB_TOKEN` or `GITHUB_PERSONAL_ACCESS_TOKEN` environment variable for authenticated requests. Without one, the resolver falls back to cached data.
+Set a `GITHUB_PERSONAL_ACCESS_TOKEN` or `GITHUB_TOKEN` environment variable for authenticated requests. Without one, the resolver falls back to cached data.
 
 ### CLI
 

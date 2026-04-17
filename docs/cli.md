@@ -14,6 +14,12 @@ npm install -g runtime-resolver
 npx runtime-resolver --node ">=20"
 ```
 
+### Peer Dependencies
+
+The Effect packages (`effect`, `@effect/cli`, `@effect/platform`, `@effect/platform-node`) are peer dependencies. When installing globally or via `npx`, npm 7+ and pnpm auto-install them automatically. No extra steps are needed.
+
+If you use `runtime-resolver` as a library alongside your own Effect project, your existing Effect versions are reused — avoiding duplicate instances that would break `Context.Tag` identity.
+
 ## Options
 
 | Flag | Description | Example |
