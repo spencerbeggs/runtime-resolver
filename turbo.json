@@ -7,6 +7,9 @@
 			"dependsOn": ["types:check"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/pnpm-workspace.yaml",
 				"!**/*.test.ts",
 				"!**/*.spec.ts",
 				"!**/*.md",
@@ -14,9 +17,7 @@
 				"!.claude/**",
 				"!.github/**",
 				"!.husky/**",
-				"!.vscode/**",
-				"!vitest.config.ts",
-				"!vitest.setup.ts"
+				"!.vscode/**"
 			],
 			"outputLogs": "full",
 			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
@@ -26,6 +27,9 @@
 			"dependsOn": ["types:check"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/pnpm-workspace.yaml",
 				"!**/*.test.ts",
 				"!**/*.spec.ts",
 				"!**/*.md",
@@ -33,37 +37,14 @@
 				"!.claude/**",
 				"!.github/**",
 				"!.husky/**",
-				"!.vscode/**",
-				"!vitest.config.ts",
-				"!vitest.setup.ts"
+				"!.vscode/**"
 			],
 			"outputLogs": "full",
-			"outputs": ["dist/npm/**", "dist/github/**", ".rslib/declarations/npm/**"]
-		},
-		"generate:defaults": {
-			"cache": true,
-			"inputs": [
-				"lib/scripts/generate-defaults.mts",
-				"src/schemas/**",
-				"src/services/GitHubClient.ts",
-				"src/services/OctokitInstance.ts",
-				"src/layers/GitHubClientLive.ts",
-				"src/layers/GitHubTokenAuth.ts",
-				"src/errors/**"
-			],
-			"outputLogs": "new-only",
-			"outputs": ["src/data/node-defaults.ts", "src/data/bun-defaults.ts", "src/data/deno-defaults.ts"],
-			"passThroughEnv": ["GITHUB_PERSONAL_ACCESS_TOKEN", "GITHUB_TOKEN"]
-		},
-		"generate:json-schema": {
-			"cache": true,
-			"inputs": ["lib/scripts/generate-json-schema.mts", "src/cli/schemas/response.ts"],
-			"outputLogs": "new-only",
-			"outputs": ["runtime-resolver.schema.json"]
+			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
 		"types:check": {
-			"cache": true,
-			"dependsOn": ["generate:defaults"],
+			"cache": false,
+			"dependsOn": [],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"!**/*.md",

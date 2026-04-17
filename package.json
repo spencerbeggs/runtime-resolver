@@ -39,7 +39,7 @@
 		"runtime-resolver": "./src/cli/index.ts"
 	},
 	"scripts": {
-		"build": "turbo run build:dev build:prod --log-order=grouped",
+		"build": "turbo run build:dev build:prod --log-order=grouped --log-prefix=none",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
 		"build:inspect": "rslib inspect --config-loader native --env-mode npm --verbose",
 		"build:prod": "rslib build --config-loader native --env-mode npm",
@@ -53,11 +53,10 @@
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
-		"lint:md": "markdownlint-cli2 '**/*.{md,mdx}' --config './lib/configs/.markdownlint-cli2.jsonc'",
-		"lint:md:fix": "markdownlint-cli2  --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
+		"lint:md": "markdownlint-cli2 --config './lib/configs/.markdownlint-cli2.jsonc'",
+		"lint:md:fix": "markdownlint-cli2 --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
 		"prepare": "husky",
 		"test": "vitest run",
-		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest --watch",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
@@ -69,7 +68,7 @@
 		"@octokit/auth-app": "^8.2.0",
 		"effect": "catalog:silk",
 		"octokit": "^5.0.5",
-		"semver-effect": "^0.2.0"
+		"semver-effect": "^0.2.1"
 	},
 	"devDependencies": {
 		"@savvy-web/changesets": "^0.8.0",
