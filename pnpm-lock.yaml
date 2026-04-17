@@ -55,7 +55,7 @@ importers:
         specifier: ^5.0.5
         version: 5.0.5
       semver-effect:
-        specifier: ^0.2.0
+        specifier: ^0.2.1
         version: 0.2.1(effect@3.21.0)
     devDependencies:
       '@savvy-web/changesets':
