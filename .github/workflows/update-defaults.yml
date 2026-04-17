@@ -3,7 +3,8 @@ name: Update Runtime Defaults
 on:
   schedule:
     - cron: "0 6 * * *" # Daily at 6am UTC
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    # Allow manual trigger
 
 permissions:
   contents: write
@@ -13,18 +14,14 @@ jobs:
   update-defaults:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: pnpm/action-setup@v5
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
+          ref: main
+          fetch-depth: 0
+      - name: Setup Runtime
+        id: runtime
+        uses: savvy-web/workflow-runtime-action@main
 
       - name: Generate defaults
         run: pnpm tsx lib/scripts/generate-defaults.mts
@@ -54,6 +51,10 @@ jobs:
           BRANCH="chore/update-defaults-$(date +%Y%m%d)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Delete existing remote branch if present (from a prior failed run)
+          git push origin --delete "$BRANCH" 2>/dev/null || true
+
           git checkout -b "$BRANCH"
           git add src/data/
           git commit -m "chore: update runtime defaults
