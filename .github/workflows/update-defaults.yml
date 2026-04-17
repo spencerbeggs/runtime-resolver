@@ -37,6 +37,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
+      - name: Lint generated files
+        run: pnpm run lint:fix
+
       - name: Check for changes
         id: changes
         run: |
@@ -54,7 +57,6 @@ jobs:
       - name: Build, typecheck, and test
         if: steps.changes.outputs.changed == 'true'
         run: |
-          pnpm run lint:fix
           pnpm run typecheck
           pnpm run build
           pnpm run test
@@ -71,11 +73,8 @@ jobs:
             chore: update runtime defaults
 
             Signed-off-by: ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{ vars.APP_BOT_NAME }}@users.noreply.github.com>
-          committer: ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{
-            vars.APP_BOT_NAME }}@users.noreply.github.com>
-          author:
-            ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{ vars.APP_BOT_NAME
-            }}@users.noreply.github.com>
+          committer: ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{ vars.APP_BOT_NAME }}@users.noreply.github.com>
+          author: ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{ vars.APP_BOT_NAME }}@users.noreply.github.com>
           title: "chore: update runtime defaults"
           body: "Automated daily update of bundled runtime version data."
           add-paths: |
@@ -84,8 +83,6 @@ jobs:
 
       - name: Enable auto-merge
         if: steps.create-pr.outputs.pull-request-number
-        run:
-          gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --auto
-          --squash
+        run: gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --auto --squash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
