@@ -1,5 +1,11 @@
 # runtime-resolver
 
+## 0.3.3
+
+### Other
+
+* [`968e580`](https://github.com/spencerbeggs/runtime-resolver/commit/968e580685a0fc67ead8bb29d55f5fb599b51d0b) Moved Effect packages from dependencies to peer dependencies for better deduplication in library consumers
+
 ## 0.3.2
 
 ### Other
