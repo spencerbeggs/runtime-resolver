@@ -3,33 +3,39 @@ name: Update Runtime Defaults
 on:
   schedule:
     - cron: "0 6 * * *" # Daily at 6am UTC
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    # Allow manual trigger
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   update-defaults:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
 
-      - uses: pnpm/action-setup@v5
-
-      - uses: actions/setup-node@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          node-version: "24"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+      - name: Setup Runtime
+        id: runtime
+        uses: savvy-web/workflow-runtime-action@main
 
       - name: Generate defaults
         run: pnpm tsx lib/scripts/generate-defaults.mts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Check for changes
         id: changes
@@ -40,6 +46,11 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Add changeset
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          printf '%s\n' '---' '"runtime-resolver": patch' '---' '' '## Other' '' '- Updated bundled runtime version defaults' > .changeset/update-defaults.md
+
       - name: Build, typecheck, and test
         if: steps.changes.outputs.changed == 'true'
         run: |
@@ -49,21 +60,31 @@ jobs:
           pnpm run test
 
       - name: Create PR with updated defaults
+        id: create-pr
         if: steps.changes.outputs.changed == 'true'
-        run: |
-          BRANCH="chore/update-defaults-$(date +%Y%m%d)"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
-          git add src/data/
-          git commit -m "chore: update runtime defaults
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch: chore/update-defaults
+          commit-message: |
+            chore: update runtime defaults
 
-          Signed-off-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          git push origin "$BRANCH"
-          gh pr create \
-            --title "chore: update runtime defaults" \
-            --body "Automated daily update of bundled runtime version data." \
-            --base main \
-            --head "$BRANCH"
+            Signed-off-by: ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{ vars.APP_BOT_NAME }}@users.noreply.github.com>
+          committer: ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{
+            vars.APP_BOT_NAME }}@users.noreply.github.com>
+          author:
+            ${{ vars.APP_BOT_NAME }} <${{ vars.APP_BOT_ID }}+${{ vars.APP_BOT_NAME
+            }}@users.noreply.github.com>
+          title: "chore: update runtime defaults"
+          body: "Automated daily update of bundled runtime version data."
+          add-paths: |
+            src/data/
+            .changeset/update-defaults.md
+
+      - name: Enable auto-merge
+        if: steps.create-pr.outputs.pull-request-number
+        run:
+          gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --auto
+          --squash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
