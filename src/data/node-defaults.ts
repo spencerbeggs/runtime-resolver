@@ -4366,7 +4366,7 @@ export const nodeDefaultScheduleData: NodeScheduleData = {
 		end: "2026-06-01",
 	},
 	v26: {
-		start: "2026-04-22",
+		start: "2026-05-05",
 		lts: "2026-10-28",
 		maintenance: "2027-10-20",
 		end: "2029-04-30",
