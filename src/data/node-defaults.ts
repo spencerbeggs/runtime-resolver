@@ -89,6 +89,11 @@ export const nodeDefaultInputs: ReadonlyArray<NodeReleaseInput> = [
 		date: "2025-10-15",
 	},
 	{
+		version: "24.16.0",
+		npm: "11.13.0",
+		date: "2026-05-21",
+	},
+	{
 		version: "24.15.0",
 		npm: "11.12.1",
 		date: "2026-04-15",
