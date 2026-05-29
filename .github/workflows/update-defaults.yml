@@ -30,7 +30,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
       - name: Setup Runtime
         id: runtime
-        uses: savvy-web/workflow-runtime-action@main
+        uses: savvy-web/silk-runtime-action@v1
 
       - name: Generate defaults
         run: pnpm tsx lib/scripts/generate-defaults.mts
