@@ -1,5 +1,11 @@
 # runtime-resolver
 
+## 0.3.12
+
+### Other
+
+* [`7f2ad4b`](https://github.com/spencerbeggs/runtime-resolver/commit/7f2ad4b3415134a9450e6d346d6df706316771c9) Updated bundled runtime version defaults
+
 ## 0.3.11
 
 ### Other
