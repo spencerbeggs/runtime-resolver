@@ -10,7 +10,7 @@ import type { NodeReleaseInput } from "../schemas/node-release.js";
  * Node.js distribution index.
  *
  * Retrieves both the parsed semver version list and the raw
- * {@link NodeReleaseInput} records needed to populate a
+ * {@link (NodeReleaseInput:type)} records needed to populate a
  * {@link NodeReleaseCache}. The live implementation fetches from
  * `https://nodejs.org/dist/index.json` via a plain HTTP request — no GitHub
  * credentials are required.

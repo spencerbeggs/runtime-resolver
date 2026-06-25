@@ -4,15 +4,15 @@ import type { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import type { Increments, ResolvedVersions } from "../schemas/common.js";
 
 /**
- * Options accepted by {@link DenoResolver.resolve}.
+ * Options accepted by `DenoResolver.resolve`.
  *
  * All fields are optional; omitting them causes the resolver to fall back to
  * its built-in defaults (latest stable release, `"latest"` increment
  * granularity).
  *
  * @see {@link DenoResolver}
- * @see {@link Increments}
- * @see {@link ResolvedVersions}
+ * @see {@link (Increments:type)}
+ * @see {@link (ResolvedVersions:type)}
  *
  * @public
  */
@@ -36,7 +36,7 @@ export interface DenoResolverOptions {
 
 	/**
 	 * Controls the granularity of the version list included in
-	 * {@link ResolvedVersions.versions}.
+	 * the `versions` field of {@link (ResolvedVersions:type)}.
 	 *
 	 * - `"latest"` — only the single highest matching version.
 	 * - `"minor"` — the latest patch for every minor line.
@@ -44,13 +44,13 @@ export interface DenoResolverOptions {
 	 *
 	 * Defaults to `"latest"` when omitted.
 	 *
-	 * @see {@link Increments}
+	 * @see {@link (Increments:type)}
 	 */
 	readonly increments?: Increments;
 }
 
 /**
- * Union of all typed errors that {@link DenoResolver.resolve} can fail with.
+ * Union of all typed errors that `DenoResolver.resolve` can fail with.
  *
  * @see {@link VersionNotFoundError}
  *
@@ -83,7 +83,7 @@ export type DenoResolverError = VersionNotFoundError;
  * @see {@link DenoResolverLive}
  * @see {@link resolveDeno}
  * @see {@link DenoResolverOptions}
- * @see {@link ResolvedVersions}
+ * @see {@link (ResolvedVersions:type)}
  *
  * @public
  */
@@ -92,7 +92,7 @@ export class DenoResolver extends Context.Tag("runtime-resolver/DenoResolver")<
 	{
 		/**
 		 * Resolves Deno versions according to `options` and returns a
-		 * {@link ResolvedVersions} object containing the matching version list,
+		 * {@link (ResolvedVersions:type)} object containing the matching version list,
 		 * the latest version string, and the data source indicator.
 		 *
 		 * Fails with {@link DenoResolverError} when no version can be resolved and

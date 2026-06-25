@@ -1,6 +1,16 @@
 import { defineBuild, runBuild } from "@savvy-web/bundler";
 
-const config = defineBuild();
+const config = defineBuild({
+	meta: {
+		tsdoc: {
+			// Effect's Data.TaggedError / Data.TaggedClass / Context.Tag patterns generate
+			// synthetic `_base` intermediate classes in the emitted .d.ts that cannot be
+			// exported or release-tagged from source. This is the toolchain-sanctioned
+			// suppression for this pattern.
+			suppressWarnings: [{ messageId: "ae-forgotten-export", pattern: "_base" }],
+		},
+	},
+});
 
 export default config;
 

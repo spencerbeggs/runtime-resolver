@@ -21,7 +21,7 @@ export const GitHubTagCommit = Schema.Struct({
  * Consumed by {@link GitHubClient} when fetching Bun and Deno release tags.
  *
  * @see {@link GitHubClient}
- * @see {@link GitHubTagList}
+ * @see `GitHubTagList`
  *
  * @public
  */
@@ -69,7 +69,7 @@ export type GitHubTagList = typeof GitHubTagList.Type;
  * publication timestamps.
  *
  * @see {@link GitHubClient}
- * @see {@link GitHubReleaseList}
+ * @see `GitHubReleaseList`
  *
  * @public
  */
