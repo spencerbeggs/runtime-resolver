@@ -130,7 +130,7 @@ export type { RuntimeCache } from "./services/RuntimeCache.js";
  * cache when the network is unavailable.
  *
  * @param options - Filtering and ranking options. See {@link NodeResolverOptions}.
- * @returns A promise that resolves to a {@link ResolvedVersions} object
+ * @returns A promise that resolves to a `ResolvedVersions` object
  *   containing the matched version list, the highest matching version as
  *   `latest`, and optional `lts` / `default` strings.
  *
@@ -169,7 +169,7 @@ export const resolveNode = (options?: NodeResolverOptions): Promise<ResolvedVers
  * Falls back to a build-time offline cache when the network is unavailable.
  *
  * @param options - Filtering and ranking options. See {@link BunResolverOptions}.
- * @returns A promise that resolves to a {@link ResolvedVersions} object
+ * @returns A promise that resolves to a `ResolvedVersions` object
  *   containing the matched version list and the highest matching version as
  *   `latest`.
  *
@@ -204,7 +204,7 @@ export const resolveBun = (options?: BunResolverOptions): Promise<ResolvedVersio
  * Falls back to a build-time offline cache when the network is unavailable.
  *
  * @param options - Filtering and ranking options. See {@link DenoResolverOptions}.
- * @returns A promise that resolves to a {@link ResolvedVersions} object
+ * @returns A promise that resolves to a `ResolvedVersions` object
  *   containing the matched version list and the highest matching version as
  *   `latest`.
  *

@@ -1,6 +1,6 @@
 {
 	"name": "runtime-resolver",
-	"version": "0.3.17",
+	"version": "0.3.18",
 	"private": true,
 	"description": "Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes with Effect-based architecture and offline fallback.",
 	"keywords": [
@@ -64,8 +64,8 @@
 	},
 	"devDependencies": {
 		"@savvy-web/bundler": "^0.11.0",
-		"@savvy-web/silk": "^1.3.2",
-		"@savvy-web/vitest": "^1.5.1",
+		"@savvy-web/silk": "^1.3.3",
+		"@vitest-agent/plugin": "^1.0.0",
 		"tsx": "catalog:silk"
 	},
 	"peerDependencies": {

@@ -54,7 +54,7 @@ export class NodeReleaseCache extends Context.Tag("runtime-resolver/NodeReleaseC
 		readonly updateSchedule: (data: NodeScheduleData) => Effect.Effect<void>;
 
 		/**
-		 * Populates the cache from raw {@link NodeReleaseInput} records (as
+		 * Populates the cache from raw {@link (NodeReleaseInput:type)} records (as
 		 * returned by the Node.js release index JSON) rather than from already-
 		 * decoded {@link NodeRelease} objects.
 		 *
@@ -63,7 +63,7 @@ export class NodeReleaseCache extends Context.Tag("runtime-resolver/NodeReleaseC
 		 *
 		 * @param inputs - An array of un-decoded release index entries.
 		 *
-		 * @see {@link NodeReleaseInput}
+		 * @see {@link (NodeReleaseInput:type)}
 		 */
 		readonly loadFromInputs: (inputs: ReadonlyArray<NodeReleaseInput>) => Effect.Effect<void>;
 

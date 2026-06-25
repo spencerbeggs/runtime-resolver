@@ -48,8 +48,8 @@ export interface RuntimeCache<R extends RuntimeRelease> {
 	 * Finds the single best-matching release for the given semver range string,
 	 * preferring the highest satisfying version.
 	 *
-	 * Fails with {@link InvalidRangeError} when `range` is not a valid semver
-	 * range expression, or with {@link UnsatisfiedRangeError} when no cached
+	 * Fails with `InvalidRangeError` when `range` is not a valid semver
+	 * range expression, or with `UnsatisfiedRangeError` when no cached
 	 * release satisfies the range.
 	 *
 	 * @param range - A semver range string (e.g. `">=1.0.0 <2.0.0"`).
@@ -66,7 +66,7 @@ export interface RuntimeCache<R extends RuntimeRelease> {
 	 * Returns all cached releases whose version satisfies the given semver
 	 * range string.
 	 *
-	 * Fails with {@link InvalidRangeError} when `range` is not a valid semver
+	 * Fails with `InvalidRangeError` when `range` is not a valid semver
 	 * range expression.
 	 *
 	 * @param range - A semver range string (e.g. `"^20.0.0"`).
@@ -77,7 +77,7 @@ export interface RuntimeCache<R extends RuntimeRelease> {
 	 * Returns the release with the highest version among all entries in the
 	 * cache.
 	 *
-	 * Fails with {@link EmptyCacheError} when the cache contains no releases.
+	 * Fails with `EmptyCacheError` when the cache contains no releases.
 	 */
 	readonly latest: () => Effect.Effect<R, EmptyCacheError>;
 

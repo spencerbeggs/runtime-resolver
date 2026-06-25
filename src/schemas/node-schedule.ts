@@ -121,7 +121,7 @@ export class NodeSchedule extends Data.TaggedClass("NodeSchedule")<{
 	}
 
 	/**
-	 * Determine the current {@link NodePhase} for a given major version number
+	 * Determine the current {@link (NodePhase:type)} for a given major version number
 	 * at the specified point in time.
 	 *
 	 * Returns `null` when the major is not present in the schedule or when

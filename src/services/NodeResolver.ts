@@ -4,16 +4,16 @@ import type { VersionNotFoundError } from "../errors/VersionNotFoundError.js";
 import type { Increments, NodePhase, ResolvedVersions } from "../schemas/common.js";
 
 /**
- * Options accepted by {@link NodeResolver.resolve}.
+ * Options accepted by `NodeResolver.resolve`.
  *
  * All fields are optional; omitting them causes the resolver to fall back to
  * its built-in defaults (all lifecycle phases, latest stable release,
  * `"latest"` increment granularity, current wall-clock date).
  *
  * @see {@link NodeResolver}
- * @see {@link NodePhase}
- * @see {@link Increments}
- * @see {@link ResolvedVersions}
+ * @see {@link (NodePhase:type)}
+ * @see {@link (Increments:type)}
+ * @see {@link (ResolvedVersions:type)}
  *
  * @public
  */
@@ -42,13 +42,13 @@ export interface NodeResolverOptions {
 	 *
 	 * When omitted all phases are eligible.
 	 *
-	 * @see {@link NodePhase}
+	 * @see {@link (NodePhase:type)}
 	 */
 	readonly phases?: ReadonlyArray<NodePhase>;
 
 	/**
 	 * Controls the granularity of the version list included in
-	 * {@link ResolvedVersions.versions}.
+	 * the `versions` field of {@link (ResolvedVersions:type)}.
 	 *
 	 * - `"latest"` — only the single highest matching version.
 	 * - `"minor"` — the latest patch for every minor line.
@@ -56,7 +56,7 @@ export interface NodeResolverOptions {
 	 *
 	 * Defaults to `"latest"` when omitted.
 	 *
-	 * @see {@link Increments}
+	 * @see {@link (Increments:type)}
 	 */
 	readonly increments?: Increments;
 
@@ -71,7 +71,7 @@ export interface NodeResolverOptions {
 }
 
 /**
- * Union of all typed errors that {@link NodeResolver.resolve} can fail with.
+ * Union of all typed errors that `NodeResolver.resolve` can fail with.
  *
  * @see {@link VersionNotFoundError}
  *
@@ -84,7 +84,7 @@ export type NodeResolverError = VersionNotFoundError;
  * release index.
  *
  * Unlike {@link BunResolver} and {@link DenoResolver}, this service is
- * lifecycle-aware: results can be filtered by {@link NodePhase} and evaluated
+ * lifecycle-aware: results can be filtered by {@link (NodePhase:type)} and evaluated
  * against a specific reference date.
  *
  * For a one-shot Promise-based API see {@link resolveNode}.
@@ -112,7 +112,7 @@ export type NodeResolverError = VersionNotFoundError;
  * @see {@link NodeResolverLive}
  * @see {@link resolveNode}
  * @see {@link NodeResolverOptions}
- * @see {@link ResolvedVersions}
+ * @see {@link (ResolvedVersions:type)}
  *
  * @public
  */
@@ -121,7 +121,7 @@ export class NodeResolver extends Context.Tag("runtime-resolver/NodeResolver")<
 	{
 		/**
 		 * Resolves Node.js versions according to `options` and returns a
-		 * {@link ResolvedVersions} object containing the matching version list,
+		 * {@link (ResolvedVersions:type)} object containing the matching version list,
 		 * the latest version string, optional LTS version string, and the data
 		 * source indicator.
 		 *

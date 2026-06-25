@@ -23,7 +23,7 @@ export const Runtime = Schema.Literal("node", "bun", "deno");
 export type Runtime = typeof Runtime.Type;
 
 /**
- * Indicates whether a {@link ResolvedVersions} result was served from
+ * Indicates whether a `ResolvedVersions` result was served from
  * a live API call or a local cache.
  *
  * @public
@@ -31,7 +31,7 @@ export type Runtime = typeof Runtime.Type;
 export const Source = Schema.Literal("api", "cache");
 
 /**
- * Indicates whether a {@link ResolvedVersions} result was served from
+ * Indicates whether a `ResolvedVersions` result was served from
  * a live API call or a local cache.
  *
  * @public

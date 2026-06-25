@@ -4,8 +4,8 @@ import { SemVer } from "semver-effect";
 import type { RuntimeReleaseInput } from "./runtime-release.js";
 
 /**
- * A Bun release entry with a parsed {@link SemVer} version and an
- * Effect {@link DateTime.DateTime} publication date.
+ * A Bun release entry with a parsed `SemVer` version and an
+ * Effect `DateTime.DateTime` publication date.
  *
  * `BunRelease` extends `Data.TaggedClass` so instances support structural
  * equality comparison and can be used safely inside Effect data structures.
@@ -15,7 +15,7 @@ import type { RuntimeReleaseInput } from "./runtime-release.js";
  *
  * @see {@link BunReleaseCache}
  * @see {@link BunResolver}
- * @see {@link RuntimeReleaseInput}
+ * @see `RuntimeReleaseInput`
  *
  * @example
  * ```typescript
@@ -47,7 +47,7 @@ export class BunRelease extends Data.TaggedClass("BunRelease")<{
 	 * publication date with `DateTime.unsafeMake`. Falls back to the current
 	 * timestamp when `input.date` is an empty string (rare in production data).
 	 *
-	 * @param input - A {@link RuntimeReleaseInput} object with raw string fields.
+	 * @param input - A `RuntimeReleaseInput` object with raw string fields.
 	 * @returns An `Effect` that succeeds with a `BunRelease` or fails with an
 	 *   `InvalidVersionError` when the version string cannot be parsed.
 	 */

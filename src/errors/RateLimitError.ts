@@ -8,10 +8,8 @@ import { Data } from "effect";
  * API indicates how long to wait before the quota resets, that duration (in
  * seconds) is available via `retryAfter`.
  *
- * Use {@link retryOnRateLimit} to automatically retry an effect with
+ * Use `retryOnRateLimit` to automatically retry an effect with
  * exponential backoff whenever this error is encountered.
- *
- * @see {@link retryOnRateLimit}
  *
  * @example
  * ```typescript

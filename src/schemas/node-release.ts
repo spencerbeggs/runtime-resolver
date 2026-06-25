@@ -97,7 +97,7 @@ export class NodeRelease {
 	 * when `now` is omitted.
 	 *
 	 * @param now - Optional reference time; defaults to `new Date()`.
-	 * @returns An `Effect` that resolves to a {@link NodePhase} string, or
+	 * @returns An `Effect` that resolves to a `NodePhase` string, or
 	 *   `null` when the major version is not present in the schedule or has
 	 *   not yet been released.
 	 */
@@ -127,7 +127,7 @@ export class NodeRelease {
 	 * Parses `input.version` and `input.npm` via `SemVer.parse` and
 	 * constructs the publication date with `DateTime.unsafeMake`.
 	 *
-	 * @param input - A {@link NodeReleaseInput} object with raw string fields.
+	 * @param input - A {@link (NodeReleaseInput:type)} object with raw string fields.
 	 * @param scheduleRef - A shared `Ref<NodeSchedule>` injected by the cache layer.
 	 * @returns An `Effect` that succeeds with a `NodeRelease` or fails with an
 	 *   `InvalidVersionError` when either version string cannot be parsed.
