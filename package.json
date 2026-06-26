@@ -63,8 +63,8 @@
 		"semver-effect": "^0.2.1"
 	},
 	"devDependencies": {
-		"@savvy-web/bundler": "^0.11.0",
-		"@savvy-web/silk": "^1.3.3",
+		"@savvy-web/bundler": "^0.11.1",
+		"@savvy-web/silk": "^1.3.4",
 		"@vitest-agent/plugin": "^1.0.0",
 		"tsx": "catalog:silk"
 	},
