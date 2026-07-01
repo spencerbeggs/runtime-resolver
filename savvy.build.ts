@@ -1,19 +1,12 @@
-import { defineBuild, runBuild } from "@savvy-web/bundler";
+import { build } from "@savvy-web/bundler";
 
-const config = defineBuild({
+await build({
 	meta: {
 		tsdoc: {
-			// Effect's Data.TaggedError / Data.TaggedClass / Context.Tag patterns generate
-			// synthetic `_base` intermediate classes in the emitted .d.ts that cannot be
-			// exported or release-tagged from source. This is the toolchain-sanctioned
-			// suppression for this pattern.
+			// Effect's Context.Tag generates synthetic `_base` intermediate classes
+			// that cannot be exported or release-tagged from source. This is the
+			// toolchain-sanctioned suppression for this pattern.
 			suppressWarnings: [{ messageId: "ae-forgotten-export", pattern: "_base" }],
 		},
 	},
 });
-
-export default config;
-
-if (import.meta.main) {
-	await runBuild(config, { cwd: import.meta.dirname, argv: process.argv.slice(2) });
-}
