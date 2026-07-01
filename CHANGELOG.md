@@ -1,5 +1,13 @@
 # runtime-resolver
 
+## 0.3.20
+
+### Dependencies
+
+* [`68bb7b4`](https://github.com/spencerbeggs/runtime-resolver/commit/68bb7b4e4625014f85656cd8fa55f404512ea75f) | Dependency | Type | Action | From | To |
+  \| ------------- | ---------- | ------- | ------ | ------ |
+  \| semver-effect | dependency | updated | ^0.2.1 | ^0.3.0 |
+
 ## 0.3.19
 
 ### Other
