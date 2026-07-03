@@ -1,5 +1,11 @@
 # runtime-resolver
 
+## 0.3.21
+
+### Other
+
+* Updated bundled runtime version defaults
+
 ## 0.3.20
 
 ### Dependencies
