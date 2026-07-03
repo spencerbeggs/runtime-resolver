@@ -69,6 +69,7 @@
 		"@typescript/native-preview": "catalog:silk",
 		"@vitest-agent/plugin": "^1.1.4",
 		"effect": "catalog:silk",
+		"tsx": "catalog:silk",
 		"typescript": "catalog:silk"
 	},
 	"peerDependencies": {
