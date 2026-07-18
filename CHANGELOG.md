@@ -1,5 +1,17 @@
 # runtime-resolver
 
+## 0.3.23
+
+### Other
+
+* Updated bundled runtime version defaults [#124][#124]
+
+### Patch Changes
+
+Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contributions!
+
+[#124]: https://github.com/spencerbeggs/runtime-resolver/pull/124
+
 ## 0.3.22
 
 ### Other
