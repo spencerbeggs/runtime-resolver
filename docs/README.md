@@ -14,7 +14,7 @@ Or run it on demand without installing:
 npx runtime-resolver --node ">=20"
 ```
 
-The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand.
+The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand. Requires Node.js >=24.11.0.
 
 ## Quick start
 

@@ -14,7 +14,7 @@ npm install -g runtime-resolver
 npx runtime-resolver --node ">=20"
 ```
 
-The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand.
+The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand. Requires Node.js >=24.11.0.
 
 ## Options
 
@@ -98,7 +98,7 @@ runtime-resolver --node ">=20"
 
 ### Multiple runtimes
 
-When more than one runtime is requested, the output is an object keyed by runtime name, in the order the flags were given:
+When more than one runtime is requested, the output is an object keyed by runtime name, always in a fixed order — Node.js, then Bun, then Deno — regardless of the order the flags were passed:
 
 ```bash
 runtime-resolver --node ">=20" --bun ">=1" --pretty
@@ -126,7 +126,7 @@ The `lts` field appears only for Node.js. The `default` field appears when a `--
 ## Exit Codes and Errors
 
 - **`0`** — every requested runtime resolved; the JSON result is on stdout.
-- **non-zero** — a usage error (a missing runtime flag, or an invalid `--node-phases`/range value) or a resolution failure. A one-line `error: <message>` is written to stderr and stdout stays empty.
+- **non-zero** — a usage error (a missing runtime flag, or an invalid `--node-phases` value) or a resolution failure (which includes a malformed semver range). A one-line `error: <message>` is written to stderr and stdout stays empty.
 
 Resolution failures surface the resolver's typed errors:
 

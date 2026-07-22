@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/runtime-resolver?label=npm&color=cb3837)](https://www.npmjs.com/package/runtime-resolver)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4caf50.svg)](https://opensource.org/licenses/MIT)
-[![Node.js %3E%3D24](https://img.shields.io/badge/Node.js-%3E%3D24-5fa04e.svg)](https://nodejs.org/)
+[![Node.js %3E%3D24.11.0](https://img.shields.io/badge/Node.js-%3E%3D24.11.0-5fa04e.svg)](https://nodejs.org/)
 [![Effect](https://img.shields.io/badge/Effect-4.x-6644CC)](https://effect.website/)
 
 A command-line tool that resolves semver-compatible versions of Node.js, Bun, and Deno runtimes and prints them as JSON. It fetches live version data with an automatic fallback to a bundled offline snapshot, so it keeps working in CI and air-gapped environments.
@@ -28,7 +28,7 @@ Or run it on demand without installing:
 npx runtime-resolver --node ">=20"
 ```
 
-The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand. Requires Node.js >=24.
+The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand. Requires Node.js >=24.11.0.
 
 ## Quick start
 
