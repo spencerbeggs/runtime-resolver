@@ -1,21 +1,8 @@
 {
-	"name": "runtime-resolver",
-	"version": "0.3.22",
+	"name": "@spencerbeggs/runtime-resolver",
+	"version": "0.0.0",
 	"private": true,
 	"description": "Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes with Effect-based architecture and offline fallback.",
-	"keywords": [
-		"node",
-		"bun",
-		"deno",
-		"runtime",
-		"version",
-		"semver",
-		"resolver",
-		"ci",
-		"github-actions",
-		"effect",
-		"cli"
-	],
 	"homepage": "https://github.com/spencerbeggs/runtime-resolver#readme",
 	"bugs": {
 		"url": "https://github.com/spencerbeggs/runtime-resolver/issues"
@@ -32,16 +19,8 @@
 	},
 	"sideEffects": false,
 	"type": "module",
-	"exports": {
-		".": "./src/index.ts"
-	},
-	"bin": {
-		"runtime-resolver": "./src/cli/index.ts"
-	},
 	"scripts": {
 		"build": "turbo run build:dev build:prod --log-order=grouped --log-prefix=none",
-		"build:dev": "node savvy.build.ts --target dev",
-		"build:prod": "node savvy.build.ts --target prod",
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
 		"ci:test": "CI=\"true\" vitest run --passWithNoTests",
 		"lint": "biome check --max-diagnostics=none",
@@ -56,34 +35,19 @@
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsc --noEmit"
 	},
-	"dependencies": {
-		"@octokit/auth-app": "^8.2.0",
-		"octokit": "^5.0.5",
-		"semver-effect": "^0.3.1"
-	},
 	"devDependencies": {
-		"@savvy-web/bundler": "^2.0.3",
 		"@savvy-web/silk": "^3.0.2",
-		"@types/node": "catalog:silk",
-		"@vitest-agent/plugin": "^2.0.0",
-		"effect": "catalog:silk",
-		"tsx": "catalog:silk",
-		"typescript": "catalog:silk"
+		"@vitest-agent/plugin": "^2.0.6",
+		"runtime-resolver": "workspace:*"
 	},
-	"peerDependencies": {
-		"@effect/cli": "catalog:silkPeers",
-		"@effect/platform": "catalog:silkPeers",
-		"@effect/platform-node": "catalog:silkPeers",
-		"effect": "catalog:silkPeers"
-	},
-	"packageManager": "pnpm@11.13.0+sha512.88d94724d8f2e6c186744a5584c6e59ecac869ec7ba15e9cb4cd628e8dc7066820b2481d8ee3b51ea8da323a7378068aa58c556a3720d32b7c20a051d088363a",
+	"packageManager": "pnpm@11.16.0+sha512.b767e9a98fc87aec0f42daefcd0e84941c2cdb45d73c4e1e68860fb2bdfdbe032ab592105479e5e05c237f740c8a5ffdbbb52385797ddc2296745a1bbb883e8d",
 	"engines": {
 		"node": ">=24.11.0"
 	},
 	"devEngines": {
 		"packageManager": {
 			"name": "pnpm",
-			"version": "11.13.0+sha512.88d94724d8f2e6c186744a5584c6e59ecac869ec7ba15e9cb4cd628e8dc7066820b2481d8ee3b51ea8da323a7378068aa58c556a3720d32b7c20a051d088363a",
+			"version": "11.16.0+sha512.b767e9a98fc87aec0f42daefcd0e84941c2cdb45d73c4e1e68860fb2bdfdbe032ab592105479e5e05c237f740c8a5ffdbbb52385797ddc2296745a1bbb883e8d",
 			"onFail": "ignore"
 		},
 		"runtime": [
@@ -93,14 +57,5 @@
 				"onFail": "ignore"
 			}
 		]
-	},
-	"publishConfig": {
-		"access": "public",
-		"directory": "dist/dev/pkg",
-		"linkDirectory": true,
-		"targets": {
-			"npm": true,
-			"github": "@spencerbeggs/runtime-resolver"
-		}
 	}
 }

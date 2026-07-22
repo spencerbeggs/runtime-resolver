@@ -2,133 +2,56 @@
 
 ## Overview
 
-runtime-resolver uses GitHub APIs to fetch version data for Node.js, Bun, and Deno runtimes. Authentication increases rate limits from 60 to 5,000 requests per hour. Without auth, the package falls back to bundled offline data when rate-limited.
+`runtime-resolver` reads Node.js versions from `nodejs.org`, which needs no credentials. Bun and Deno versions come from the GitHub REST API, which is rate-limited to **60 requests per hour** when unauthenticated and **5,000 per hour** with a token. When a request is rate-limited or the network is unavailable, the resolver falls back to a bundled offline snapshot and logs a warning to stderr.
 
-## Auto-Detection Chain
+You only need a token when resolving `--bun` or `--deno` frequently enough to hit the anonymous limit.
 
-runtime-resolver automatically detects credentials using this priority chain (first match wins):
+## Detection Order
 
-1. **CLI flags** -- `--token` or `--app-id` + `--app-private-key`
-   (+ optional `--app-installation-id`)
-2. **App env vars** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
-   (+ optional `GITHUB_APP_INSTALLATION_ID`)
-3. **Token env vars** -- `GITHUB_PERSONAL_ACCESS_TOKEN`, then `GITHUB_TOKEN`
-4. **Unauthenticated** -- no auth, subject to 60 req/hr rate limit
+The CLI selects GitHub credentials in this order (first match wins):
 
-When multiple credential sources are detected (for example, both app env vars and token env vars are set), a warning is emitted to stderr indicating which source was selected. No warning when CLI flags are provided -- explicit flags are unambiguous.
+1. **`--token` flag** — an explicit personal access token, overriding the environment
+2. **`GITHUB_PERSONAL_ACCESS_TOKEN`** environment variable
+3. **`GITHUB_TOKEN`** environment variable
+4. **Unauthenticated** — no credentials, subject to the 60 req/hr limit
 
-## Token Authentication
+No special scopes are required — only public repository data is read.
 
-The simplest option. Set an environment variable:
+## Token via Environment
 
 ```bash
-# Preferred - fine-grained PAT
+# Preferred — fine-grained PAT
 export GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxxx
 
-# Fallback - default GitHub token (e.g., in GitHub Actions)
+# Fallback — default GitHub token (e.g. in GitHub Actions)
 export GITHUB_TOKEN=ghp_xxxx
+
+runtime-resolver --bun ">=1"
 ```
 
-Priority order: `GITHUB_PERSONAL_ACCESS_TOKEN` is checked first, then `GITHUB_TOKEN`. If neither is set, requests are made without authentication.
+`GITHUB_PERSONAL_ACCESS_TOKEN` is checked before `GITHUB_TOKEN`. If neither is set, requests are unauthenticated.
 
-No special scopes are required. runtime-resolver only accesses public repository data.
+## Token via Flag
 
-### CLI: Explicit Token
-
-Provide a token directly via CLI flag:
+Pass a token directly; it takes precedence over both environment variables:
 
 ```bash
-runtime-resolver --node ">=20" --token "ghp_xxxx"
+runtime-resolver --bun ">=1" --token "ghp_xxxx"
 ```
-
-### Effect API: Explicit Token
-
-If you are composing layers with the Effect API, you can provide a token directly instead of relying on environment variables:
-
-```typescript
-import { GitHubTokenAuthFromToken } from "runtime-resolver";
-
-const layer = GitHubTokenAuthFromToken("ghp_xxxx");
-```
-
-This creates an `OctokitInstance` layer authenticated with the given token.
-
-## GitHub App Authentication
-
-For server environments or GitHub Actions with fine-grained permissions, use GitHub App authentication.
-
-### Environment Variables
-
-```bash
-export GITHUB_APP_ID="123456"
-export GITHUB_APP_PRIVATE_KEY="$(cat /path/to/key.pem)"
-# Optional - auto-discovered if omitted
-export GITHUB_APP_INSTALLATION_ID="789"
-```
-
-### CLI Flags
-
-```bash
-# With private key from file (@ prefix)
-runtime-resolver --node ">=20" --app-id "123456" --app-private-key @/path/to/key.pem
-
-# With literal private key
-runtime-resolver --node ">=20" --app-id "123456" --app-private-key "-----BEGIN RSA..."
-
-# With explicit installation ID
-runtime-resolver --node ">=20" --app-id "123456" --app-private-key @key.pem --app-installation-id "789"
-```
-
-**Validation rules:**
-
-- `--token` and `--app-id`/`--app-private-key` are mutually exclusive
-- `--app-id` and `--app-private-key` must both be provided
-- `--app-installation-id` requires `--app-id` and `--app-private-key`
-
-### Effect API: Explicit App Auth
-
-```typescript
-import { GitHubAppAuth } from "runtime-resolver";
-
-const layer = GitHubAppAuth({
-  appId: "12345",
-  privateKey: "-----BEGIN RSA PRIVATE KEY-----...",
-  installationId: 67890, // Optional - auto-resolved if omitted
-});
-```
-
-When `installationId` is omitted, the layer fetches the first available installation automatically. If no installations are found, the layer fails with an `AuthenticationError`.
-
-### Auto-Detection Layer
-
-The `GitHubAutoAuth` layer runs the full detection chain and is the default used by the pre-built `NodeLayer`, `BunLayer`, and `DenoLayer`:
-
-```typescript
-import { GitHubAutoAuth } from "runtime-resolver";
-```
-
-## AuthenticationError
-
-Authentication failures produce an `AuthenticationError` with a `method` field indicating which authentication method failed:
-
-- `method: "token"` -- HTTP 401 response from the GitHub API
-- `method: "app"` -- GitHub App credential failures (invalid private key, no installations found)
 
 ## Offline Fallback
 
-When authentication fails or the network is unavailable, runtime-resolver uses bundled version data generated at build time. This data is refreshed each time the package is published.
-
-The fallback is transparent -- the same `ResolvedVersions` interface is returned regardless of data source. The data may be slightly stale but provides a working baseline for CI environments and air-gapped systems.
+When a live feed is unavailable — a rate-limit response, or no network — the resolver serves a bundled snapshot generated when the package was published, and logs a warning naming the affected runtime. The result's `source` field reads `"cache"` in that case (versus `"api"` for a live fetch), so you can always tell which path produced the data. The snapshot may be slightly stale but keeps CI and air-gapped environments working.
 
 ## GitHub Actions
 
-The built-in `GITHUB_TOKEN` secret is sufficient for most workflows:
+The built-in `GITHUB_TOKEN` secret is enough for most workflows that resolve Bun or Deno:
 
 ```yaml
-- uses: actions/checkout@v4
-- run: npx runtime-resolver --node ">=20" --pretty
+- uses: actions/checkout@v7
+- run: npx runtime-resolver --bun ">=1" --pretty
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-For higher rate limits across multiple jobs, use a fine-grained personal access token stored as a repository secret and set `GITHUB_PERSONAL_ACCESS_TOKEN` instead.
+Resolving only `--node` needs no token at all. For higher rate limits across many jobs, store a fine-grained personal access token as a repository secret and expose it as `GITHUB_PERSONAL_ACCESS_TOKEN`.

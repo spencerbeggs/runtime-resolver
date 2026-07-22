@@ -1,6 +1,6 @@
 # CLI Reference
 
-The `runtime-resolver` CLI resolves semver-compatible versions of Node.js, Bun, and Deno runtimes. It outputs structured JSON to stdout and always exits with code 0. Errors are encoded in the JSON response envelope rather than signaled through exit codes. Every response includes a `$schema` property pointing to the published JSON Schema.
+The `runtime-resolver` CLI resolves semver-compatible versions of Node.js, Bun, and Deno runtimes. It prints the resolved version data as JSON to stdout and exits `0` on success. Usage errors and resolution failures print a short message to stderr and exit with a non-zero code, so scripts can branch on the exit status rather than parsing an envelope.
 
 ## Installation
 
@@ -14,11 +14,7 @@ npm install -g runtime-resolver
 npx runtime-resolver --node ">=20"
 ```
 
-### Peer Dependencies
-
-The Effect packages (`effect`, `@effect/cli`, `@effect/platform`, `@effect/platform-node`) are peer dependencies. When installing globally or via `npx`, npm 7+ and pnpm auto-install them automatically. No extra steps are needed.
-
-If you use `runtime-resolver` as a library alongside your own Effect project, your existing Effect versions are reused — avoiding duplicate instances that would break `Context.Tag` identity.
+The runtime dependencies (`effect`, `@effected/runtimes`, `@effected/semver`) install automatically — there are no peer dependencies to add by hand.
 
 ## Options
 
@@ -34,12 +30,12 @@ If you use `runtime-resolver` as a library alongside your own Effect project, yo
 | `--deno-default <version>` | Pin a default version for Deno | `--deno-default "2.0.0"` |
 | `--node-date <date>` | ISO date for reproducible Node.js phase calculations | `--node-date "2024-01-15"` |
 | `--pretty` | Pretty-print the JSON output | |
+| `--offline` | Resolve from the bundled snapshot only; make no network requests | |
 | `--token <token>` | GitHub personal access token for authentication | `--token "ghp_..."` |
-| `--app-id <id>` | GitHub App ID for app authentication | `--app-id "123456"` |
-| `--app-private-key <key>` | GitHub App private key (literal or `@/path/to/key.pem`) | `--app-private-key @key.pem` |
-| `--app-installation-id <id>` | GitHub App installation ID (auto-discovered if omitted) | `--app-installation-id "789"` |
-| `--schema` | Print the JSON Schema for the response format and exit | |
 | `--version` | Print the CLI version and exit | |
+| `--help` | Print usage and exit | |
+
+At least one of `--node`, `--bun`, or `--deno` is required. `--node-phases` and `--node-date` apply to Node.js only; `--increments` applies to every requested runtime.
 
 ### Increments
 
@@ -48,49 +44,6 @@ The `--increments` flag controls version granularity in the output for all reque
 - `latest` -- only the latest matching version per major line (default)
 - `minor` -- one version per minor release
 - `patch` -- every patch version
-
-### Authentication Flags
-
-The `--token`, `--app-id`, `--app-private-key`, and `--app-installation-id` flags provide explicit authentication, overriding any environment variables.
-
-**Token authentication:**
-
-```bash
-runtime-resolver --node ">=20" --token "ghp_..."
-```
-
-**GitHub App authentication:**
-
-```bash
-# With literal private key
-runtime-resolver --node ">=20" --app-id "123456" --app-private-key "-----BEGIN RSA..."
-
-# With private key from file (@ prefix)
-runtime-resolver --node ">=20" --app-id "123456" --app-private-key @/path/to/key.pem
-
-# With explicit installation ID
-runtime-resolver --node ">=20" --app-id "123456" --app-private-key @key.pem --app-installation-id "789"
-```
-
-**Validation rules:**
-
-- `--token` and `--app-id`/`--app-private-key` are mutually exclusive
-- `--app-id` and `--app-private-key` must both be provided
-- `--app-installation-id` requires `--app-id` and `--app-private-key`
-- Auth flags cannot be combined with `--schema`
-
-### Schema Validation
-
-The `--schema` flag prints the JSON Schema for the response format and exits. It cannot be combined with any resolve flags (`--node`, `--bun`, `--deno`, `--increments`, `--node-phases`, `--node-default`, `--bun-default`, `--deno-default`, `--node-date`). If `--schema` is used alongside any of these flags, the CLI prints an error and exits:
-
-```bash
-# Valid: print the schema
-runtime-resolver --schema
-
-# Invalid: --schema with resolve flags
-runtime-resolver --schema --node ">=20"
-# Error: --schema cannot be combined with resolve flags (--node, --bun, --deno, etc.)
-```
 
 ### Node.js Phases
 
@@ -101,9 +54,11 @@ The `--node-phases` flag accepts a comma-separated list of release phases to fil
 - `maintenance-lts` -- LTS releases in maintenance mode
 - `end-of-life` -- releases that have reached end of life
 
+An unrecognized phase is a usage error: the CLI prints the offending value and the accepted set to stderr and exits non-zero.
+
 ### Default Versions
 
-The `--node-default`, `--bun-default`, and `--deno-default` flags pin a specific version for each runtime. The pinned version is included in the results even if it would otherwise be filtered out. It appears as the `default` field in the response.
+The `--node-default`, `--bun-default`, and `--deno-default` flags pin a specific version for each runtime. The pinned version is included in the results even if it would otherwise be filtered out, and appears as the `default` field in that runtime's output.
 
 For Node.js, when no `--node-default` is provided, the `default` field automatically reports the latest LTS version.
 
@@ -111,103 +66,100 @@ For Node.js, when no `--node-default` is provided, the `default` field automatic
 
 The `--node-date` flag accepts an ISO 8601 date string (e.g. `2024-01-15`). It overrides the reference date used for Node.js release phase calculations, enabling reproducible results.
 
-### Empty Invocation
+### Offline Mode
 
-When no runtime flags (`--node`, `--bun`, `--deno`) are provided, the CLI prints a help message to stderr instead of producing JSON output.
+The `--offline` flag forces snapshot-only resolution: every requested runtime resolves from the version data bundled with the package, and the CLI makes no requests to `nodejs.org` or the GitHub API. Results carry `source: "cache"`, so the output itself records that the answer came from the snapshot rather than a live feed.
 
-## Response Format
+Offline mode needs no credentials — because there is no network call to authenticate, `--offline` takes precedence over `--token` (and over the `GITHUB_PERSONAL_ACCESS_TOKEN` / `GITHUB_TOKEN` environment variables), which are simply ignored. This makes it a good fit for air-gapped or rate-limit-sensitive environments where a fixed, network-free answer is preferable to a live one.
 
-### Success Response
+```bash
+runtime-resolver --bun ">=1" --deno ">=1" --offline
+```
 
-When all requested runtimes resolve successfully, `ok` is `true`. Each runtime result includes a `source` field indicating whether data came from a live API fetch (`"api"`) or the bundled build-time cache (`"cache"`):
+The bundled snapshot is only as current as the installed package version; upgrade `runtime-resolver` to refresh it.
+
+## Output
+
+The CLI emits the resolver's version data directly — no wrapper envelope, no `$schema` field.
+
+Each runtime's result carries a `source` field indicating whether the data came from a live API fetch (`"api"`) or the bundled offline snapshot (`"cache"`), the matched `versions`, the highest match as `latest`, and — where applicable — `lts` (Node.js only) and `default`.
+
+### Single runtime
+
+When exactly one runtime is requested, its result is emitted directly:
+
+```bash
+runtime-resolver --node ">=20"
+```
+
+```json
+{"source":"api","versions":["22.14.0","20.19.0"],"latest":"22.14.0","lts":"20.19.0","default":"20.19.0"}
+```
+
+### Multiple runtimes
+
+When more than one runtime is requested, the output is an object keyed by runtime name, in the order the flags were given:
+
+```bash
+runtime-resolver --node ">=20" --bun ">=1" --pretty
+```
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json",
-  "ok": true,
-  "results": {
-    "node": {
-      "ok": true,
-      "source": "api",
-      "versions": ["22.14.0", "20.19.0"],
-      "latest": "22.14.0",
-      "lts": "20.19.0",
-      "default": "20.19.0"
-    }
+  "node": {
+    "source": "api",
+    "versions": ["22.14.0"],
+    "latest": "22.14.0",
+    "lts": "20.19.0",
+    "default": "20.19.0"
+  },
+  "bun": {
+    "source": "api",
+    "versions": ["1.1.42"],
+    "latest": "1.1.42"
   }
 }
 ```
 
-The `lts` field appears only for Node.js results. The `default` field appears when a `--*-default` flag is set, or automatically for Node.js (latest LTS).
+The `lts` field appears only for Node.js. The `default` field appears when a `--*-default` flag is set, or automatically for Node.js (latest LTS). `--pretty` switches from the compact default to 2-space indentation.
 
-### Partial Failure
+## Exit Codes and Errors
 
-When some runtimes succeed and others fail, the top-level `ok` is `false` but successful results are still included:
+- **`0`** — every requested runtime resolved; the JSON result is on stdout.
+- **non-zero** — a usage error (a missing runtime flag, or an invalid `--node-phases`/range value) or a resolution failure. A one-line `error: <message>` is written to stderr and stdout stays empty.
 
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json",
-  "ok": false,
-  "results": {
-    "node": {
-      "ok": true,
-      "source": "api",
-      "versions": ["22.14.0"],
-      "latest": "22.14.0"
-    },
-    "bun": {
-      "ok": false,
-      "error": {
-        "_tag": "VersionNotFoundError",
-        "message": "No versions match constraint",
-        "runtime": "bun",
-        "constraint": ">=99"
-      }
-    }
-  }
-}
+Resolution failures surface the resolver's typed errors:
+
+| Condition | Example stderr message |
+| --- | --- |
+| Range matched nothing | `error: no bun version matched ">=99"` |
+| Range matched nothing within the requested phases | `error: no node version matched ">=20" within phase(s) current` |
+| Malformed semver range | `error: invalid node range: Invalid range expression: "x" at position 0` |
+| Pinned default cannot be resolved | `error: no node version matched the requested default "0.0.1"` |
+
+Because failures are signalled by exit status, scripts guard resolution with a plain status check rather than inspecting the payload:
+
+```bash
+if ! result=$(runtime-resolver --node ">=20"); then
+  echo "resolution failed" >&2
+  exit 1
+fi
+echo "$result" | jq -r '.latest'
 ```
-
-### Error Types
-
-Each error object carries a `_tag` field identifying its type, a `message` field, and additional metadata specific to the error:
-
-| Error Tag | Description | Extra Fields |
-| --- | --- | --- |
-| `VersionNotFoundError` | No versions match the given range | `runtime`, `constraint` |
-| `AuthenticationError` | Authentication failed | `method` |
 
 ## Usage with jq
 
-The structured JSON output pairs well with `jq` for scripting:
+The structured JSON output pairs well with `jq`. For a single requested runtime the fields are top-level; for several, index by runtime name:
 
 ```bash
-# Get the latest Node.js version matching a range
-runtime-resolver --node ">=20" | jq -r '.results.node.latest'
+# Latest Node.js version matching a range (single runtime → top-level fields)
+runtime-resolver --node ">=20" | jq -r '.latest'
 
-# Get all resolved Bun versions as an array
-runtime-resolver --bun ">=1" | jq '.results.bun.versions'
+# All resolved Bun versions
+runtime-resolver --bun ">=1" | jq '.versions'
 
-# Check whether resolution succeeded
-runtime-resolver --node ">=20" | jq '.ok'
-
-# Get the LTS version for Node.js
-runtime-resolver --node ">=18" | jq -r '.results.node.lts'
-```
-
-## JSON Schema
-
-The response format is described by a published JSON Schema. Use it for validation in editors, CI checks, or code generation:
-
-```bash
-# Dump the schema to a local file
-runtime-resolver --schema > schema.json
-```
-
-The schema is also available at:
-
-```text
-https://raw.githubusercontent.com/spencerbeggs/runtime-resolver/main/runtime-resolver.schema.json
+# Node.js LTS when several runtimes are requested (keyed by runtime)
+runtime-resolver --node ">=18" --deno ">=2" | jq -r '.node.lts'
 ```
 
 ## CI/CD Examples
@@ -230,7 +182,7 @@ jobs:
         id: resolve
         run: |
           RESULT=$(npx runtime-resolver --node ">=20" --node-phases "current,active-lts")
-          echo "versions=$(echo "$RESULT" | jq -c '.results.node.versions')" >> "$GITHUB_OUTPUT"
+          echo "versions=$(echo "$RESULT" | jq -c '.versions')" >> "$GITHUB_OUTPUT"
 
   test:
     needs: resolve
@@ -239,50 +191,48 @@ jobs:
       matrix:
         node-version: ${{ fromJson(needs.resolve.outputs.node-versions) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci && npm test
 ```
 
-### Shell Scripts
+The resolve step fails the job automatically if the range matches nothing, since the CLI exits non-zero.
 
-Guard against resolution failures by checking the `ok` field:
+### Shell Scripts
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
+# A failed resolution exits non-zero, so `set -e` stops the script here.
 RESULT=$(runtime-resolver --node ">=20" --pretty)
-OK=$(echo "$RESULT" | jq -r '.ok')
 
-if [ "$OK" != "true" ]; then
-  echo "Resolution failed:" >&2
-  echo "$RESULT" | jq '.results' >&2
-  exit 1
-fi
-
-NODE_VERSION=$(echo "$RESULT" | jq -r '.results.node.latest')
+NODE_VERSION=$(echo "$RESULT" | jq -r '.latest')
 echo "Using Node.js $NODE_VERSION"
 ```
 
 ## Authentication
 
-The CLI detects GitHub credentials automatically using this priority chain (first match wins):
+Node.js versions come from `nodejs.org` and need no credentials. Bun and Deno versions come from the GitHub REST API, which is rate-limited to 60 requests per hour when unauthenticated — provide a token to raise that limit.
 
-1. **CLI flags** -- `--token` or `--app-id` + `--app-private-key`
-2. **App env vars** -- `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY`
-3. **Token env vars** -- `GITHUB_PERSONAL_ACCESS_TOKEN`, then `GITHUB_TOKEN`
-4. **Unauthenticated** -- subject to 60 requests per hour
+The CLI selects credentials in this order (first match wins):
+
+1. **`--token` flag** — an explicit personal access token
+2. **`GITHUB_PERSONAL_ACCESS_TOKEN`** environment variable
+3. **`GITHUB_TOKEN`** environment variable
+4. **Unauthenticated** — subject to 60 requests per hour
 
 ```bash
 # Explicit token via flag
-runtime-resolver --node ">=20" --token "ghp_..."
+runtime-resolver --bun ">=1" --token "ghp_..."
 
 # Or via environment variable
 export GITHUB_TOKEN="ghp_..."
-runtime-resolver --node ">=20"
+runtime-resolver --bun ">=1"
 ```
 
-When multiple credential sources are detected (for example, both app env vars and token env vars are set), a warning is emitted to stderr indicating which source was selected. No warning when CLI flags are provided -- explicit flags are unambiguous.
+Credentials only matter for live lookups. With `--offline`, no request is made and none of these sources are consulted — see [Offline Mode](#offline-mode).
+
+See [Authentication](./authentication.md) for details.
