@@ -1,6 +1,7 @@
 import type { NoMatchingVersionError, ResolvedVersions, Runtime, UnresolvableDefaultError } from "@effected/runtimes";
 import { BunResolver, DenoResolver, NodeResolver } from "@effected/runtimes";
 import type { InvalidRangeError } from "@effected/semver";
+import type { Layer } from "effect";
 import { Console, DateTime, Effect, Option, Result } from "effect";
 import { CliError, Command, Flag } from "effect/unstable/cli";
 import type { ResolverLayers } from "./layers.js";
@@ -26,6 +27,21 @@ const describeResolveError = (
 			return `no ${runtime} version matched the requested default "${error.defaultVersion}"`;
 	}
 };
+
+/**
+ * Resolve one runtime: run its resolver effect, map any typed resolution
+ * failure to a user-facing CLI error, and provide the runtime's chosen layer.
+ * Extracted so the node/bun/deno branches share one resolve/map/provide shape.
+ */
+const resolveRuntime = <R>(
+	runtime: Runtime,
+	resolve: Effect.Effect<ResolvedVersions, InvalidRangeError | NoMatchingVersionError | UnresolvableDefaultError, R>,
+	layer: Layer.Layer<R>,
+): Effect.Effect<ResolvedVersions, CliError.UserError> =>
+	resolve.pipe(
+		Effect.mapError((error) => new CliError.UserError({ cause: describeResolveError(runtime, error) })),
+		Effect.provide(layer),
+	);
 
 /** Fail with the CLI framework's user-error, carrying an already-formatted message. */
 const usageError = (message: string): Effect.Effect<never, CliError.UserError> =>
@@ -125,18 +141,18 @@ export const makeCli = (selectLayers: (offline: boolean) => ResolverLayers) =>
 				if (Option.isSome(config.node)) {
 					const range = config.node.value;
 					const defaultVersion = Option.getOrUndefined(config.nodeDefault);
-					const resolved = yield* Effect.gen(function* () {
-						const resolver = yield* NodeResolver;
-						return yield* resolver.resolve({
-							range,
-							...(phases !== undefined ? { phases } : {}),
-							...(increments !== undefined ? { increments } : {}),
-							...(defaultVersion !== undefined ? { defaultVersion } : {}),
-							...(nodeDate !== undefined ? { date: nodeDate } : {}),
-						});
-					}).pipe(
-						Effect.mapError((error) => new CliError.UserError({ cause: describeResolveError("node", error) })),
-						Effect.provide(layers.node),
+					const resolved = yield* resolveRuntime(
+						"node",
+						Effect.flatMap(NodeResolver, (resolver) =>
+							resolver.resolve({
+								range,
+								...(phases !== undefined ? { phases } : {}),
+								...(increments !== undefined ? { increments } : {}),
+								...(defaultVersion !== undefined ? { defaultVersion } : {}),
+								...(nodeDate !== undefined ? { date: nodeDate } : {}),
+							}),
+						),
+						layers.node,
 					);
 					entries.push(["node", resolved]);
 				}
@@ -144,16 +160,16 @@ export const makeCli = (selectLayers: (offline: boolean) => ResolverLayers) =>
 				if (Option.isSome(config.bun)) {
 					const range = config.bun.value;
 					const defaultVersion = Option.getOrUndefined(config.bunDefault);
-					const resolved = yield* Effect.gen(function* () {
-						const resolver = yield* BunResolver;
-						return yield* resolver.resolve({
-							range,
-							...(increments !== undefined ? { increments } : {}),
-							...(defaultVersion !== undefined ? { defaultVersion } : {}),
-						});
-					}).pipe(
-						Effect.mapError((error) => new CliError.UserError({ cause: describeResolveError("bun", error) })),
-						Effect.provide(layers.bun(config.token)),
+					const resolved = yield* resolveRuntime(
+						"bun",
+						Effect.flatMap(BunResolver, (resolver) =>
+							resolver.resolve({
+								range,
+								...(increments !== undefined ? { increments } : {}),
+								...(defaultVersion !== undefined ? { defaultVersion } : {}),
+							}),
+						),
+						layers.bun(config.token),
 					);
 					entries.push(["bun", resolved]);
 				}
@@ -161,16 +177,16 @@ export const makeCli = (selectLayers: (offline: boolean) => ResolverLayers) =>
 				if (Option.isSome(config.deno)) {
 					const range = config.deno.value;
 					const defaultVersion = Option.getOrUndefined(config.denoDefault);
-					const resolved = yield* Effect.gen(function* () {
-						const resolver = yield* DenoResolver;
-						return yield* resolver.resolve({
-							range,
-							...(increments !== undefined ? { increments } : {}),
-							...(defaultVersion !== undefined ? { defaultVersion } : {}),
-						});
-					}).pipe(
-						Effect.mapError((error) => new CliError.UserError({ cause: describeResolveError("deno", error) })),
-						Effect.provide(layers.deno(config.token)),
+					const resolved = yield* resolveRuntime(
+						"deno",
+						Effect.flatMap(DenoResolver, (resolver) =>
+							resolver.resolve({
+								range,
+								...(increments !== undefined ? { increments } : {}),
+								...(defaultVersion !== undefined ? { defaultVersion } : {}),
+							}),
+						),
+						layers.deno(config.token),
 					);
 					entries.push(["deno", resolved]);
 				}
