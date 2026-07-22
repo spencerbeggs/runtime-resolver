@@ -33,7 +33,5 @@ Request several runtimes and the output becomes an object keyed by runtime name.
 
 ## Guides
 
-| Guide | Description |
-| ----- | ----------- |
-| [CLI reference](./cli.md) | Flags, output format, exit codes, jq recipes, and CI/CD examples. |
-| [Authentication](./authentication.md) | GitHub token detection order and offline fallback behavior. |
+- [CLI reference](./cli.md) — Flags, output format, exit codes, jq recipes, and scripting.
+- [GitHub authentication and rate limits](./github.md) — Why Bun and Deno need a token, rate limits, token detection order, offline fallback, and the GitHub Actions matrix example.

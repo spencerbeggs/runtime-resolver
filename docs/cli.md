@@ -1,8 +1,10 @@
-# CLI Reference
+# CLI reference
 
 The `runtime-resolver` CLI resolves semver-compatible versions of Node.js, Bun, and Deno runtimes. It prints the resolved version data as JSON to stdout and exits `0` on success. Usage errors and resolution failures print a short message to stderr and exit with a non-zero code, so scripts can branch on the exit status rather than parsing an envelope.
 
-## Installation
+Resolving Bun or Deno reads from the GitHub REST API and benefits from a token — see [GitHub authentication and rate limits](./github.md).
+
+## Install
 
 Install globally or run directly with `npx`:
 
@@ -41,32 +43,32 @@ At least one of `--node`, `--bun`, or `--deno` is required. `--node-phases` and 
 
 The `--increments` flag controls version granularity in the output for all requested runtimes (Node.js, Bun, and Deno):
 
-- `latest` -- only the latest matching version per major line (default)
-- `minor` -- one version per minor release
-- `patch` -- every patch version
+- `latest` — only the latest matching version per major line (default)
+- `minor` — one version per minor release
+- `patch` — every patch version
 
-### Node.js Phases
+### Node.js phases
 
 The `--node-phases` flag accepts a comma-separated list of release phases to filter results. Valid phases:
 
-- `current` -- the current release line
-- `active-lts` -- actively maintained LTS releases
-- `maintenance-lts` -- LTS releases in maintenance mode
-- `end-of-life` -- releases that have reached end of life
+- `current` — the current release line
+- `active-lts` — actively maintained LTS releases
+- `maintenance-lts` — LTS releases in maintenance mode
+- `end-of-life` — releases that have reached end of life
 
 An unrecognized phase is a usage error: the CLI prints the offending value and the accepted set to stderr and exits non-zero.
 
-### Default Versions
+### Default versions
 
 The `--node-default`, `--bun-default`, and `--deno-default` flags pin a specific version for each runtime. The pinned version is included in the results even if it would otherwise be filtered out, and appears as the `default` field in that runtime's output.
 
 For Node.js, when no `--node-default` is provided, the `default` field automatically reports the latest LTS version.
 
-### Node.js Date
+### Node.js date
 
 The `--node-date` flag accepts an ISO 8601 date string (e.g. `2024-01-15`). It overrides the reference date used for Node.js release phase calculations, enabling reproducible results.
 
-### Offline Mode
+### Offline mode
 
 The `--offline` flag forces snapshot-only resolution: every requested runtime resolves from the version data bundled with the package, and the CLI makes no requests to `nodejs.org` or the GitHub API. Results carry `source: "cache"`, so the output itself records that the answer came from the snapshot rather than a live feed.
 
@@ -74,13 +76,14 @@ Offline mode needs no credentials — because there is no network call to authen
 
 ```bash
 runtime-resolver --bun ">=1" --deno ">=1" --offline
+# {"bun":{"source":"cache",...},"deno":{"source":"cache",...}}
 ```
 
 The bundled snapshot is only as current as the installed package version; upgrade `runtime-resolver` to refresh it.
 
 ## Output
 
-The CLI emits the resolver's version data directly — no wrapper envelope, no `$schema` field.
+The CLI emits the resolver's version data directly — no wrapper envelope.
 
 Each runtime's result carries a `source` field indicating whether the data came from a live API fetch (`"api"`) or the bundled offline snapshot (`"cache"`), the matched `versions`, the highest match as `latest`, and — where applicable — `lts` (Node.js only) and `default`.
 
@@ -90,10 +93,7 @@ When exactly one runtime is requested, its result is emitted directly:
 
 ```bash
 runtime-resolver --node ">=20"
-```
-
-```json
-{"source":"api","versions":["22.14.0","20.19.0"],"latest":"22.14.0","lts":"20.19.0","default":"20.19.0"}
+# {"source":"api","versions":["22.14.0","20.19.0"],"latest":"22.14.0","lts":"20.19.0","default":"20.19.0"}
 ```
 
 ### Multiple runtimes
@@ -102,28 +102,25 @@ When more than one runtime is requested, the output is an object keyed by runtim
 
 ```bash
 runtime-resolver --node ">=20" --bun ">=1" --pretty
-```
-
-```json
-{
-  "node": {
-    "source": "api",
-    "versions": ["22.14.0"],
-    "latest": "22.14.0",
-    "lts": "20.19.0",
-    "default": "20.19.0"
-  },
-  "bun": {
-    "source": "api",
-    "versions": ["1.1.42"],
-    "latest": "1.1.42"
-  }
-}
+# {
+#   "node": {
+#     "source": "api",
+#     "versions": ["22.14.0"],
+#     "latest": "22.14.0",
+#     "lts": "20.19.0",
+#     "default": "20.19.0"
+#   },
+#   "bun": {
+#     "source": "api",
+#     "versions": ["1.1.42"],
+#     "latest": "1.1.42"
+#   }
+# }
 ```
 
 The `lts` field appears only for Node.js. The `default` field appears when a `--*-default` flag is set, or automatically for Node.js (latest LTS). `--pretty` switches from the compact default to 2-space indentation.
 
-## Exit Codes and Errors
+## Exit codes and errors
 
 - **`0`** — every requested runtime resolved; the JSON result is on stdout.
 - **non-zero** — a usage error (a missing runtime flag, or an invalid `--node-phases` value) or a resolution failure (which includes a malformed semver range). A one-line `error: <message>` is written to stderr and stdout stays empty.
@@ -145,6 +142,7 @@ if ! result=$(runtime-resolver --node ">=20"); then
   exit 1
 fi
 echo "$result" | jq -r '.latest'
+# 22.14.0
 ```
 
 ## Usage with jq
@@ -154,85 +152,30 @@ The structured JSON output pairs well with `jq`. For a single requested runtime 
 ```bash
 # Latest Node.js version matching a range (single runtime → top-level fields)
 runtime-resolver --node ">=20" | jq -r '.latest'
+# 22.14.0
 
 # All resolved Bun versions
 runtime-resolver --bun ">=1" | jq '.versions'
+# ["1.1.42"]
 
 # Node.js LTS when several runtimes are requested (keyed by runtime)
 runtime-resolver --node ">=18" --deno ">=2" | jq -r '.node.lts'
+# 20.19.0
 ```
 
-## CI/CD Examples
+## Scripting
 
-### GitHub Actions
-
-Use `runtime-resolver` in a workflow to build a dynamic version matrix:
-
-```yaml
-name: CI Matrix
-on: [push]
-
-jobs:
-  resolve:
-    runs-on: ubuntu-latest
-    outputs:
-      node-versions: ${{ steps.resolve.outputs.versions }}
-    steps:
-      - name: Resolve Node.js versions
-        id: resolve
-        run: |
-          RESULT=$(npx runtime-resolver --node ">=20" --node-phases "current,active-lts")
-          echo "versions=$(echo "$RESULT" | jq -c '.versions')" >> "$GITHUB_OUTPUT"
-
-  test:
-    needs: resolve
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ${{ fromJson(needs.resolve.outputs.node-versions) }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci && npm test
-```
-
-The resolve step fails the job automatically if the range matches nothing, since the CLI exits non-zero.
-
-### Shell Scripts
+A failed resolution exits non-zero, so `set -e` stops the script at the resolve step:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# A failed resolution exits non-zero, so `set -e` stops the script here.
 RESULT=$(runtime-resolver --node ">=20" --pretty)
 
 NODE_VERSION=$(echo "$RESULT" | jq -r '.latest')
 echo "Using Node.js $NODE_VERSION"
+# Using Node.js 22.14.0
 ```
 
-## Authentication
-
-Node.js versions come from `nodejs.org` and need no credentials. Bun and Deno versions come from the GitHub REST API, which is rate-limited to 60 requests per hour when unauthenticated — provide a token to raise that limit.
-
-The CLI selects credentials in this order (first match wins):
-
-1. **`--token` flag** — an explicit personal access token
-2. **`GITHUB_PERSONAL_ACCESS_TOKEN`** environment variable
-3. **`GITHUB_TOKEN`** environment variable
-4. **Unauthenticated** — subject to 60 requests per hour
-
-```bash
-# Explicit token via flag
-runtime-resolver --bun ">=1" --token "ghp_..."
-
-# Or via environment variable
-export GITHUB_TOKEN="ghp_..."
-runtime-resolver --bun ">=1"
-```
-
-Credentials only matter for live lookups. With `--offline`, no request is made and none of these sources are consulted — see [Offline Mode](#offline-mode).
-
-See [Authentication](./authentication.md) for details.
+For a GitHub Actions matrix built from resolver output, see [GitHub authentication and rate limits](./github.md#github-actions).

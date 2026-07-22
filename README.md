@@ -52,8 +52,8 @@ The CLI exits `0` when every requested runtime resolves. A usage error or resolu
 
 ## Documentation
 
-- [CLI reference](./docs/cli.md) — flags, output format, exit codes, jq recipes, and CI/CD examples.
-- [Authentication](./docs/authentication.md) — GitHub token detection order and offline fallback behavior.
+- [CLI reference](./docs/cli.md) — flags, output format, exit codes, jq recipes, and scripting.
+- [GitHub authentication and rate limits](./docs/github.md) — why Bun and Deno need a token, rate limits, token detection order, offline fallback, and the GitHub Actions matrix example.
 
 See [docs](./docs/) for the full guide index.
 
