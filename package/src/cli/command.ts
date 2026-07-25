@@ -1,4 +1,10 @@
-import type { NoMatchingVersionError, ResolvedVersions, Runtime, UnresolvableDefaultError } from "@effected/runtimes";
+import type {
+	FreshnessError,
+	NoMatchingVersionError,
+	ResolvedVersions,
+	Runtime,
+	UnresolvableDefaultError,
+} from "@effected/runtimes";
 import { BunResolver, DenoResolver, NodeResolver } from "@effected/runtimes";
 import type { InvalidRangeError } from "@effected/semver";
 import type { Layer } from "effect";
@@ -9,13 +15,21 @@ import { selectResolverLayers } from "./layers.js";
 import { NODE_PHASES, formatOutput, parsePhases } from "./output.js";
 
 /**
+ * Every typed failure a kit resolver's `resolve` can raise.
+ *
+ * `FreshnessError` is in the channel for all three resolvers even though only
+ * the kit's `layerFresh` strategy can raise it, and this CLI never selects that
+ * strategy — its live layers fall back to the bundled snapshot, and `--offline`
+ * is snapshot-only. It is handled rather than discarded so the branch stays
+ * correct if a fresh-only mode is ever added.
+ */
+type ResolveError = InvalidRangeError | NoMatchingVersionError | UnresolvableDefaultError | FreshnessError;
+
+/**
  * Turn a resolver's typed failure into the one-line, operator-facing message
  * the process prints to stderr before exiting non-zero.
  */
-const describeResolveError = (
-	runtime: Runtime,
-	error: InvalidRangeError | NoMatchingVersionError | UnresolvableDefaultError,
-): string => {
+const describeResolveError = (runtime: Runtime, error: ResolveError): string => {
 	switch (error._tag) {
 		case "InvalidRangeError":
 			return `invalid ${runtime} range: ${error.message}`;
@@ -25,6 +39,8 @@ const describeResolveError = (
 		}
 		case "UnresolvableDefaultError":
 			return `no ${runtime} version matched the requested default "${error.defaultVersion}"`;
+		case "FreshnessError":
+			return `could not fetch live ${runtime} release data: ${String(error.cause)}`;
 	}
 };
 
@@ -35,7 +51,7 @@ const describeResolveError = (
  */
 const resolveRuntime = <R>(
 	runtime: Runtime,
-	resolve: Effect.Effect<ResolvedVersions, InvalidRangeError | NoMatchingVersionError | UnresolvableDefaultError, R>,
+	resolve: Effect.Effect<ResolvedVersions, ResolveError, R>,
 	layer: Layer.Layer<R>,
 ): Effect.Effect<ResolvedVersions, CliError.UserError> =>
 	resolve.pipe(
@@ -94,9 +110,9 @@ const tokenFlag = Flag.optional(
  * The selector is called once per run with the parsed `--offline` flag to pick
  * the layer set (live feeds, or the snapshot-only `.layerOffline`). Each
  * runtime's chosen layer is provided *inside* its flag-gated branch and nowhere
- * else, so an unrequested runtime's layer is never built — and, because the
- * kit's live `.layer` fetches its feed at acquisition, never touches the
- * network. Parameterizing the selector is also what lets tests inject
+ * else, so an unrequested runtime's layer — and the `GitHubClient` beneath a
+ * Bun or Deno one — is never built, and no feed it would have fetched is ever
+ * reached. Parameterizing the selector is also what lets tests inject
  * `.layerOffline` (or a tripwire that dies if built).
  */
 export const makeCli = (selectLayers: (offline: boolean) => ResolverLayers) =>

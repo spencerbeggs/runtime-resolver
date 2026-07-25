@@ -28,9 +28,11 @@ export const githubClientFor = (token: Option.Option<Redacted.Redacted<string>>)
  *
  * Node needs no token; Bun and Deno take the parsed `--token` because their
  * credential wiring depends on it. The layers are provided *inside* each
- * flag-gated branch of the handler, never merged — the kit's live `.layer`
- * fetches its release feed at acquisition, so building a runtime's layer is an
- * IO cost that must be paid only when that runtime was actually requested.
+ * flag-gated branch of the handler, never merged. The kit's live layers
+ * acquire lazily — the feed is fetched by the first `resolve`, not at
+ * acquisition — so the branch gating is what keeps a runtime nobody asked for
+ * out of the run: its resolver, its `GitHubClient`, and the feed fetch that
+ * would follow are all never reached.
  */
 export interface ResolverLayers {
 	readonly node: Layer.Layer<NodeResolver>;
@@ -39,8 +41,11 @@ export interface ResolverLayers {
 }
 
 /**
- * The live resolver layers: real feeds over `fetch`, with the kit's snapshot
- * fallback. Each is built only when its runtime's branch runs.
+ * The live resolver layers: the kit's `.layer` strategy, which tries the real
+ * feed over `fetch` on the first `resolve` and falls back to the bundled
+ * snapshot. Never `.layerFresh`, whose fetch-or-fail contract would turn an
+ * unreachable feed into a run-ending `FreshnessError`. Each is built only when
+ * its runtime's branch runs.
  */
 export const liveResolverLayers: ResolverLayers = {
 	node: NodeResolver.layer.pipe(Layer.provide(httpClient)),
