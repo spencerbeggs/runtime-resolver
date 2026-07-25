@@ -114,10 +114,11 @@ describe("cli", () => {
 		}),
 	);
 
-	// Regression: an unrequested runtime's layer must never be built. The kit's
-	// live `.layer` fetches its feed at acquisition, so building a Bun/Deno layer
-	// for a `--node`-only run is wasted IO (and burns the anon rate limit). These
-	// tripwire layers die if acquired, so the run fails should the gating regress.
+	// Regression: an unrequested runtime's layer must never be built. Building a
+	// Bun/Deno layer for a `--node`-only run drags in a `GitHubClient` nothing
+	// will call, and any later strategy that fetches at acquisition would burn
+	// the anon rate limit outright. These tripwire layers die if acquired, so the
+	// run fails should the gating regress.
 	it.effect("never builds resolver layers for unrequested runtimes", () =>
 		Effect.gen(function* () {
 			const tripwireCli = makeCli(() => ({

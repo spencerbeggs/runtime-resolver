@@ -44,7 +44,7 @@
 	},
 	"dependencies": {
 		"@effected/runtimes": "^0.2.0",
-		"@effected/semver": "~0.2.1",
+		"@effected/semver": "^0.2.1",
 		"effect": "catalog:effect"
 	},
 	"devDependencies": {
