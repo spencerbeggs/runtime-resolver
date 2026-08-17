@@ -43,13 +43,13 @@
 		"types:check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@effected/runtimes": "^0.3.0",
-		"@effected/semver": "^0.4.0",
+		"@effected/runtimes": "^0.4.0",
+		"@effected/semver": "^0.5.0",
 		"effect": "catalog:effect"
 	},
 	"devDependencies": {
 		"@effect/vitest": "catalog:effect",
-		"@savvy-web/bundler": "^2.1.12",
+		"@savvy-web/bundler": "^2.1.14",
 		"@types/node": "catalog:silk",
 		"tsx": "catalog:silk",
 		"typescript": "catalog:silk"
