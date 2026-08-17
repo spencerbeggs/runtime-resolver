@@ -1,5 +1,19 @@
 # runtime-resolver
 
+## 1.0.6
+
+### Dependencies
+
+* | Dependency         | Type       | Action  | From           | To           |                                                                            |
+  | ------------------ | ---------- | ------- | -------------- | ------------ | -------------------------------------------------------------------------- |
+  | @effected/runtimes | dependency | updated | ^0.3.0         | ^0.4.0       |                                                                            |
+  | @effected/semver   | dependency | updated | ^0.4.0         | ^0.5.0       |                                                                            |
+  | effect             | dependency | updated | 4.0.0-beta.107 | 4.0.0-rc.109 | [#148][#148] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
+
+### Patch Changes
+
+[#148]: https://github.com/spencerbeggs/runtime-resolver/pull/148
+
 ## 1.0.5
 
 ### Dependencies
