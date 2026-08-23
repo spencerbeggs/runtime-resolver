@@ -43,8 +43,8 @@
 		"types:check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@effected/runtimes": "^0.4.3",
-		"@effected/semver": "^0.5.0",
+		"@effected/runtimes": "catalog:effected",
+		"@effected/semver": "catalog:effected",
 		"effect": "catalog:effect"
 	},
 	"devDependencies": {

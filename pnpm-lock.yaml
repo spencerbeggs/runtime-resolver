@@ -41,6 +41,13 @@ catalogs:
     effect:
       specifier: 4.0.0-rc.109
       version: 4.0.0-rc.109
+  effected:
+    '@effected/runtimes':
+      specifier: ^0.4.3
+      version: 0.4.3
+    '@effected/semver':
+      specifier: ^0.5.0
+      version: 0.5.0
   silk:
     '@types/node':
       specifier: ^26.2.0
@@ -74,10 +81,10 @@ importers:
   package:
     dependencies:
       '@effected/runtimes':
-        specifier: ^0.4.3
+        specifier: catalog:effected
         version: 0.4.3(effect@4.0.0-rc.109)
       '@effected/semver':
-        specifier: ^0.5.0
+        specifier: catalog:effected
         version: 0.5.0(effect@4.0.0-rc.109)
       effect:
         specifier: catalog:effect
