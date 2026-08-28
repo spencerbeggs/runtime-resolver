@@ -1,11 +1,27 @@
 # runtime-resolver
 
+## 1.0.9
+
+### Dependencies
+
+| Dependency | Type | Action | From | To |
+| --- | --- | --- | --- | --- |
+| @effected/runtimes | dependency | updated | ^0.4.3 | ^0.4.4 |
+
+[#183][#183]
+
+### Thanks
+
+Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contributions!
+
+[#183]: https://github.com/spencerbeggs/runtime-resolver/pull/183
+
 ## 1.0.8
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From   | To     |                                                                            |
-  | ------------------ | ---------- | ------- | ------ | ------ | -------------------------------------------------------------------------- |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.4.2 | ^0.4.3 | [#155][#155] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
@@ -16,8 +32,8 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From   | To     |                                                                            |
-  | ------------------ | ---------- | ------- | ------ | ------ | -------------------------------------------------------------------------- |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.4.0 | ^0.4.2 | [#152][#152] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
@@ -28,11 +44,11 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From           | To           |                                                                            |
-  | ------------------ | ---------- | ------- | -------------- | ------------ | -------------------------------------------------------------------------- |
-  | @effected/runtimes | dependency | updated | ^0.3.0         | ^0.4.0       |                                                                            |
-  | @effected/semver   | dependency | updated | ^0.4.0         | ^0.5.0       |                                                                            |
-  | effect             | dependency | updated | 4.0.0-beta.107 | 4.0.0-rc.109 | [#148][#148] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
+  | @effected/runtimes | dependency | updated | ^0.3.0 | ^0.4.0 |  |
+  | @effected/semver | dependency | updated | ^0.4.0 | ^0.5.0 |  |
+  | effect | dependency | updated | 4.0.0-beta.107 | 4.0.0-rc.109 | [#148][#148] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
 
@@ -42,11 +58,11 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From           | To             |                                                                            |
-  | ------------------ | ---------- | ------- | -------------- | -------------- | -------------------------------------------------------------------------- |
-  | @effected/runtimes | dependency | updated | ^0.2.7         | ^0.3.0         |                                                                            |
-  | @effected/semver   | dependency | updated | ^0.3.2         | ^0.4.0         |                                                                            |
-  | effect             | dependency | updated | 4.0.0-beta.101 | 4.0.0-beta.107 | [#140][#140] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
+  | @effected/runtimes | dependency | updated | ^0.2.7 | ^0.3.0 |  |
+  | @effected/semver | dependency | updated | ^0.3.2 | ^0.4.0 |  |
+  | effect | dependency | updated | 4.0.0-beta.101 | 4.0.0-beta.107 | [#140][#140] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
 
@@ -56,10 +72,10 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From   | To     |                                                                            |
-  | ------------------ | ---------- | ------- | ------ | ------ | -------------------------------------------------------------------------- |
-  | @effected/runtimes | dependency | updated | ^0.2.3 | ^0.2.7 |                                                                            |
-  | @effected/semver   | dependency | updated | ^0.3.1 | ^0.3.2 | [#138][#138] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
+  | @effected/runtimes | dependency | updated | ^0.2.3 | ^0.2.7 |  |
+  | @effected/semver | dependency | updated | ^0.3.1 | ^0.3.2 | [#138][#138] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
 
@@ -69,10 +85,10 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From   | To     |                                                                            |
-  | ------------------ | ---------- | ------- | ------ | ------ | -------------------------------------------------------------------------- |
-  | @effected/runtimes | dependency | updated | ^0.2.0 | ^0.2.3 |                                                                            |
-  | @effected/semver   | dependency | updated | ^0.2.1 | ^0.3.1 | [#136][#136] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
+  | @effected/runtimes | dependency | updated | ^0.2.0 | ^0.2.3 |  |
+  | @effected/semver | dependency | updated | ^0.2.1 | ^0.3.1 | [#136][#136] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
 
@@ -82,8 +98,8 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From   | To     |                                                                            |
-  | ------------------ | ---------- | ------- | ------ | ------ | -------------------------------------------------------------------------- |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.1.5 | ^0.2.0 | [#131][#131] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
@@ -94,11 +110,11 @@
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From          | To             |                                                                            |
-  | ------------------ | ---------- | ------- | ------------- | -------------- | -------------------------------------------------------------------------- |
-  | @effected/runtimes | dependency | updated | ^0.1.4        | ^0.1.5         |                                                                            |
-  | @effected/semver   | dependency | updated | \~0.2.0       | \~0.2.1        |                                                                            |
-  | effect             | dependency | updated | 4.0.0-beta.99 | 4.0.0-beta.101 | [#129][#129] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
+  | @effected/runtimes | dependency | updated | ^0.1.4 | ^0.1.5 |  |
+  | @effected/semver | dependency | updated | \~0.2.0 | \~0.2.1 |  |
+  | effect | dependency | updated | 4.0.0-beta.99 | 4.0.0-beta.101 | [#129][#129] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
 
@@ -108,38 +124,31 @@
 
 ### Breaking Changes
 
-* `runtime-resolver` is now a **CLI-only** package. The library API is removed entirely — there is no longer anything to `import` from this package:
-
-  * `resolveNode`, `resolveBun`, and `resolveDeno` Promise-based functions are gone.
-  * Every Effect service, layer, and error export is gone (`NodeResolver`, `BunResolver`, `DenoResolver`, `*CacheLive`, `*FetcherLive`, `GitHubClient`, `AuthenticationError`, `CacheError`, `FreshnessError`, `InvalidInputError`, `NetworkError`, `ParseError`, `RateLimitError`, `VersionNotFoundError`, and related schemas/types).
-  * `effect`, `@effect/cli`, `@effect/platform`, and `@effect/platform-node` are no longer peer dependencies — there is nothing left to compose against.
+- `runtime-resolver` is now a **CLI-only** package. The library API is removed entirely — there is no longer anything to `import` from this package:
+  - `resolveNode`, `resolveBun`, and `resolveDeno` Promise-based functions are gone.
+  - Every Effect service, layer, and error export is gone (`NodeResolver`, `BunResolver`, `DenoResolver`, `*CacheLive`, `*FetcherLive`, `GitHubClient`, `AuthenticationError`, `CacheError`, `FreshnessError`, `InvalidInputError`, `NetworkError`, `ParseError`, `RateLimitError`, `VersionNotFoundError`, and related schemas/types).
+  - `effect`, `@effect/cli`, `@effect/platform`, and `@effect/platform-node` are no longer peer dependencies — there is nothing left to compose against.
 
   Resolution logic now comes entirely from the `@effected/runtimes` kit, and the CLI is rewritten on core `effect/unstable/cli` (`effect` moves to the v4 beta).
-
   ### CLI output and exit codes
-
   The CLI no longer wraps results in a response envelope:
-
-  * The `--schema` flag, the `$schema` response field, and the published JSON Schema are removed.
-  * Output is now the kit-native `ResolvedVersions` JSON — a single result object when one runtime is requested, or an object keyed by runtime name when several are requested — written directly to stdout with no `ok`/`results` wrapper.
-  * The CLI now exits non-zero on usage errors and resolution failures instead of always exiting `0` with the error encoded in the JSON body.
+  - The `--schema` flag, the `$schema` response field, and the published JSON Schema are removed.
+  - Output is now the kit-native `ResolvedVersions` JSON — a single result object when one runtime is requested, or an object keyed by runtime name when several are requested — written directly to stdout with no `ok`/`results` wrapper.
+  - The CLI now exits non-zero on usage errors and resolution failures instead of always exiting `0` with the error encoded in the JSON body.
 
   ### Authentication
-
   GitHub App authentication is removed. The `--app-id`, `--app-private-key`, and `--app-installation-id` flags are gone — `--token` (or the `GITHUB_PERSONAL_ACCESS_TOKEN`/`GITHUB_TOKEN` environment variables) is now the only supported authentication method.
-
   ### Migration
-
   Replace any library usage (`resolveNode`/`resolveBun`/`resolveDeno` or direct service/layer composition) with the `runtime-resolver` CLI, or depend on `@effected/runtimes` directly for programmatic access. Replace `--app-id`/`--app-private-key`/`--app-installation-id` authentication with a `--token` personal access token. Replace `--schema`-based validation with the shape documented in the CLI reference, since there is no longer a published JSON Schema.
 
 ### Features
 
-* `--offline` flag forces snapshot-only resolution: no network requests are made, and results carry `source: "cache"`. [#126][#126]
+- `--offline` flag forces snapshot-only resolution: no network requests are made, and results carry `source: "cache"`. [#126][#126]
 
 ### Dependencies
 
-* | Dependency         | Type       | Action  | From   | To     |                                                                            |
-  | ------------------ | ---------- | ------- | ------ | ------ | -------------------------------------------------------------------------- |
+- | Dependency | Type | Action | From | To |  |
+  | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.1.3 | ^0.1.4 | [#128][#128] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
 ### Patch Changes
@@ -154,7 +163,7 @@ Thanks to [@spencerbeggs](https://github.com/spencerbeggs) for their contributio
 
 ### Other
 
-* Updated bundled runtime version defaults [#115][#115]
+- Updated bundled runtime version defaults [#115][#115]
 
 ### Patch Changes
 
@@ -166,145 +175,145 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
 
 ### Other
 
-* Updated bundled runtime version defaults
+- Updated bundled runtime version defaults
 
 ## 0.3.20
 
 ### Dependencies
 
-* [`68bb7b4`](https://github.com/spencerbeggs/runtime-resolver/commit/68bb7b4e4625014f85656cd8fa55f404512ea75f) | Dependency | Type | Action | From | To |
-  \| ------------- | ---------- | ------- | ------ | ------ |
-  \| semver-effect | dependency | updated | ^0.2.1 | ^0.3.0 |
+- [`68bb7b4`](https://github.com/spencerbeggs/runtime-resolver/commit/68bb7b4e4625014f85656cd8fa55f404512ea75f) \| Dependency \| Type \| Action \| From \| To \|
+  \| ------------- \| ---------- \| ------- \| ------ \| ------ \|
+  \| semver-effect \| dependency \| updated \| ^0.2.1 \| ^0.3.0 \|
 
 ## 0.3.19
 
 ### Other
 
-* [`4acea9b`](https://github.com/spencerbeggs/runtime-resolver/commit/4acea9b7f49ddee4b32ffde976fac90752e14e2f) Updated bundled runtime version defaults
+- [`4acea9b`](https://github.com/spencerbeggs/runtime-resolver/commit/4acea9b7f49ddee4b32ffde976fac90752e14e2f) Updated bundled runtime version defaults
 
 ## 0.3.18
 
 ### Other
 
-* [`7ad7f83`](https://github.com/spencerbeggs/runtime-resolver/commit/7ad7f8320177072149a056b7517565588b281654) Updated bundled runtime version defaults
+- [`7ad7f83`](https://github.com/spencerbeggs/runtime-resolver/commit/7ad7f8320177072149a056b7517565588b281654) Updated bundled runtime version defaults
 
 ## 0.3.17
 
 ### Other
 
-* [`76973a0`](https://github.com/spencerbeggs/runtime-resolver/commit/76973a0978bac932d5d28169fa3705f6695e501e) Updated bundled runtime version defaults
+- [`76973a0`](https://github.com/spencerbeggs/runtime-resolver/commit/76973a0978bac932d5d28169fa3705f6695e501e) Updated bundled runtime version defaults
 
 ## 0.3.16
 
 ### Dependencies
 
-* | [`d03b7a3`](https://github.com/spencerbeggs/runtime-resolver/commit/d03b7a3a33427681f4ba23d857aa08d1ee95eb3e) | Dependency    | Type    | Action | From   | To |
-  | :------------------------------------------------------------------------------------------------------------ | :------------ | :------ | :----- | :----- | -- |
-  | @effect/platform                                                                                              | dependency    | updated | 0.96.1 | 0.96.2 |    |
-  | effect                                                                                                        | dependency    | updated | 3.21.3 | 3.21.4 |    |
-  | @savvy-web/bundler                                                                                            | devDependency | updated | ^0.6.0 | ^0.8.0 |    |
-  | @savvy-web/silk                                                                                               | devDependency | updated | ^1.1.2 | ^1.2.0 |    |
+- | [`d03b7a3`](https://github.com/spencerbeggs/runtime-resolver/commit/d03b7a3a33427681f4ba23d857aa08d1ee95eb3e) | Dependency | Type | Action | From | To |
+  | :-- | :-- | :-- | :-- | :-- | --- |
+  | @effect/platform | dependency | updated | 0.96.1 | 0.96.2 |  |
+  | effect | dependency | updated | 3.21.3 | 3.21.4 |  |
+  | @savvy-web/bundler | devDependency | updated | ^0.6.0 | ^0.8.0 |  |
+  | @savvy-web/silk | devDependency | updated | ^1.1.2 | ^1.2.0 |  |
 
 ## 0.3.15
 
 ### Other
 
-* [`51ed552`](https://github.com/spencerbeggs/runtime-resolver/commit/51ed552469a5e94ef8139dec6b5ec1e67b42883e) Updated bundled runtime version defaults
+- [`51ed552`](https://github.com/spencerbeggs/runtime-resolver/commit/51ed552469a5e94ef8139dec6b5ec1e67b42883e) Updated bundled runtime version defaults
 
 ## 0.3.14
 
 ### Other
 
-* [`32361a5`](https://github.com/spencerbeggs/runtime-resolver/commit/32361a5587f8a5f532c8fef6e486814e9ca0511b) Updated bundled runtime version defaults
+- [`32361a5`](https://github.com/spencerbeggs/runtime-resolver/commit/32361a5587f8a5f532c8fef6e486814e9ca0511b) Updated bundled runtime version defaults
 
 ## 0.3.13
 
 ### Other
 
-* [`d46e94b`](https://github.com/spencerbeggs/runtime-resolver/commit/d46e94b0fd8235d4e5a3b29188050d9cfe981350) Updated bundled runtime version defaults
+- [`d46e94b`](https://github.com/spencerbeggs/runtime-resolver/commit/d46e94b0fd8235d4e5a3b29188050d9cfe981350) Updated bundled runtime version defaults
 
 ## 0.3.12
 
 ### Other
 
-* [`7f2ad4b`](https://github.com/spencerbeggs/runtime-resolver/commit/7f2ad4b3415134a9450e6d346d6df706316771c9) Updated bundled runtime version defaults
+- [`7f2ad4b`](https://github.com/spencerbeggs/runtime-resolver/commit/7f2ad4b3415134a9450e6d346d6df706316771c9) Updated bundled runtime version defaults
 
 ## 0.3.11
 
 ### Other
 
-* [`cc001c5`](https://github.com/spencerbeggs/runtime-resolver/commit/cc001c571261428a017d730d3469be4f4e23bd11) Updated bundled runtime version defaults
+- [`cc001c5`](https://github.com/spencerbeggs/runtime-resolver/commit/cc001c571261428a017d730d3469be4f4e23bd11) Updated bundled runtime version defaults
 
 ## 0.3.10
 
 ### Other
 
-* [`eb17114`](https://github.com/spencerbeggs/runtime-resolver/commit/eb171144560832bc0fe5ec59ec35e3364abdd558) Updated bundled runtime version defaults
+- [`eb17114`](https://github.com/spencerbeggs/runtime-resolver/commit/eb171144560832bc0fe5ec59ec35e3364abdd558) Updated bundled runtime version defaults
 
 ## 0.3.9
 
 ### Other
 
-* [`dc07d31`](https://github.com/spencerbeggs/runtime-resolver/commit/dc07d3135899cbddcf110fbd98eb2f0b5c2b48fb) Updated bundled runtime version defaults
+- [`dc07d31`](https://github.com/spencerbeggs/runtime-resolver/commit/dc07d3135899cbddcf110fbd98eb2f0b5c2b48fb) Updated bundled runtime version defaults
 
 ## 0.3.8
 
 ### Other
 
-* [`f5c9d30`](https://github.com/spencerbeggs/runtime-resolver/commit/f5c9d30023418d54c897af5ad407189eb2ecd7b9) Updated bundled runtime version defaults
+- [`f5c9d30`](https://github.com/spencerbeggs/runtime-resolver/commit/f5c9d30023418d54c897af5ad407189eb2ecd7b9) Updated bundled runtime version defaults
 
 ## 0.3.7
 
 ### Other
 
-* [`ac72f01`](https://github.com/spencerbeggs/runtime-resolver/commit/ac72f019a155bdd6a7b7e3e50dd68e1173f4f3a4) Updated bundled runtime version defaults
+- [`ac72f01`](https://github.com/spencerbeggs/runtime-resolver/commit/ac72f019a155bdd6a7b7e3e50dd68e1173f4f3a4) Updated bundled runtime version defaults
 
 ## 0.3.6
 
 ### Other
 
-* [`5bebe0d`](https://github.com/spencerbeggs/runtime-resolver/commit/5bebe0d5243487bf9294275683cb94ba6e8af9f1) Updated bundled runtime version defaults
+- [`5bebe0d`](https://github.com/spencerbeggs/runtime-resolver/commit/5bebe0d5243487bf9294275683cb94ba6e8af9f1) Updated bundled runtime version defaults
 
 ## 0.3.5
 
 ### Other
 
-* [`f44d3e4`](https://github.com/spencerbeggs/runtime-resolver/commit/f44d3e44fe550b19e1e1a4e6fbb39f00096cea38) Updated bundled runtime version defaults
+- [`f44d3e4`](https://github.com/spencerbeggs/runtime-resolver/commit/f44d3e44fe550b19e1e1a4e6fbb39f00096cea38) Updated bundled runtime version defaults
 
 ## 0.3.4
 
 ### Other
 
-* [`d986d5a`](https://github.com/spencerbeggs/runtime-resolver/commit/d986d5a431ff87b1ca095edb74a7912aa0f044a3) Updated bundled runtime version defaults
+- [`d986d5a`](https://github.com/spencerbeggs/runtime-resolver/commit/d986d5a431ff87b1ca095edb74a7912aa0f044a3) Updated bundled runtime version defaults
 
 ## 0.3.3
 
 ### Other
 
-* [`968e580`](https://github.com/spencerbeggs/runtime-resolver/commit/968e580685a0fc67ead8bb29d55f5fb599b51d0b) Moved Effect packages from dependencies to peer dependencies for better deduplication in library consumers
+- [`968e580`](https://github.com/spencerbeggs/runtime-resolver/commit/968e580685a0fc67ead8bb29d55f5fb599b51d0b) Moved Effect packages from dependencies to peer dependencies for better deduplication in library consumers
 
 ## 0.3.2
 
 ### Other
 
-* [`15e527b`](https://github.com/spencerbeggs/runtime-resolver/commit/15e527be600156b9de9d175d2d7eb8bde46eeb40) Updated bundled runtime version defaults
+- [`15e527b`](https://github.com/spencerbeggs/runtime-resolver/commit/15e527be600156b9de9d175d2d7eb8bde46eeb40) Updated bundled runtime version defaults
 
 ## 0.3.1
 
 ### Other
 
-* [`01eda34`](https://github.com/spencerbeggs/runtime-resolver/commit/01eda344598d85ff8533da21ebbc0b41bcb19282) Aligns with new test harness
+- [`01eda34`](https://github.com/spencerbeggs/runtime-resolver/commit/01eda344598d85ff8533da21ebbc0b41bcb19282) Aligns with new test harness
 
 ## 0.3.0
 
 ### Features
 
-* [`9098215`](https://github.com/spencerbeggs/runtime-resolver/commit/90982157860fbd26a4fdb53bf9c16732e278f513) Migrate to modern Effect patterns and semver-effect 0.2.0 API.
+- [`9098215`](https://github.com/spencerbeggs/runtime-resolver/commit/90982157860fbd26a4fdb53bf9c16732e278f513) Migrate to modern Effect patterns and semver-effect 0.2.0 API.
 
-- Upgrade semver-effect to 0.2.0 (`SemVer.parse`, `Range.parse`, flat `SemVer` type)
-- Migrate all 12 services from deprecated `Context.GenericTag` to class-based `Context.Tag`
-- Remove `*Base` workaround exports for api-extractor (now suppressed by builder)
-- Inline `Data.TaggedError` and `Data.TaggedClass` directly in error/schema classes
+* Upgrade semver-effect to 0.2.0 (`SemVer.parse`, `Range.parse`, flat `SemVer` type)
+* Migrate all 12 services from deprecated `Context.GenericTag` to class-based `Context.Tag`
+* Remove `*Base` workaround exports for api-extractor (now suppressed by builder)
+* Inline `Data.TaggedError` and `Data.TaggedClass` directly in error/schema classes
 
 Resolves #5.
 
@@ -312,45 +321,45 @@ Resolves #5.
 
 ### Minor Changes
 
-* [`e584b86`](https://github.com/spencerbeggs/runtime-resolver/commit/e584b869c6c03928aaec4b302984b5d5f6a7fc61) Rewrite domain model with Effect architecture using semver-effect
+- [`e584b86`](https://github.com/spencerbeggs/runtime-resolver/commit/e584b869c6c03928aaec4b302984b5d5f6a7fc61) Rewrite domain model with Effect architecture using semver-effect
 
-* Add typed domain classes: NodeRelease, BunRelease, DenoRelease, NodeSchedule
+- Add typed domain classes: NodeRelease, BunRelease, DenoRelease, NodeSchedule
 
-* Add runtime-specific cache services: NodeReleaseCache, BunReleaseCache, DenoReleaseCache
+- Add runtime-specific cache services: NodeReleaseCache, BunReleaseCache, DenoReleaseCache
 
-* Add fetcher services: NodeVersionFetcher, NodeScheduleFetcher, BunVersionFetcher, DenoVersionFetcher
+- Add fetcher services: NodeVersionFetcher, NodeScheduleFetcher, BunVersionFetcher, DenoVersionFetcher
 
-* Add freshness as a Layer concern with Auto/Fresh/Offline cache variants per runtime
+- Add freshness as a Layer concern with Auto/Fresh/Offline cache variants per runtime
 
-* Remove freshness option from resolver APIs and CLI
+- Remove freshness option from resolver APIs and CLI
 
-* Remove resolveVersion method from all resolvers
+- Remove resolveVersion method from all resolvers
 
-* Remove VersionCache/VersionCacheLive in favor of runtime-specific caches backed by semver-effect
+- Remove VersionCache/VersionCacheLive in favor of runtime-specific caches backed by semver-effect
 
-* Simplify resolver error unions to VersionNotFoundError
+- Simplify resolver error unions to VersionNotFoundError
 
-* Add daily GitHub Actions workflow for updating bundled defaults
+- Add daily GitHub Actions workflow for updating bundled defaults
 
 ## 0.1.0
 
 ### Minor Changes
 
-* [`6ee3439`](https://github.com/spencerbeggs/runtime-resolver/commit/6ee3439a91898ceb870550aeece75d2474c3434b) feat: initial release of runtime-resolver
+- [`6ee3439`](https://github.com/spencerbeggs/runtime-resolver/commit/6ee3439a91898ceb870550aeece75d2474c3434b) feat: initial release of runtime-resolver
 
 Resolve semver-compatible versions of Node.js, Bun, and Deno runtimes from
 GitHub release and tag data. Supports both a Promise-based API for quick
 integration and a full Effect service/layer architecture for advanced
 composition.
 
-* Promise API: `resolveNode()`, `resolveBun()`, `resolveDeno()` with automatic
+- Promise API: `resolveNode()`, `resolveBun()`, `resolveDeno()` with automatic
   GitHub authentication via environment variables
-* Effect services: `NodeResolver`, `BunResolver`, `DenoResolver` with
+- Effect services: `NodeResolver`, `BunResolver`, `DenoResolver` with
   composable layers for authentication, caching, and GitHub client
-* CLI: `runtime-resolver` command with `--node`, `--bun`, `--deno` flags and
+- CLI: `runtime-resolver` command with `--node`, `--bun`, `--deno` flags and
   JSON output
-* GitHub App and personal access token authentication strategies
-* Build-time version cache with automatic offline fallback
-* Node.js release schedule awareness (current, active-lts, maintenance-lts)
-* Configurable version increments (latest, minor, patch) and freshness
+- GitHub App and personal access token authentication strategies
+- Build-time version cache with automatic offline fallback
+- Node.js release schedule awareness (current, active-lts, maintenance-lts)
+- Configurable version increments (latest, minor, patch) and freshness
   (auto, api, cache)
