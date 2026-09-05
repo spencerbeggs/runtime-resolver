@@ -6,23 +6,23 @@ importers:
   .:
     configDependencies:
       '@effected/pnpm-plugin-effect':
-        specifier: 0.6.17
-        version: 0.6.17
+        specifier: 0.6.18
+        version: 0.6.18
       '@savvy-web/pnpm-plugin-silk':
         specifier: 0.31.2
         version: 0.31.2
 
 packages:
 
-  '@effected/pnpm-plugin-effect@0.6.17':
-    resolution: {integrity: sha512-Cdsq0OKrgeJ9oTjW7l1xkYi14aIP4setQSXUa6JQnPEDWLoXGjh7qlvx+eT/kgIt6ySQ625W77gkEcvZiI6jpg==}
+  '@effected/pnpm-plugin-effect@0.6.18':
+    resolution: {integrity: sha512-kD4X5TIieYIaYMn24HaOzcpC8XwDgW988zSTdtX+nak3jIYKL5xK6lUT0r9HKR63BCVnTs1IIt75/p+KSQPmBg==}
 
   '@savvy-web/pnpm-plugin-silk@0.31.2':
     resolution: {integrity: sha512-/rvfiPgmIetajN84lJuWVGLPDIW3uRq4xl37fjTw/JIZIV/7EXVg1L6O3KyZZgSbGXqIevhDpipJLrA4e6hhFg==}
 
 snapshots:
 
-  '@effected/pnpm-plugin-effect@0.6.17': {}
+  '@effected/pnpm-plugin-effect@0.6.18': {}
 
   '@savvy-web/pnpm-plugin-silk@0.31.2': {}
 
@@ -43,8 +43,8 @@ catalogs:
       version: 4.0.0-rc.109
   effected:
     '@effected/runtimes':
-      specifier: ^0.4.5
-      version: 0.4.5
+      specifier: ^0.4.6
+      version: 0.4.6
     '@effected/semver':
       specifier: ^0.5.0
       version: 0.5.0
@@ -62,7 +62,7 @@ catalogs:
 overrides:
   '@microsoft/api-extractor>typescript': ^6.0.3
 
-pnpmfileChecksum: sha256-voDMKbdDX2ewZfuBzXEXgvnDZoVPIBSn4LUXWnomB2g=
+pnpmfileChecksum: sha256-K7iMi/k+Gu1KPlI86ksK4k1rJfO6+dZANw3Udu8nq9s=
 
 importers:
 
@@ -82,7 +82,7 @@ importers:
     dependencies:
       '@effected/runtimes':
         specifier: catalog:effected
-        version: 0.4.5(effect@4.0.0-rc.109)
+        version: 0.4.6(effect@4.0.0-rc.109)
       '@effected/semver':
         specifier: catalog:effected
         version: 0.5.0(effect@4.0.0-rc.109)
@@ -449,8 +449,8 @@ packages:
     peerDependencies:
       effect: 4.0.0-rc.109
 
-  '@effected/runtimes@0.4.5':
-    resolution: {integrity: sha512-0HvgTFo3j2x6pkvsRGlXo6HnhBi/JaY+D9AEqj+lDBe7mmVggJ9Nz1OLmc5d4/RNxY/9eRS+bzMw1HHgtom/UA==}
+  '@effected/runtimes@0.4.6':
+    resolution: {integrity: sha512-IbQEXNxMFQ7TxW/RE4YaNvLYxo/CUmTi0sAel8M7p+QiXGKwWfT24b6VU4pFqAFvXqyYc/lI7XksdXDLuqApDQ==}
     engines: {node: '>=24.11.0'}
     peerDependencies:
       effect: 4.0.0-rc.109
@@ -1599,8 +1599,8 @@ packages:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
 
-  baseline-browser-mapping@2.11.20:
-    resolution: {integrity: sha512-H0ulySigv6icDJ1F7SjtdCD6PrhTpdYCmP0CactWy1+ekh0AFd0o1Wn5T8b+hnTmdBx19u9yhL6wvCylXMY7zw==}
+  baseline-browser-mapping@2.11.21:
+    resolution: {integrity: sha512-uh8vpY/1/YyFkunIDFH/12p7/7VdPKA1hejMVEbdkEaWnUz0Hesvx5EbiU6XxjyHZIOju+ZMbQJkRh+es3/spQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -1816,8 +1816,8 @@ packages:
   effect@4.0.0-rc.109:
     resolution: {integrity: sha512-6ubcOCtfdbmFO5+vgcT2HsTw5s+n3aMUj4eAIbVpUxP7+VYCwXxxcBHgiWgizOrGO1eGmuOBFek3mM0dFcwaWA==}
 
-  electron-to-chromium@1.5.420:
-    resolution: {integrity: sha512-2yD6XreGusOfNV+dUcvipJEXc3n/n7fgr7996aszTG+YY5E4mqM4tOq/3uhP129cazL9YHbVWSpc79ePotWtPA==}
+  electron-to-chromium@1.5.421:
+    resolution: {integrity: sha512-cUhfpHQy+PGbt+X90DMcAVazDCziIZr73hpxD4LRs4BGQoJCifPzTfQWa7S6c+uhokTOBe8tot09GBSEO6c9LA==}
 
   emoji-regex@10.6.0:
     resolution: {integrity: sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==}
@@ -2642,8 +2642,8 @@ packages:
     resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
     engines: {node: '>=16.20.0'}
 
-  postcss@8.5.26:
-    resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
+  postcss@8.5.28:
+    resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
 
   proxy-addr@2.0.7:
@@ -2905,8 +2905,8 @@ packages:
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
-  tinyexec@1.3.0:
-    resolution: {integrity: sha512-QKAl9m8gWWGHV8jZcPeym6j+XULi6tOf1mT83WYJ4Lk2ytW/uwAWkrP0uFsdoYMdueVJ0qs26wZ+23xeB4ibNQ==}
+  tinyexec@1.3.1:
+    resolution: {integrity: sha512-GCvB3aoys96IuDFBMcTB46JOR6mdMtAToqwiW8JlWhsoh1mhHi/xn9ss/Dg7N555GiJyEt2qzoG/NHCwM6h1EA==}
     engines: {node: '>=18'}
 
   tinyglobby@0.2.17:
@@ -3374,7 +3374,7 @@ snapshots:
       launch-editor: 2.14.1
       package-manager-detector: 1.8.0
       semver: 7.8.5
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
 
   '@changesets/config@4.0.0':
     dependencies:
@@ -3389,7 +3389,7 @@ snapshots:
   '@changesets/format@0.1.2':
     dependencies:
       package-manager-detector: 1.8.0
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
 
   '@changesets/get-dependents-graph@3.0.0':
     dependencies:
@@ -3415,7 +3415,7 @@ snapshots:
       '@changesets/types': 7.0.0
       '@manypkg/get-packages': 3.1.0
       picomatch: 4.0.7
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
 
   '@changesets/parse@1.0.0':
     dependencies:
@@ -3466,7 +3466,7 @@ snapshots:
       '@commitlint/load': 21.2.2(@types/node@26.4.1)(typescript@7.0.2)
       '@commitlint/read': 21.2.1(conventional-commits-parser@7.1.2)
       '@commitlint/types': 21.2.0
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
       yargs: 18.1.0
     transitivePeerDependencies:
       - '@types/node'
@@ -3536,7 +3536,7 @@ snapshots:
       '@commitlint/top-level': 21.2.0
       '@commitlint/types': 21.2.0
       '@conventional-changelog/git-client': 3.1.2(conventional-commits-parser@7.1.2)
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
     transitivePeerDependencies:
       - conventional-commits-filter
       - conventional-commits-parser
@@ -3664,7 +3664,7 @@ snapshots:
       '@effected/spdx': 0.5.0(effect@4.0.0-rc.109)
       effect: 4.0.0-rc.109
 
-  '@effected/runtimes@0.4.5(effect@4.0.0-rc.109)':
+  '@effected/runtimes@0.4.6(effect@4.0.0-rc.109)':
     dependencies:
       '@effected/semver': 0.5.0(effect@4.0.0-rc.109)
       effect: 4.0.0-rc.109
@@ -4264,7 +4264,7 @@ snapshots:
   '@tsdown/exe@0.22.14(tsdown@0.22.14)':
     dependencies:
       obug: 2.1.4
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
       tsdown: 0.22.14(@tsdown/exe@0.22.14)(tsx@4.23.13)(typescript@7.0.2)
       verkit: 0.3.2
 
@@ -4729,7 +4729,7 @@ snapshots:
 
   balanced-match@4.0.4: {}
 
-  baseline-browser-mapping@2.11.20: {}
+  baseline-browser-mapping@2.11.21: {}
 
   body-parser@2.3.0(supports-color@8.1.1):
     dependencies:
@@ -4755,9 +4755,9 @@ snapshots:
 
   browserslist@4.28.8:
     dependencies:
-      baseline-browser-mapping: 2.11.20
+      baseline-browser-mapping: 2.11.21
       caniuse-lite: 1.0.30001810
-      electron-to-chromium: 1.5.420
+      electron-to-chromium: 1.5.421
       node-releases: 2.0.54
       update-browserslist-db: 1.3.2(browserslist@4.28.8)
 
@@ -4916,7 +4916,7 @@ snapshots:
       fast-check: 4.9.0
       msgpackr: 2.1.0
 
-  electron-to-chromium@1.5.420: {}
+  electron-to-chromium@1.5.421: {}
 
   emoji-regex@10.6.0: {}
 
@@ -5398,7 +5398,7 @@ snapshots:
     dependencies:
       picomatch: 4.0.7
       string-argv: 0.3.2
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
     optionalDependencies:
       yaml: 2.9.0
 
@@ -5914,7 +5914,7 @@ snapshots:
 
   pkce-challenge@5.0.1: {}
 
-  postcss@8.5.26:
+  postcss@8.5.28:
     dependencies:
       nanoid: 3.3.18
       picocolors: 1.1.1
@@ -6218,7 +6218,7 @@ snapshots:
 
   tinybench@2.9.0: {}
 
-  tinyexec@1.3.0: {}
+  tinyexec@1.3.1: {}
 
   tinyglobby@0.2.17:
     dependencies:
@@ -6249,7 +6249,7 @@ snapshots:
       picomatch: 4.0.7
       rolldown: 1.2.7
       rolldown-plugin-dts: 0.27.14(rolldown@1.2.7)(typescript@6.0.3)
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
       tinyglobby: 0.2.17
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
@@ -6276,7 +6276,7 @@ snapshots:
       picomatch: 4.0.7
       rolldown: 1.2.7
       rolldown-plugin-dts: 0.27.14(rolldown@1.2.7)(typescript@7.0.2)
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
       tinyglobby: 0.2.17
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
@@ -6418,7 +6418,7 @@ snapshots:
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
-      postcss: 8.5.26
+      postcss: 8.5.28
       rolldown: 1.2.7
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -6446,7 +6446,7 @@ snapshots:
       picomatch: 4.0.7
       std-env: 4.2.0
       tinybench: 2.9.0
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
       vite: 8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.6.1)(tsx@4.23.13)(yaml@2.9.0)
