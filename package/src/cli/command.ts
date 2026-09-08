@@ -96,9 +96,11 @@ const nodeDateFlag = Flag.optional(
 );
 const prettyFlag = Flag.boolean("pretty").pipe(
 	Flag.withDescription("Pretty-print the JSON output with 2-space indentation"),
+	Flag.withDefault(false),
 );
 const offlineFlag = Flag.boolean("offline").pipe(
 	Flag.withDescription("Resolve from the bundled snapshot only; make no network requests"),
+	Flag.withDefault(false),
 );
 const tokenFlag = Flag.optional(
 	Flag.redacted("token").pipe(Flag.withDescription("GitHub personal access token used for Bun and Deno lookups")),
