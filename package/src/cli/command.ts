@@ -64,46 +64,46 @@ const usageError = (message: string): Effect.Effect<never, CliError.UserError> =
 	Effect.fail(new CliError.UserError({ cause: message }));
 
 const nodeFlag = Flag.optional(
-	Flag.string("node").pipe(Flag.withDescription("Resolve Node.js versions for this semver range")),
+	Flag.String("node").pipe(Flag.withDescription("Resolve Node.js versions for this semver range")),
 );
 const bunFlag = Flag.optional(
-	Flag.string("bun").pipe(Flag.withDescription("Resolve Bun versions for this semver range")),
+	Flag.String("bun").pipe(Flag.withDescription("Resolve Bun versions for this semver range")),
 );
 const denoFlag = Flag.optional(
-	Flag.string("deno").pipe(Flag.withDescription("Resolve Deno versions for this semver range")),
+	Flag.String("deno").pipe(Flag.withDescription("Resolve Deno versions for this semver range")),
 );
 const nodePhasesFlag = Flag.optional(
-	Flag.string("node-phases").pipe(
+	Flag.String("node-phases").pipe(
 		Flag.withDescription(`Comma-separated Node lifecycle phases (${NODE_PHASES.join(", ")})`),
 	),
 );
 const incrementsFlag = Flag.optional(
-	Flag.choice("increments", ["latest", "minor", "patch"]).pipe(
+	Flag.Literals("increments", ["latest", "minor", "patch"]).pipe(
 		Flag.withDescription("Grouping granularity applied to every requested runtime"),
 	),
 );
 const nodeDefaultFlag = Flag.optional(
-	Flag.string("node-default").pipe(Flag.withDescription("Range whose newest Node match becomes the `default` field")),
+	Flag.String("node-default").pipe(Flag.withDescription("Range whose newest Node match becomes the `default` field")),
 );
 const bunDefaultFlag = Flag.optional(
-	Flag.string("bun-default").pipe(Flag.withDescription("Range whose newest Bun match becomes the `default` field")),
+	Flag.String("bun-default").pipe(Flag.withDescription("Range whose newest Bun match becomes the `default` field")),
 );
 const denoDefaultFlag = Flag.optional(
-	Flag.string("deno-default").pipe(Flag.withDescription("Range whose newest Deno match becomes the `default` field")),
+	Flag.String("deno-default").pipe(Flag.withDescription("Range whose newest Deno match becomes the `default` field")),
 );
 const nodeDateFlag = Flag.optional(
-	Flag.date("node-date").pipe(Flag.withDescription("ISO date at which to evaluate Node lifecycle phases")),
+	Flag.Date("node-date").pipe(Flag.withDescription("ISO date at which to evaluate Node lifecycle phases")),
 );
-const prettyFlag = Flag.boolean("pretty").pipe(
+const prettyFlag = Flag.Boolean("pretty").pipe(
 	Flag.withDescription("Pretty-print the JSON output with 2-space indentation"),
 	Flag.withDefault(false),
 );
-const offlineFlag = Flag.boolean("offline").pipe(
+const offlineFlag = Flag.Boolean("offline").pipe(
 	Flag.withDescription("Resolve from the bundled snapshot only; make no network requests"),
 	Flag.withDefault(false),
 );
 const tokenFlag = Flag.optional(
-	Flag.redacted("token").pipe(Flag.withDescription("GitHub personal access token used for Bun and Deno lookups")),
+	Flag.Redacted("token").pipe(Flag.withDescription("GitHub personal access token used for Bun and Deno lookups")),
 );
 
 /**
