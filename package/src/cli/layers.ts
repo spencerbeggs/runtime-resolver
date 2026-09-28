@@ -1,8 +1,8 @@
 import { BunResolver, DenoResolver, GitHubAuth, GitHubClient, NodeResolver } from "@effected/runtimes";
 import type { Redacted } from "effect";
 import { Effect, FileSystem, Layer, Option, Path, Stdio, Terminal } from "effect";
-import { FetchHttpClient } from "effect/unstable/http";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { FetchHttpClient } from "effect/http";
+import { ChildProcessSpawner } from "effect/process";
 
 /**
  * The `fetch`-backed HTTP client, bound to one constant so every resolver layer

@@ -9,7 +9,7 @@ import { BunResolver, DenoResolver, NodeResolver } from "@effected/runtimes";
 import type { InvalidRangeError } from "@effected/semver";
 import type { Layer } from "effect";
 import { Console, DateTime, Effect, Option, Result } from "effect";
-import { CliError, Command, Flag } from "effect/unstable/cli";
+import { CliError, Command, Flag } from "effect/cli";
 import type { ResolverLayers } from "./layers.js";
 import { selectResolverLayers } from "./layers.js";
 import { NODE_PHASES, formatOutput, parsePhases } from "./output.js";

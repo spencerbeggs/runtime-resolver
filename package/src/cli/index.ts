@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Effect, Exit } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { cli } from "./command.js";
 import { NodeCliEnvironment } from "./layers.js";
 import { failureMessage } from "./report.js";
