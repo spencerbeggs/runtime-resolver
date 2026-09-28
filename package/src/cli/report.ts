@@ -1,5 +1,5 @@
 import { Cause, Option } from "effect";
-import { CliError } from "effect/unstable/cli";
+import { CliError } from "effect/cli";
 
 /**
  * The stderr line to print for a failed run, or `null` when nothing should be

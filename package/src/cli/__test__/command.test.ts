@@ -1,8 +1,8 @@
 import { describe, expect, it } from "@effect/vitest";
 import { BunResolver, DenoResolver, NodeResolver } from "@effected/runtimes";
 import { Effect, Layer } from "effect";
+import { CliError, Command } from "effect/cli";
 import { TestConsole } from "effect/testing";
-import { CliError, Command } from "effect/unstable/cli";
 import { makeCli } from "../command.js";
 import type { ResolverLayers } from "../layers.js";
 import { NodeCliEnvironment } from "../layers.js";
