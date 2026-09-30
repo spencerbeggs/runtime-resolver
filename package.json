@@ -38,7 +38,7 @@
 	"devDependencies": {
 		"@okfit/plugin": "^0.5.6",
 		"@savvy-web/silk": "^4.3.0",
-		"@vitest-agent/plugin": "^5.1.0",
+		"@vitest-agent/plugin": "^5.1.1",
 		"runtime-resolver": "workspace:*"
 	},
 	"engines": {
@@ -47,7 +47,7 @@
 	"devEngines": {
 		"packageManager": {
 			"name": "pnpm",
-			"version": "12.8.1",
+			"version": "12.8.2",
 			"onFail": "download"
 		},
 		"runtime": [
