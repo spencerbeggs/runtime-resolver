@@ -1,5 +1,22 @@
 # runtime-resolver
 
+## 1.0.34
+
+### Dependencies
+
+| Dependency | Type | Action | From | To |
+| --- | --- | --- | --- | --- |
+| @effected/runtimes | dependency | updated | ^0.15.1 | ^0.15.2 |
+| @effected/semver | dependency | updated | ^0.17.0 | ^0.18.0 |
+
+[#321][#321]
+
+### Thanks
+
+Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contributions!
+
+[#321]: https://github.com/spencerbeggs/runtime-resolver/pull/321
+
 ## 1.0.33
 
 ### Dependencies
