@@ -1,5 +1,23 @@
 # runtime-resolver
 
+## 1.0.35
+
+### Dependencies
+
+| Dependency | Type | Action | From | To |
+| --- | --- | --- | --- | --- |
+| @effected/runtimes | dependency | updated | ^0.15.2 | ^0.16.0 |
+| @effected/semver | dependency | updated | ^0.18.0 | ^0.19.0 |
+| effect | dependency | updated | ^4.0.6 | ^4.0.7 |
+
+[#326][#326]
+
+### Thanks
+
+Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contributions!
+
+[#326]: https://github.com/spencerbeggs/runtime-resolver/pull/326
+
 ## 1.0.34
 
 ### Dependencies
@@ -449,8 +467,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
   | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.4.2 | ^0.4.3 | [#155][#155] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
-### Patch Changes
-
 [#155]: https://github.com/spencerbeggs/runtime-resolver/pull/155
 
 ## 1.0.7
@@ -460,8 +476,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
 - | Dependency | Type | Action | From | To |  |
   | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.4.0 | ^0.4.2 | [#152][#152] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
-
-### Patch Changes
 
 [#152]: https://github.com/spencerbeggs/runtime-resolver/pull/152
 
@@ -475,8 +489,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
   | @effected/semver | dependency | updated | ^0.4.0 | ^0.5.0 |  |
   | effect | dependency | updated | 4.0.0-beta.107 | 4.0.0-rc.109 | [#148][#148] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
-### Patch Changes
-
 [#148]: https://github.com/spencerbeggs/runtime-resolver/pull/148
 
 ## 1.0.5
@@ -489,8 +501,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
   | @effected/semver | dependency | updated | ^0.3.2 | ^0.4.0 |  |
   | effect | dependency | updated | 4.0.0-beta.101 | 4.0.0-beta.107 | [#140][#140] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
-### Patch Changes
-
 [#140]: https://github.com/spencerbeggs/runtime-resolver/pull/140
 
 ## 1.0.4
@@ -501,8 +511,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
   | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.2.3 | ^0.2.7 |  |
   | @effected/semver | dependency | updated | ^0.3.1 | ^0.3.2 | [#138][#138] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
-
-### Patch Changes
 
 [#138]: https://github.com/spencerbeggs/runtime-resolver/pull/138
 
@@ -515,8 +523,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
   | @effected/runtimes | dependency | updated | ^0.2.0 | ^0.2.3 |  |
   | @effected/semver | dependency | updated | ^0.2.1 | ^0.3.1 | [#136][#136] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
 
-### Patch Changes
-
 [#136]: https://github.com/spencerbeggs/runtime-resolver/pull/136
 
 ## 1.0.2
@@ -526,8 +532,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
 - | Dependency | Type | Action | From | To |  |
   | --- | --- | --- | --- | --- | --- |
   | @effected/runtimes | dependency | updated | ^0.1.5 | ^0.2.0 | [#131][#131] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
-
-### Patch Changes
 
 [#131]: https://github.com/spencerbeggs/runtime-resolver/pull/131
 
@@ -540,8 +544,6 @@ Thanks to [@spencerbeggs](https://github.com/apps/spencerbeggs) for their contri
   | @effected/runtimes | dependency | updated | ^0.1.4 | ^0.1.5 |  |
   | @effected/semver | dependency | updated | \~0.2.0 | \~0.2.1 |  |
   | effect | dependency | updated | 4.0.0-beta.99 | 4.0.0-beta.101 | [#129][#129] Thanks [@spencerbeggs](https://github.com/apps/spencerbeggs)! |
-
-### Patch Changes
 
 [#129]: https://github.com/spencerbeggs/runtime-resolver/pull/129
 
