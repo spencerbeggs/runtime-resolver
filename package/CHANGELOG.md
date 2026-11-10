@@ -1,5 +1,23 @@
 # runtime-resolver
 
+## 1.0.37
+
+### Build System
+
+- Build with `effected package build` instead of `@savvy-web/bundler`. The published package keeps the same `runtime-resolver` bin and behaviour. The bin entry is now a thin loader over a `main` module, so the source bin linked into the workspace registers tsx itself and runs outside pnpm scripts.
+
+### Dependencies
+
+| Dependency | Type | Action | From | To |
+| --- | --- | --- | --- | --- |
+| @effected/runtimes | dependency | updated | ^0.18.1 | ^0.19.0 |
+| @effected/semver | dependency | updated | ^0.22.0 | ^0.24.0 |
+| effect | dependency | updated | ~4.1.2 | 4.1.3 |
+
+### Maintenance
+
+- Port the CLI's non-interactive `Terminal` stub to Effect 4.1.3, which adds a required `size` member. The stub dies if `size` is touched, like its other members; CLI behaviour is unchanged.
+
 ## 1.0.36
 
 ### Dependencies
