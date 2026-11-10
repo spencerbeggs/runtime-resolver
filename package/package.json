@@ -37,9 +37,7 @@
 		"runtime-resolver": "./src/cli/index.ts"
 	},
 	"scripts": {
-		"build:dev": "node savvy.build.ts --target dev",
-		"build:prod": "node savvy.build.ts --target prod",
-		"prepare": "turbo run build:dev",
+		"build": "effected package build",
 		"types:check": "tsc --noEmit"
 	},
 	"dependencies": {
@@ -49,18 +47,16 @@
 	},
 	"devDependencies": {
 		"@effect/vitest": "catalog:effected",
-		"@savvy-web/bundler": "^2.7.4",
-		"@types/node": "catalog:silk",
-		"tsx": "catalog:silk",
-		"typescript": "catalog:silk"
+		"@effected/plugin": "catalog:effected",
+		"@types/node": "catalog:effected:build",
+		"tsx": "catalog:effected:build",
+		"typescript": "catalog:effected:build"
 	},
 	"engines": {
 		"node": ">=24.11.0"
 	},
 	"publishConfig": {
 		"access": "public",
-		"directory": "dist/dev/pkg",
-		"linkDirectory": true,
 		"targets": {
 			"npm": true,
 			"github": "@spencerbeggs/runtime-resolver"

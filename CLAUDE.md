@@ -26,9 +26,7 @@ pnpm run test:coverage     # Run tests with coverage report
 ### Building
 
 ```bash
-pnpm run build             # Build all packages (dev + prod)
-pnpm run build:dev         # Build development output only
-pnpm run build:prod        # Build production/npm output only
+pnpm run build             # Build the package with `effected package build`
 ```
 
 ### Running a Single Test
@@ -52,12 +50,15 @@ pnpm vitest run pkgs/ecma-module/src/index.test.ts
 
 ### Package Build Pipeline
 
-Each package uses Rslib with dual output:
+The publishable member, `package/`, builds with `effected package build` (from
+`@effected/plugin`), configured by `package/effected.toml`. It is bin-only, so
+the build emits no declarations and no API model. Output lands in
+`dist/prod/<target>/pkg` for each `publishConfig.targets` entry (`npm`,
+`github`), with `dist/prod/issues.json` holding the build's diagnostics.
 
-1. `dist/dev/` - Development build with source maps
-2. `dist/npm/` - Production build for npm publishing
-
-Turbo tasks define dependencies: `typecheck` depends on `build` completing first.
+There is no dev build and no link directory: the root's `workspace:*` link
+resolves to `package/` source, and the bin registers tsx itself when it runs
+from `.ts`. Turbo's `build` depends on `types:check`, which needs no build.
 
 ### Code Quality
 

@@ -72,6 +72,7 @@ export const selectResolverLayers = (offline: boolean): ResolverLayers =>
 const deadTerminal = Terminal.make({
 	columns: Effect.die("terminal is not available in runtime-resolver"),
 	rows: Effect.die("terminal is not available in runtime-resolver"),
+	size: Effect.die("terminal is not available in runtime-resolver"),
 	readInput: Effect.die("terminal input is not available in runtime-resolver"),
 	readLine: Effect.die("terminal input is not available in runtime-resolver"),
 	display: () => Effect.die("terminal output is not available in runtime-resolver"),

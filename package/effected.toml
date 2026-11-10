@@ -1,0 +1,5 @@
+# Bin-only package: the `runtime-resolver` binary is the sole output. There is no
+# exports map and so no declarations for a consumer or the API model to read.
+[package.build]
+emitDts = false
+meta = false
