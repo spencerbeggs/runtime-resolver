@@ -29,9 +29,7 @@ pnpm run test
 
 | Script | Description |
 | ------ | ----------- |
-| `pnpm run build` | Build all packages (dev + prod) |
-| `pnpm run build:dev` | Build development output only |
-| `pnpm run build:prod` | Build production/npm output only |
+| `pnpm run build` | Build the package with `effected package build` |
 | `pnpm run test` | Run all tests |
 | `pnpm run test:watch` | Run tests in watch mode |
 | `pnpm run test:coverage` | Run tests with coverage report |

@@ -20,8 +20,8 @@
 	"sideEffects": false,
 	"type": "module",
 	"scripts": {
-		"build": "turbo run build:dev build:prod --log-order=grouped --log-prefix=none",
-		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
+		"build": "turbo run build --log-order=grouped --log-prefix=none",
+		"ci:build": "CI=\"true\" turbo run build --log-order=grouped --output-logs=full --log-prefix=none",
 		"ci:test": "CI=\"true\" vitest run --passWithNoTests",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",

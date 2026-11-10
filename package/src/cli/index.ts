@@ -1,22 +1,15 @@
 #!/usr/bin/env node
-import { Effect, Exit } from "effect";
-import { Command } from "effect/cli";
-import { cli } from "./command.js";
-import { NodeCliEnvironment } from "./layers.js";
-import { failureMessage } from "./report.js";
 
-const version = process.env.__PACKAGE_VERSION__ ?? "0.0.0";
-
-// Each runtime's resolver layer is provided inside its own flag-gated branch of
-// the handler, so only requested runtimes are built. The bin only owns the
-// process-level `Command.Environment`.
-const program = Command.runWith(cli, { version })(process.argv.slice(2)).pipe(Effect.provide(NodeCliEnvironment));
-
-const exit = await Effect.runPromiseExit(program);
-if (Exit.isFailure(exit)) {
-	process.exitCode = 1;
-	const message = failureMessage(exit.cause);
-	if (message !== null) {
-		process.stderr.write(`${message}\n`);
-	}
+// The workspace root links this package through `workspace:*`, so its
+// `.bin/runtime-resolver` runs this file from source, where no pnpm
+// `nodeOptions` load tsx. Register it here, before anything resolves a `.js`
+// import from source. The built `.js` bin never takes this branch, and the
+// specifier is computed so the bundler does not inline tsx into the package.
+if (import.meta.url.endsWith(".ts")) {
+	const tsx = ["tsx", "esm", "api"].join("/");
+	const { register } = (await import(tsx)) as { readonly register: () => void };
+	register();
 }
+
+const { main } = await import("./main.js");
+await main(process.argv.slice(2));
