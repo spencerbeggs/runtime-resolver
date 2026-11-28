@@ -1,5 +1,14 @@
 # runtime-resolver
 
+## 1.0.41
+
+### Dependencies
+
+| Dependency | Type | Action | From | To |
+| --- | --- | --- | --- | --- |
+| @effected/runtimes | dependency | updated | ^0.19.3 | ^0.19.4 |
+| effect | dependency | updated | 4.1.5 | 4.1.7 |
+
 ## 1.0.40
 
 ### Dependencies
